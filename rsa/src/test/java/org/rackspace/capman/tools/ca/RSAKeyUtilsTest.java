@@ -21,9 +21,6 @@ import org.rackspace.capman.tools.ca.exceptions.RsaException;
 
 public class RSAKeyUtilsTest {
 
-    public static void nop() {
-    }
-
     public RSAKeyUtilsTest() {
     }
 
@@ -58,6 +55,5 @@ public class RSAKeyUtilsTest {
             msg = StringUtils.getEST(ex);
             throw ex;
         }
-        nop();
     }
 }

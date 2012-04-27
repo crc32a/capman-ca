@@ -25,7 +25,7 @@ public class X509VerifierTest {
     private PrivKeyReader caKeyReader;
     private PrivKeyReader testKeyReader;
     private PrivKeyReader pkcs8KeyReader;
-    private static final List<String> dateErrorFilter;
+    public static final List<String> dateErrorFilter;
     
     static {
         dateErrorFilter = new ArrayList<String>();
@@ -62,16 +62,16 @@ public class X509VerifierTest {
     public void tearDown() {
     }
 
-    private List<String> verifyIssuerAndSubjectCert(X509CertificateObject issuerCrt,X509CertificateObject subjectCrt){
+    private List<String> verifyIssuerAndSubjectCertWhoCaresAboutTheDate(X509CertificateObject issuerCrt,X509CertificateObject subjectCrt){
         List<String> errorList = X509Verifier.verifyIssuerAndSubjectCert(issuerCrt, subjectCrt);
         errorList.removeAll(dateErrorFilter); // Don't count Date Errors since who know
-        return errorList; // how long this test is working.
+        return errorList; // other wise these tests will fail around 2039
     }
 
     public void caCrtShouldHaveSignedtestCrt() {
         X509CertificateObject caCrt = caCrtReader.getX509CertificateObject();
         X509CertificateObject testCrt = testCrtReader.getX509CertificateObject();
-        List<String> errorList = verifyIssuerAndSubjectCert(caCrt, testCrt);
+        List<String> errorList = verifyIssuerAndSubjectCertWhoCaresAboutTheDate(caCrt, testCrt);
         Assert.assertEquals(0, errorList.size());
     }
 
@@ -79,7 +79,7 @@ public class X509VerifierTest {
     public void caCrtAlsoShouldHaveSignedPkcs8Crt() {
         X509CertificateObject caCrt = caCrtReader.getX509CertificateObject();
         X509CertificateObject pkcs8Crt = pkcs8CrtReader.getX509CertificateObject();
-        List<String> errorList =verifyIssuerAndSubjectCert(caCrt, pkcs8Crt);
+        List<String> errorList =verifyIssuerAndSubjectCertWhoCaresAboutTheDate(caCrt, pkcs8Crt);
         Assert.assertEquals(0, errorList.size());
     }
 
@@ -87,7 +87,7 @@ public class X509VerifierTest {
     public void pkcs8CrtDidntSignTestCrtOnTheOtherHand() {
         X509CertificateObject pkcs8Crt = pkcs8CrtReader.getX509CertificateObject();
         X509CertificateObject testCrt = testCrtReader.getX509CertificateObject();
-        List<String> errorList = verifyIssuerAndSubjectCert(testCrt, pkcs8Crt);
+        List<String> errorList = verifyIssuerAndSubjectCertWhoCaresAboutTheDate(testCrt, pkcs8Crt);
         Assert.assertTrue(errorList.size() > 0); // This should error out
     }
 

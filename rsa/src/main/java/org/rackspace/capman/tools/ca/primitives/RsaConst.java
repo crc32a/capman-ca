@@ -23,6 +23,8 @@ public class RsaConst {
     public static final int DEFAULT_PRIME_CERTAINTY = 32;
     public static final Hashtable oids;
     public static final Hashtable algorithms;
+    public static int initCount = 0;
+
 
     static {
         Provider bc = new BouncyCastleProvider();
@@ -105,10 +107,7 @@ public class RsaConst {
 
     // Static initializers aren't executed intill a method of the object is
     // accesses for the first time.
-    public static int init() {
-        int nop=0;
-        nop += 1;
-        nop -= 1;
-        return nop;
+    public static void init() {
+        initCount++;
     }
 }
