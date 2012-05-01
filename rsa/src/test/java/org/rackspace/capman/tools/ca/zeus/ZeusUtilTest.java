@@ -49,7 +49,7 @@ public class ZeusUtilTest {
             + "KhmIrBwleye5CsulwKIXXrESpLlWCUhIm/OS+R2EgdseLy1QEPycVLhO++7EKHcz\n"
             + "CEkPMg+ayICHS9v3+KQhkO37aZZ7aeTa/2V5ztBuoO1b5Ku3up2Q/Yez0whA8bMg\n"
             + "Ox585g==\n"
-            + "-----END CERTIFICATE-----";
+            + "-----END CERTIFICATE-----\n";
     private static final String ca2Crt = "-----BEGIN CERTIFICATE-----\n"
             + "MIIDMDCCApmgAwIBAgIBAjANBgkqhkiG9w0BAQUFADBzMQswCQYDVQQGEwJVUzEO\n"
             + "MAwGA1UECBMFVGV4YXMxDjAMBgNVBAcTBVRleGFzMRowGAYDVQQKExFSYWNrU3Bh\n"
@@ -191,6 +191,22 @@ public class ZeusUtilTest {
     public void tearDown() {
     }
 
+    public String buildNonsenseMixed(){
+        StringBuilder chain = new StringBuilder();
+        chain.append("Nonsense\n\nGarbage\n");
+        chain.append(ca4Crt);
+        chain.append("foo\nbar\nNAN\n");
+        chain.append(ca3Crt);
+        chain.append("Blah\nBlah\n");
+        chain.append(ca2Crt);
+        chain.append("\r\n\r\nldsav\r\nrrgbsdfjkab\r\n");
+        chain.append(ca1Crt);
+        chain.append("djkahkdbsv\nfbdasfa\nadfbfdabfda\n");
+        chain.append(ca0Crt);
+        chain.append("\n\n\npfft\n");
+        return chain.toString();
+    }
+
     private String buildGoodOrderedChain() {
         StringBuilder chain = new StringBuilder();
         chain.append(ca4Crt);
@@ -211,8 +227,27 @@ public class ZeusUtilTest {
         String errorMsg = String.format(fmt, StringUtils.joinString(errorList, ","));
         Assert.assertTrue(errorMsg, errorList.size() <= 1);
         String expPublic_cert = String.format("%s%s", pfftCrt, goodChain);
-        Assert.assertEquals(expPublic_cert, zcf.getPublic_cert());
-        Assert.assertEquals(pfftKey, zcf.getPrivate_key());
+        String zCert = zcf.getPublic_cert();
+        String zKey = zcf.getPrivate_key();
+        Assert.assertEquals(expPublic_cert, zCert);
+        Assert.assertEquals(pfftKey, zKey);
+    }
+
+    @Test
+    public void shouldFilterNonsenseBetweenPemBlocks() {
+        String nonsenseMixedChain = buildNonsenseMixed();
+        String goodChain = buildGoodOrderedChain();
+        ZeusCertFile zcf = ZeusUtil.getCertFile(pfftKey, pfftCrt, nonsenseMixedChain);
+        List<String> errorList = zcf.getErrorList();
+        errorList.removeAll(dateErrorFilter); // We don't cound date Errors
+        String fmt = "Expected no Errors but got: [%s]";
+        String errorMsg = String.format(fmt, StringUtils.joinString(errorList, ","));
+        Assert.assertTrue(errorMsg, errorList.size() <= 1);
+        String expPublic_cert = String.format("%s%s", pfftCrt, goodChain);
+        String zCert = zcf.getPublic_cert();
+        String zKey = zcf.getPrivate_key();
+        Assert.assertEquals(expPublic_cert, zCert);
+        Assert.assertEquals(pfftKey, zKey);
     }
 
     @Test

@@ -23,7 +23,6 @@ import org.rackspace.capman.tools.util.exceptions.X509ReaderDecodeException;
 import org.rackspace.capman.tools.util.exceptions.X509ReaderNoSuchExtensionException;
 
 public class X509Reader {
-
     private static final String X500NameFormat = "RFC2253";
     private static final String SubjKeyIdOid = "2.5.29.14";
     private static final String AuthKeyIdOid = "2.5.29.35";

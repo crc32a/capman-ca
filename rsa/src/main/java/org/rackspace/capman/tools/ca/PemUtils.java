@@ -24,8 +24,6 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.Charset;
-import org.rackspace.capman.tools.ca.primitives.ByteLineList;
-import org.rackspace.capman.tools.ca.primitives.ByteLineListEntry;
 import org.rackspace.capman.tools.ca.primitives.ByteLineReader;
 import static org.rackspace.capman.tools.ca.primitives.ByteLineReader.cmpBytes;
 import static org.rackspace.capman.tools.ca.primitives.ByteLineReader.appendLF;
@@ -38,6 +36,9 @@ public class PemUtils {
     private static final byte[] END_CSR;
     private static final byte[] BEG_CRT;
     private static final byte[] END_CRT;
+    private static final int CR = 13;
+    private static final int LF = 10;
+    private static final int PAGESIZE = 4096;
 
     static {
         BEG_PRV = StringUtils.asciiBytes("-----BEGIN RSA PRIVATE KEY-----");
@@ -87,7 +88,7 @@ public class PemUtils {
             return fromPem(pemBytes);
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(PemUtils.class.getName()).log(Level.SEVERE, null, ex);
-            throw new PemException("Error decodeing PEM",ex);
+            throw new PemException("Error decodeing PEM", ex);
         }
     }
 
@@ -115,7 +116,7 @@ public class PemUtils {
         try {
             out = new String(pemBytes, "US-ASCII");
         } catch (UnsupportedEncodingException ex) {
-            throw new PemException("Could not encode Object to PEM",ex);
+            throw new PemException("Could not encode Object to PEM", ex);
         }
         return out;
 
@@ -141,56 +142,75 @@ public class PemUtils {
     }
 
     public static List<PemBlock> parseMultiPem(byte[] multiPemBytes) {
+        String lineDBG="";
+        String multiPemString = "";
         List<PemBlock> pemBlocks = new ArrayList<PemBlock>();
-        PemBlock pemBlock;
-        ByteLineList lines;
-        ByteLineReader br;
-        int lc;
-        byte[] line;
-        byte[] pemBlockBytes;
-        boolean outsidePemBlock;
-        Object decodedObject;
-        outsidePemBlock = true;
-        lc = 1;
-        br = new ByteLineReader(multiPemBytes);
-        lines = new ByteLineList();
-        pemBlock = new PemBlock();
-        pemBlock.setLineNum(lc);
+        ByteLineReader br = new ByteLineReader(multiPemBytes);
+        boolean outsideBlock = true;
+        int lc = 1;
+        ByteArrayOutputStream bos;
+        PemBlock pemBlock = null;
+        bos = null;
+        Object decodedObject = null;
+        try {
+            multiPemString = new String(multiPemBytes, "US-ASCII");
+        } catch (UnsupportedEncodingException ex) {
+            multiPemString = "You got to be kidding me";
+        }
         while (br.bytesAvailable() > 0) {
-            line = br.readLine(true);
+            byte[] line = br.readLine(true);
             lc++;
-            if(outsidePemBlock && isBegPemBlock(line)){
-                if(!lines.empty()) {
-                    pemBlockBytes = lines.toBytes(); // This must be garbage data
-                    pemBlock.setPemData(pemBlockBytes);
-                    pemBlock.setDecodedObject(null);
-                    lines = new ByteLineList();
-                    pemBlocks.add(pemBlock);
+            if (isEmptyLine(line)) {
+                continue;
+            }
+            try {
+                lineDBG = new String(line, "US-ASCII");
+            } catch (UnsupportedEncodingException ex) {
+                lineDBG = "EXCEPTION";
+            }
+            if (outsideBlock) {
+                if (isBegPemBlock(line)) {
+                    bos = new ByteArrayOutputStream(PAGESIZE);
                     pemBlock = new PemBlock();
                     pemBlock.setLineNum(lc);
+                    pemBlock.setDecodedObject(null);
+                    pemBlock.setPemData(null);
+                    writeLine(bos,line);
+                    outsideBlock = !outsideBlock;
+                    continue;
+                } else {
+                    continue; // We are still outside the a block so skip this line
                 }
-                outsidePemBlock = false; // toggle state to inside
-                lines.addLine(appendLF(line));
-            }else if(!outsidePemBlock && isEndPemBlock(line)){
-                lines.addLine(appendLF(line));
-                pemBlockBytes = lines.toBytes();
-                lines = new ByteLineList();
-                pemBlock.setPemData(pemBlockBytes);
-                try {
-                    decodedObject = PemUtils.fromPem(pemBlockBytes);
-                } catch (PemException ex) {
-                    decodedObject = null;
+            } else {
+                // We are inside a pemBlock
+                if (isEndPemBlock(line)) {
+                    outsideBlock = !outsideBlock;
+                    writeLine(bos, line);
+                    byte[] bytes = bos.toByteArray();
+                    pemBlock.setPemData(bytes);
+                    try {
+                        decodedObject = PemUtils.fromPem(bytes);
+                    } catch (PemException ex) {
+                        decodedObject = null;
+                    }
+                    pemBlock.setDecodedObject(decodedObject);
+                    pemBlocks.add(pemBlock);
+                } else {
+                    writeLine(bos, line);
                 }
-                pemBlock.setDecodedObject(decodedObject);
-                pemBlocks.add(pemBlock);
-                pemBlock = new PemBlock();
-                pemBlock.setLineNum(lc);
-                outsidePemBlock = true;
-            }else{
-                lines.addLine(appendLF(line));
             }
         }
         return pemBlocks;
+    }
+
+    public static void writeLine(ByteArrayOutputStream bos, byte[] line) {
+        for (int i = 0; i < line.length; i++) {
+            int byteInt = (line[i] >= 0) ? (int) line[i] : (int) line[i] + 256;
+            bos.write(byteInt); // Not sure why single byte writes are Exception free. Its annoying.
+        }
+        // attach LF
+        bos.write(LF);
+
     }
 
     public static boolean isBegPemBlock(byte[] line) {
@@ -217,5 +237,13 @@ public class PemUtils {
             return true;
         }
         return false;
+    }
+
+    public static boolean isEmptyLine(byte[] line) {
+        if (line.length <= 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

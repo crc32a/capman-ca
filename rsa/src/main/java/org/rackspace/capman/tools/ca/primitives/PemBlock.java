@@ -1,22 +1,28 @@
 package org.rackspace.capman.tools.ca.primitives;
 
+import java.util.Arrays;
+
 public class PemBlock {
+
     private int lineNum;
-    private byte[]  pemData;
+    private byte[] pemData;
     private Object decodedObject;
 
-    public PemBlock(){
+    public PemBlock() {
         pemData = null;
         decodedObject = null;
     }
 
-    public PemBlock(int lineNum,byte[] pemData,Object decodedObject){
+    public PemBlock(int lineNum, byte[] pemData, Object decodedObject) {
         int i;
         this.lineNum = lineNum;
         this.decodedObject = decodedObject;
-        for(i=0;i<pemData.length;i++){
-            this.pemData[i] = pemData[i];
+        if (pemData == null) {
+            this.pemData = null;
+            return;
         }
+        this.pemData = Arrays.copyOf(pemData, pemData.length);
+
     }
 
     public byte[] getPemData() {
@@ -25,12 +31,10 @@ public class PemBlock {
 
     public void setPemData(byte[] pemData) {
         int i;
-        if(pemData==null){
+        if (pemData == null) {
             this.pemData = null;
-        }
-        this.pemData = new byte[pemData.length];
-        for(i=0;i<pemData.length;i++){
-            this.pemData[i] = pemData[i];
+        } else {
+            this.pemData = Arrays.copyOf(pemData, pemData.length);
         }
     }
 
@@ -49,5 +53,4 @@ public class PemBlock {
     public void setLineNum(int lineNum) {
         this.lineNum = lineNum;
     }
-
 }
