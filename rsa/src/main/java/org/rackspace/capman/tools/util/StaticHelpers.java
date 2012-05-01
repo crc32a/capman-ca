@@ -33,6 +33,9 @@ public class StaticHelpers {
 
     public static String bytes2hex(byte[] in){
         StringBuilder sb = new StringBuilder();
+        if(in == null){
+            return null;
+        }
         for(int i=0;i<in.length;i++){
             int byteInt = (in[i] >= 0) ? (int) in[i] : (int) in[i] + 256;
             sb.append(int2hex[byteInt>>4]); // High nibble

@@ -8,20 +8,23 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 // Nieve chain builder.
 public class X509Chainer {
-    private List<X509Certificate>x509Certs;
 
-    public X509Chainer(){
+    private Set<X509Certificate> x509Certs;
+
+    public X509Chainer() {
+        x509Certs = new HashSet<X509Certificate>();
     }
 
     // Nieve O(n) based search. IF you use it for path building it could become
-    // O(n*l) where l is the length of the chain
-    public List<X509Certificate> getNextIssuer(X509Certificate subjectCert){
+    public List<X509Certificate> getNextIssuer(X509Certificate subjectCert) {
         List<X509Certificate> nextIssuer = new ArrayList<X509Certificate>();
-        for(X509Certificate candidateCrt : x509Certs){
+        for (X509Certificate candidateCrt : x509Certs) {
             PublicKey candidateKey = (PublicKey) candidateCrt.getPublicKey();
             try {
                 subjectCert.verify(candidateKey);
@@ -42,11 +45,30 @@ public class X509Chainer {
         return nextIssuer;
     }
 
-    public List<X509Certificate> getX509Certs() {
+    // Nieve pathBuilder that only looks at the key for a matching signing key
+    // O(n*l) where l is the length of this chain
+    public List<X509Certificate> buildPath(X509Certificate userCert) {
+        List<X509Certificate> pathOut = new ArrayList<X509Certificate>();
+        X509Chainer chainer = new X509Chainer();
+        chainer.getX509Certs().addAll(this.x509Certs);
+        List<X509Certificate> next = chainer.getNextIssuer(userCert);
+        if (next.isEmpty()) {
+            return pathOut;
+        }
+        while (next.size() > 0) {
+            X509Certificate nextX509 = next.get(0);
+            pathOut.add(nextX509);
+            chainer.getX509Certs().remove(nextX509); // We don't want to get stuck in a loop
+            next = chainer.getNextIssuer(nextX509);
+        }
+        return pathOut;
+    }
+
+    public Set<X509Certificate> getX509Certs() {
         return x509Certs;
     }
 
-    public void setX509Certs(List<X509Certificate> x509Certs) {
+    public void setX509Certs(Set<X509Certificate> x509Certs) {
         this.x509Certs = x509Certs;
     }
 }

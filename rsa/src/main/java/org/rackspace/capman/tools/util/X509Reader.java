@@ -2,6 +2,7 @@ package org.rackspace.capman.tools.util;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
@@ -170,6 +171,9 @@ public class X509Reader {
         }
         byte[] authIdBytes;
         authIdBytes = authKIS.getKeyIdentifier();
+        if(authIdBytes==null){
+            return null;
+        }
         String out = StaticHelpers.bytes2hex(authIdBytes);
         return out;
     }
@@ -200,6 +204,11 @@ public class X509Reader {
         return subjKeyId;
     }
 
+    public PublicKey getPublicKey(){
+        PublicKey pubKey = x509obj.getPublicKey();
+        return pubKey;
+    }
+
     private AuthorityKeyIdentifierStructure getAuthorityKeyIdentifierStructure() throws X509ReaderNoSuchExtensionException, X509ReaderDecodeException {
         byte[] authKeyIdBytes = x509obj.getExtensionValue(AuthKeyIdOid);
         if (authKeyIdBytes == null) {
@@ -212,6 +221,5 @@ public class X509Reader {
             throw new X509ReaderDecodeException("Unable to decode AuthorityKeyIdentifier from Cert", ex);
         }
         return authKeyId;
-
     }
 }

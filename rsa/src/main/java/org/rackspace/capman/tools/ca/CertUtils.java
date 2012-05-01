@@ -47,10 +47,12 @@ import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 
 public class CertUtils {
+
     public static final String ISSUER_NOT_AFTER_FAIL = "issuer Cert Not After Fail";
     public static final String ISSUER_NOT_BEFORE_FAIL = "issuer Cert Not Before Fail";
     public static final String SUBJECT_NOT_AFTER_FAIL = "subject Cert Not After Fail";
     public static final String SUBJECT_NOT_BEFORE_FAIL = "subject Cert Not Before Fail";
+
     public static X509Certificate signCSR(PKCS10CertificationRequest req,
             RsaPair keys, X509Certificate caCrt, int days, BigInteger serial) throws NullKeyException, RsaException {
         long nowMillis;
@@ -297,9 +299,21 @@ public class CertUtils {
     }
 
     public static boolean isSelfSigned(X509CertificateObject cert) {
-        X500Principal subject = cert.getSubjectX500Principal();
-        X500Principal issuer = cert.getIssuerX500Principal();
-        return subject.equals(issuer);
+        PublicKey pubKey = cert.getPublicKey();
+        try {
+            cert.verify(pubKey);
+        } catch (CertificateException ex) {
+            return false;
+        } catch (NoSuchAlgorithmException ex) {
+            return false;
+        } catch (InvalidKeyException ex) {
+            return false;
+        } catch (NoSuchProviderException ex) {
+            return false;
+        } catch (SignatureException ex) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean isSelfSigned(byte[] certPem) {
