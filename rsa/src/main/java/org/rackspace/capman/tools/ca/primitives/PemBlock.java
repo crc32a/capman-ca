@@ -5,6 +5,8 @@ import java.util.Arrays;
 public class PemBlock {
 
     private int lineNum;
+    private int startByte;
+    private int stopByte;
     private byte[] pemData;
     private Object decodedObject;
 
@@ -14,7 +16,6 @@ public class PemBlock {
     }
 
     public PemBlock(int lineNum, byte[] pemData, Object decodedObject) {
-        int i;
         this.lineNum = lineNum;
         this.decodedObject = decodedObject;
         if (pemData == null) {
@@ -52,5 +53,21 @@ public class PemBlock {
 
     public void setLineNum(int lineNum) {
         this.lineNum = lineNum;
+    }
+
+    public int getStartByte() {
+        return startByte;
+    }
+
+    public void setStartByte(int startByte) {
+        this.startByte = startByte;
+    }
+
+    public int getStopByte() {
+        return stopByte;
+    }
+
+    public void setStopByte(int stopByte) {
+        this.stopByte = stopByte;
     }
 }

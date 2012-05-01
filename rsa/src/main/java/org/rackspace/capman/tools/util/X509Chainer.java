@@ -21,7 +21,7 @@ public class X509Chainer {
         x509Certs = new HashSet<X509Certificate>();
     }
 
-    // Nieve O(n) based search. IF you use it for path building it could become
+    // Nieve O(n) based search.
     public List<X509Certificate> getNextIssuer(X509Certificate subjectCert) {
         List<X509Certificate> nextIssuer = new ArrayList<X509Certificate>();
         for (X509Certificate candidateCrt : x509Certs) {
@@ -46,7 +46,7 @@ public class X509Chainer {
     }
 
     // Nieve pathBuilder that only looks at the key for a matching signing key
-    // O(n*l) where l is the length of this chain
+    // O(n*l) where l is the length of this chain and n is the number of certs in x509certs
     public List<X509Certificate> buildPath(X509Certificate userCert) {
         List<X509Certificate> pathOut = new ArrayList<X509Certificate>();
         X509Chainer chainer = new X509Chainer();

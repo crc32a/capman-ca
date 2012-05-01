@@ -24,9 +24,7 @@ public class StaticHelpers {
     public static BigInteger bytes2BigInt(byte[] in) {
         BigInteger out = BigInteger.ZERO;
         for (int i = 0; i < in.length; i++) {
-            BigInteger bv = BigInteger.valueOf(uint(in[i]));
-            out = out.shiftLeft(8);
-            out = out.add(bv);
+            out = out.shiftLeft(8).add(BigInteger.valueOf(uint(in[i])));
         }
         return out;
     }

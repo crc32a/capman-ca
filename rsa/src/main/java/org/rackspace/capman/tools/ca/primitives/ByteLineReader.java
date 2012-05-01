@@ -10,9 +10,15 @@ public class ByteLineReader {
     private static final byte LF = 10;
     private static final int PAGESIZE = 4096;
     private ByteArrayInputStream inStream;
+    private int totalBytes;
 
     public ByteLineReader(byte[] bytes) {
         inStream = new ByteArrayInputStream(bytes);
+        totalBytes = inStream.available();
+    }
+
+    public int getBytesRead(){
+        return totalBytes - inStream.available();
     }
 
     public int bytesAvailable() {

@@ -142,32 +142,23 @@ public class PemUtils {
     }
 
     public static List<PemBlock> parseMultiPem(byte[] multiPemBytes) {
-        String lineDBG="";
-        String multiPemString = "";
         List<PemBlock> pemBlocks = new ArrayList<PemBlock>();
         ByteLineReader br = new ByteLineReader(multiPemBytes);
         boolean outsideBlock = true;
-        int lc = 1;
+        int lc = 0;
+        int currBytePos;
         ByteArrayOutputStream bos;
         PemBlock pemBlock = null;
         bos = null;
         Object decodedObject = null;
-        try {
-            multiPemString = new String(multiPemBytes, "US-ASCII");
-        } catch (UnsupportedEncodingException ex) {
-            multiPemString = "You got to be kidding me";
-        }
         while (br.bytesAvailable() > 0) {
+            currBytePos = br.getBytesRead();
             byte[] line = br.readLine(true);
             lc++;
             if (isEmptyLine(line)) {
                 continue;
             }
-            try {
-                lineDBG = new String(line, "US-ASCII");
-            } catch (UnsupportedEncodingException ex) {
-                lineDBG = "EXCEPTION";
-            }
+
             if (outsideBlock) {
                 if (isBegPemBlock(line)) {
                     bos = new ByteArrayOutputStream(PAGESIZE);
@@ -175,7 +166,8 @@ public class PemUtils {
                     pemBlock.setLineNum(lc);
                     pemBlock.setDecodedObject(null);
                     pemBlock.setPemData(null);
-                    writeLine(bos,line);
+                    pemBlock.setStartByte(currBytePos);
+                    writeLine(bos, line);
                     outsideBlock = !outsideBlock;
                     continue;
                 } else {
@@ -194,6 +186,8 @@ public class PemUtils {
                         decodedObject = null;
                     }
                     pemBlock.setDecodedObject(decodedObject);
+                    currBytePos = br.getBytesRead();
+                    pemBlock.setStopByte(currBytePos);
                     pemBlocks.add(pemBlock);
                 } else {
                     writeLine(bos, line);
