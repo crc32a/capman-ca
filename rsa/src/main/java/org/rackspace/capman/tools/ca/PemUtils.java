@@ -65,7 +65,7 @@ public class PemUtils {
         }
         fis = new FileInputStream(file);
         data = new byte[(int) flen];
-        fis.read(data, 0, (int) flen);
+        fis.read(data, 0, (int) flen); // FAil
         fis.close();
         return data;
     }
