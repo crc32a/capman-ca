@@ -1,4 +1,4 @@
-package org.rackspace.capman.tools.util.fileio;
+package org.rackspace.capman.tools.util;
 
 import org.bouncycastle.jce.provider.X509CertificateObject;
 
@@ -28,11 +28,10 @@ public class X509MapValue {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = hash * 37 + this.x509CertificateObject.hashCode();
-        hash = hash * 31 + this.fileName.hashCode();
-        hash = hash * 47 + this.lineNum;
-        return hash;
+        int xh = (this.x509CertificateObject == null) ? 0 : this.x509CertificateObject.hashCode();
+        int fh = (this.fileName==null)?0:this.fileName.hashCode();
+        int lh = this.lineNum;
+        return (((37 + xh) * 23 + fh) * 47 + lh);
     }
 
     @Override

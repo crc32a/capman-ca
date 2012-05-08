@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.util.fileio;
 
+import org.rackspace.capman.tools.util.X509MapValue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -10,6 +11,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +46,7 @@ public class RsaFileUtils {
             if (nbytes < 0) {
                 break;
             }
-            os.write(buff);
+            os.write(buff,0,nbytes);
         }
         bytesOut = os.toByteArray();
         is.close();
@@ -59,6 +61,8 @@ public class RsaFileUtils {
         return dirWalk(dirFile, p);
     }
 
+    // Warning Beware of dirwalk on directories containing directory links
+    // A link such as "ln -s .. x" will cause circular walks. 
     public static List<File> dirWalk(File dirFile, Pattern fnPattern) {
         List<File> files = new ArrayList<File>();
         if (!dirFile.canRead() || !dirFile.isDirectory()) {
@@ -106,10 +110,29 @@ public class RsaFileUtils {
             if (!(decodedObj instanceof X509CertificateObject)) {
                 continue;
             }
-            X509CertificateObject x509obj = (X509CertificateObject)block.getDecodedObject();
+            X509CertificateObject x509obj = (X509CertificateObject) block.getDecodedObject();
             X509MapValue valMap = new X509MapValue(x509obj, file.getAbsolutePath(), block.getLineNum());
             valMapList.add(valMap);
         }
         return valMapList;
+    }
+
+    public static List<X509MapValue> readX509Files(Collection<File> files) {
+        List<X509MapValue> mapVals = new ArrayList<X509MapValue>();
+        for (File file : files) {
+            List<X509MapValue> fileMapVals;
+            try {
+                fileMapVals = readX509File(file);
+            } catch (FileNotFoundException ex) {
+                String msg = String.format("File not found %s SKIPPING x509 read\n", file.getAbsolutePath());
+                Logger.getLogger(RsaFileUtils.class.getName()).log(Level.WARNING, msg, ex);
+                continue;
+            } catch (IOException ex) {
+                Logger.getLogger(RsaFileUtils.class.getName()).log(Level.WARNING, null, ex);
+                continue;
+            }
+            mapVals.addAll(fileMapVals);
+        }
+        return mapVals;
     }
 }

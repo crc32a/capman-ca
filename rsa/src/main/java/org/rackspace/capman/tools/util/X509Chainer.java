@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-// Nieve chain builder.
+// Nieve chain builder. Experiments suggest its useless for production
 public class X509Chainer {
 
     private Set<X509Certificate> x509Certs;

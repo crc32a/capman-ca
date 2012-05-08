@@ -1,33 +1,36 @@
 package org.rackspace.capman.tools.ca.gui;
 
-import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.PemUtils;
-import java.awt.Color;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.text.BadLocationException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import javax.swing.JFileChooser;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import org.rackspace.capman.tools.ca.StringUtils;
 import org.rackspace.capman.tools.ca.gui.utils.ButtonGroupMapper;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
@@ -35,16 +38,23 @@ import static org.rackspace.capman.tools.ca.gui.utils.GuiConst.*;
 import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.ConversionException;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
-import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
 
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import static org.rackspace.capman.tools.ca.StringUtils.getEST;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.rackspace.capman.tools.ca.CsrUtils;
+import org.rackspace.capman.tools.ca.gui.utils.CaTextPane;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
 import org.rackspace.capman.tools.ca.zeus.ZeusCertFile;
 import org.rackspace.capman.tools.ca.zeus.ZeusUtil;
+import org.rackspace.capman.tools.util.X509Chainer;
+import org.rackspace.capman.tools.util.X509Map;
+import org.rackspace.capman.tools.util.X509MapValue;
+import org.rackspace.capman.tools.util.X509PathBuilder;
+import org.rackspace.capman.tools.util.X509Reader;
+import org.rackspace.capman.tools.util.exceptions.X509PathBuildException;
+import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
 
 public class CaFrame extends javax.swing.JFrame {
 
@@ -118,7 +128,7 @@ public class CaFrame extends javax.swing.JFrame {
         certOutFN = new javax.swing.JTextField();
         signCSRButton = new javax.swing.JButton();
         selfSignCA = new javax.swing.JCheckBox();
-        VerifyPanel = new javax.swing.JPanel();
+        verifyPanel = new javax.swing.JPanel();
         verifyKeyCertPanel = new javax.swing.JPanel();
         vkcKeyButton = new javax.swing.JButton();
         vkcKeyFN = new javax.swing.JTextField();
@@ -131,7 +141,7 @@ public class CaFrame extends javax.swing.JFrame {
         issuerCertFN = new javax.swing.JTextField();
         subjectCertFN = new javax.swing.JTextField();
         verifyIssuerAndSubjectCertButton = new javax.swing.JButton();
-        jPanel2 = new javax.swing.JPanel();
+        verifyKeyCrtPanel = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         keyText = new javax.swing.JTextPane();
         jLabel13 = new javax.swing.JLabel();
@@ -145,7 +155,43 @@ public class CaFrame extends javax.swing.JFrame {
         clearCertButton = new javax.swing.JButton();
         jLabel15 = new javax.swing.JLabel();
         clearChainButton = new javax.swing.JButton();
-        DebugTab = new javax.swing.JPanel();
+        crtPathTab = new javax.swing.JPanel();
+        loadX509MapsBorder = new javax.swing.JPanel();
+        jLabel16 = new javax.swing.JLabel();
+        crtsLoadedCountTextField = new javax.swing.JTextField();
+        jLabel17 = new javax.swing.JLabel();
+        crtMapCountTextField = new javax.swing.JTextField();
+        loadCrtPathCrtsButton = new javax.swing.JButton();
+        loadCrtPathMapButton = new javax.swing.JButton();
+        clearCertPathCrtsButton = new javax.swing.JButton();
+        clearCrtPathMapButton = new javax.swing.JButton();
+        setDirWalkButton = new javax.swing.JButton();
+        crtLoadBaseDir = new javax.swing.JTextField();
+        jLabel18 = new javax.swing.JLabel();
+        crtChainerCountTextField = new javax.swing.JTextField();
+        loadChainerButton = new javax.swing.JButton();
+        clearChainerButton = new javax.swing.JButton();
+        crtPathFN = new javax.swing.JTextField();
+        crtPathCrtFileButton = new javax.swing.JButton();
+        buildNieveChainButton = new javax.swing.JButton();
+        jLabel19 = new javax.swing.JLabel();
+        crtsInRootCAs = new javax.swing.JTextField();
+        loadRootCAsButton = new javax.swing.JButton();
+        clearRootCAsButton = new javax.swing.JButton();
+        jLabel20 = new javax.swing.JLabel();
+        crtsInImds = new javax.swing.JTextField();
+        loadImdsButton = new javax.swing.JButton();
+        clearImdsButton = new javax.swing.JButton();
+        buildPXIXPathButton = new javax.swing.JButton();
+        clearCrtPathFNButton = new javax.swing.JButton();
+        clearLoadBaseDirNameButton = new javax.swing.JButton();
+        displayRootImdHashCodes = new javax.swing.JButton();
+        displayCrtHashCodeButton = new javax.swing.JButton();
+        CrtPathMessageBorder = new javax.swing.JPanel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        crtPathMessagesPane = new javax.swing.JTextPane();
+        clearCrtPathMessagesButton = new javax.swing.JButton();
+        debugTab = new javax.swing.JPanel();
         debugPanel = new javax.swing.JPanel();
         clearDebugButton = new javax.swing.JButton();
         debugStateButton = new javax.swing.JButton();
@@ -224,14 +270,14 @@ public class CaFrame extends javax.swing.JFrame {
             .addGroup(keyGenTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(rsaGenPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(514, Short.MAX_VALUE))
+                .addContainerGap(592, Short.MAX_VALUE))
         );
         keyGenTabLayout.setVerticalGroup(
             keyGenTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(keyGenTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(rsaGenPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(665, Short.MAX_VALUE))
+                .addContainerGap(711, Short.MAX_VALUE))
         );
 
         appTabs.addTab("Key Generation", keyGenTab);
@@ -435,7 +481,7 @@ public class CaFrame extends javax.swing.JFrame {
                 .addGroup(csrGenTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(csrOptionsPanel, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(csrSubjectPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 734, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(461, Short.MAX_VALUE))
+                .addContainerGap(539, Short.MAX_VALUE))
         );
         csrGenTabLayout.setVerticalGroup(
             csrGenTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -444,7 +490,7 @@ public class CaFrame extends javax.swing.JFrame {
                 .addComponent(csrSubjectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(csrOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(147, Short.MAX_VALUE))
+                .addContainerGap(193, Short.MAX_VALUE))
         );
 
         appTabs.addTab("CSR Generation", csrGenTab);
@@ -607,14 +653,14 @@ public class CaFrame extends javax.swing.JFrame {
             .addGroup(csrSigningTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(CSRSigningPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(450, Short.MAX_VALUE))
+                .addContainerGap(528, Short.MAX_VALUE))
         );
         csrSigningTabLayout.setVerticalGroup(
             csrSigningTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(csrSigningTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(CSRSigningPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(299, Short.MAX_VALUE))
+                .addContainerGap(345, Short.MAX_VALUE))
         );
 
         appTabs.addTab("CSR Signing", csrSigningTab);
@@ -712,7 +758,7 @@ public class CaFrame extends javax.swing.JFrame {
                             .addComponent(subjectCertFN)
                             .addComponent(issuerCertFN, javax.swing.GroupLayout.DEFAULT_SIZE, 446, Short.MAX_VALUE)))
                     .addComponent(verifyIssuerAndSubjectCertButton, javax.swing.GroupLayout.PREFERRED_SIZE, 368, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(37, Short.MAX_VALUE))
+                .addContainerGap(115, Short.MAX_VALUE))
         );
         keycertandchainPanelLayout.setVerticalGroup(
             keycertandchainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -729,7 +775,7 @@ public class CaFrame extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Verify Key Cert and Chain"));
+        verifyKeyCrtPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Verify Key Cert and Chain"));
 
         keyText.setBackground(new java.awt.Color(0, 0, 0));
         keyText.setFont(new java.awt.Font("Monospaced", 1, 8));
@@ -780,47 +826,47 @@ public class CaFrame extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout verifyKeyCrtPanelLayout = new javax.swing.GroupLayout(verifyKeyCrtPanel);
+        verifyKeyCrtPanel.setLayout(verifyKeyCrtPanelLayout);
+        verifyKeyCrtPanelLayout.setHorizontalGroup(
+            verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
+                .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
                                 .addComponent(jLabel13)
                                 .addGap(18, 18, 18)
                                 .addComponent(clearKeyButton, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
                                 .addGap(5, 5, 5)
                                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
                                 .addComponent(jLabel14)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(clearCertButton, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
                                 .addComponent(jLabel15)
                                 .addGap(18, 18, 18)
                                 .addComponent(clearChainButton, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE))))
                     .addComponent(verifyKeyCertChain, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+        verifyKeyCrtPanelLayout.setVerticalGroup(
+            verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
+                .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
+                        .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel13)
                             .addComponent(clearKeyButton)
                             .addComponent(jLabel14)
@@ -834,36 +880,375 @@ public class CaFrame extends javax.swing.JFrame {
                 .addContainerGap(36, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout VerifyPanelLayout = new javax.swing.GroupLayout(VerifyPanel);
-        VerifyPanel.setLayout(VerifyPanelLayout);
-        VerifyPanelLayout.setHorizontalGroup(
-            VerifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(VerifyPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout verifyPanelLayout = new javax.swing.GroupLayout(verifyPanel);
+        verifyPanel.setLayout(verifyPanelLayout);
+        verifyPanelLayout.setHorizontalGroup(
+            verifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(verifyPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(VerifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(VerifyPanelLayout.createSequentialGroup()
+                .addGroup(verifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(verifyPanelLayout.createSequentialGroup()
                         .addComponent(verifyKeyCertPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(518, Short.MAX_VALUE))
-                    .addGroup(VerifyPanelLayout.createSequentialGroup()
+                        .addContainerGap(596, Short.MAX_VALUE))
+                    .addGroup(verifyPanelLayout.createSequentialGroup()
                         .addComponent(keycertandchainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(518, 518, 518))
-                    .addGroup(VerifyPanelLayout.createSequentialGroup()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(verifyPanelLayout.createSequentialGroup()
+                        .addComponent(verifyKeyCrtPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
-        VerifyPanelLayout.setVerticalGroup(
-            VerifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(VerifyPanelLayout.createSequentialGroup()
+        verifyPanelLayout.setVerticalGroup(
+            verifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(verifyPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(verifyKeyCertPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(keycertandchainPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addComponent(verifyKeyCrtPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(70, Short.MAX_VALUE))
         );
 
-        appTabs.addTab("Verification", VerifyPanel);
+        appTabs.addTab("Verification", verifyPanel);
+
+        loadX509MapsBorder.setBorder(javax.swing.BorderFactory.createTitledBorder("LoadX509Maps"));
+
+        jLabel16.setText("Crts Loaded");
+
+        crtsLoadedCountTextField.setEditable(false);
+
+        jLabel17.setText("Crts in Map");
+
+        crtMapCountTextField.setEditable(false);
+
+        loadCrtPathCrtsButton.setText("Load");
+        loadCrtPathCrtsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadCrtPathCrtsButtonActionPerformed(evt);
+            }
+        });
+
+        loadCrtPathMapButton.setText("Load");
+        loadCrtPathMapButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadCrtPathMapButtonActionPerformed(evt);
+            }
+        });
+
+        clearCertPathCrtsButton.setText("Clear");
+        clearCertPathCrtsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearCertPathCrtsButtonActionPerformed(evt);
+            }
+        });
+
+        clearCrtPathMapButton.setText("Clear");
+        clearCrtPathMapButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearCrtPathMapButtonActionPerformed(evt);
+            }
+        });
+
+        setDirWalkButton.setText("Set Base Dir for Crt Load");
+        setDirWalkButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                setDirWalkButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel18.setText("Crts In Chainer");
+
+        crtChainerCountTextField.setEditable(false);
+
+        loadChainerButton.setText("Load");
+        loadChainerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadChainerButtonActionPerformed(evt);
+            }
+        });
+
+        clearChainerButton.setText("Clear");
+        clearChainerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearChainerButtonActionPerformed(evt);
+            }
+        });
+
+        crtPathCrtFileButton.setText("Set Crt File");
+        crtPathCrtFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                crtPathCrtFileButtonActionPerformed(evt);
+            }
+        });
+
+        buildNieveChainButton.setText("Build Nieve Chain");
+        buildNieveChainButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buildNieveChainButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel19.setText("Crts in RootCAs");
+
+        crtsInRootCAs.setEditable(false);
+
+        loadRootCAsButton.setText("Load");
+        loadRootCAsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadRootCAsButtonActionPerformed(evt);
+            }
+        });
+
+        clearRootCAsButton.setText("Clear");
+        clearRootCAsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearRootCAsButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel20.setText("Crts in Intermediate");
+
+        crtsInImds.setEditable(false);
+
+        loadImdsButton.setText("Load");
+        loadImdsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadImdsButtonActionPerformed(evt);
+            }
+        });
+
+        clearImdsButton.setText("Clear");
+        clearImdsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearImdsButtonActionPerformed(evt);
+            }
+        });
+
+        buildPXIXPathButton.setText("Build Pkix Chain");
+        buildPXIXPathButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buildPXIXPathButtonActionPerformed(evt);
+            }
+        });
+
+        clearCrtPathFNButton.setText("Clear");
+        clearCrtPathFNButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearCrtPathFNButtonActionPerformed(evt);
+            }
+        });
+
+        clearLoadBaseDirNameButton.setText("Clear");
+        clearLoadBaseDirNameButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearLoadBaseDirNameButtonActionPerformed(evt);
+            }
+        });
+
+        displayRootImdHashCodes.setText("Display x509 hashcodes");
+        displayRootImdHashCodes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                displayRootImdHashCodesActionPerformed(evt);
+            }
+        });
+
+        displayCrtHashCodeButton.setText("Display Crt HashCode");
+        displayCrtHashCodeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                displayCrtHashCodeButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout loadX509MapsBorderLayout = new javax.swing.GroupLayout(loadX509MapsBorder);
+        loadX509MapsBorder.setLayout(loadX509MapsBorderLayout);
+        loadX509MapsBorderLayout.setHorizontalGroup(
+            loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(buildNieveChainButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(crtPathCrtFileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(setDirWalkButton, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(buildPXIXPathButton, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
+                            .addComponent(clearLoadBaseDirNameButton, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
+                            .addComponent(clearCrtPathFNButton, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(crtLoadBaseDir)
+                            .addComponent(crtPathFN, javax.swing.GroupLayout.DEFAULT_SIZE, 751, Short.MAX_VALUE)))
+                    .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(crtMapCountTextField)
+                                    .addComponent(crtsLoadedCountTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE)))
+                            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                .addGap(12, 12, 12)
+                                .addComponent(displayRootImdHashCodes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(loadCrtPathCrtsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
+                                    .addComponent(loadCrtPathMapButton, javax.swing.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(clearCertPathCrtsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(clearCrtPathMapButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE)))
+                            .addComponent(displayCrtHashCodeButton, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE))
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                        .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(crtChainerCountTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 168, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(loadChainerButton, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(clearChainerButton, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE))
+                                    .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                        .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(crtsInRootCAs, javax.swing.GroupLayout.DEFAULT_SIZE, 168, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(loadRootCAsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(clearRootCAsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE))))
+                            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(crtsInImds, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(loadImdsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(clearImdsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE)))))
+                .addContainerGap())
+        );
+        loadX509MapsBorderLayout.setVerticalGroup(
+            loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                        .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel16)
+                            .addComponent(crtsLoadedCountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel17))
+                    .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
+                            .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(clearCertPathCrtsButton)
+                                .addComponent(loadCrtPathCrtsButton)
+                                .addComponent(jLabel18)
+                                .addComponent(crtChainerCountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(loadChainerButton)
+                                .addComponent(clearChainerButton))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(clearCrtPathMapButton)
+                                    .addComponent(jLabel19)
+                                    .addComponent(crtsInRootCAs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(loadRootCAsButton)
+                                    .addComponent(clearRootCAsButton))
+                                .addComponent(loadCrtPathMapButton)))
+                        .addComponent(crtMapCountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(clearImdsButton)
+                        .addComponent(jLabel20)
+                        .addComponent(crtsInImds, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(loadImdsButton))
+                    .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(displayRootImdHashCodes)
+                        .addComponent(displayCrtHashCodeButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buildNieveChainButton)
+                    .addComponent(buildPXIXPathButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(crtPathFN, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(crtPathCrtFileButton)
+                    .addComponent(clearCrtPathFNButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(setDirWalkButton)
+                    .addComponent(crtLoadBaseDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(clearLoadBaseDirNameButton))
+                .addContainerGap())
+        );
+
+        CrtPathMessageBorder.setBorder(javax.swing.BorderFactory.createTitledBorder("Crt Path Messages"));
+
+        crtPathMessagesPane.setBackground(new java.awt.Color(0, 0, 0));
+        crtPathMessagesPane.setEditable(false);
+        crtPathMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        crtPathMessagesPane.setForeground(new java.awt.Color(0, 255, 0));
+        jScrollPane5.setViewportView(crtPathMessagesPane);
+
+        clearCrtPathMessagesButton.setText("Clear");
+        clearCrtPathMessagesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearCrtPathMessagesButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout CrtPathMessageBorderLayout = new javax.swing.GroupLayout(CrtPathMessageBorder);
+        CrtPathMessageBorder.setLayout(CrtPathMessageBorderLayout);
+        CrtPathMessageBorderLayout.setHorizontalGroup(
+            CrtPathMessageBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CrtPathMessageBorderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(CrtPathMessageBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 1240, Short.MAX_VALUE)
+                    .addComponent(clearCrtPathMessagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+        CrtPathMessageBorderLayout.setVerticalGroup(
+            CrtPathMessageBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CrtPathMessageBorderLayout.createSequentialGroup()
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(clearCrtPathMessagesButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout crtPathTabLayout = new javax.swing.GroupLayout(crtPathTab);
+        crtPathTab.setLayout(crtPathTabLayout);
+        crtPathTabLayout.setHorizontalGroup(
+            crtPathTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, crtPathTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(crtPathTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(CrtPathMessageBorder, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(loadX509MapsBorder, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        crtPathTabLayout.setVerticalGroup(
+            crtPathTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(crtPathTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(loadX509MapsBorder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(CrtPathMessageBorder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(138, Short.MAX_VALUE))
+        );
+
+        appTabs.addTab("Crt Path", crtPathTab);
 
         debugPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Debug Messages"));
 
@@ -932,15 +1317,14 @@ public class CaFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(displayMemory, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(invokeGC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(962, Short.MAX_VALUE))
+                .addContainerGap(1040, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(invokeGC)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(displayMemory)
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addComponent(displayMemory))
         );
 
         javax.swing.GroupLayout debugPanelLayout = new javax.swing.GroupLayout(debugPanel);
@@ -955,14 +1339,14 @@ public class CaFrame extends javax.swing.JFrame {
                         .addContainerGap())
                     .addGroup(debugPanelLayout.createSequentialGroup()
                         .addGroup(debugPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1162, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1240, Short.MAX_VALUE)
                             .addGroup(debugPanelLayout.createSequentialGroup()
                                 .addComponent(setMysteryFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(mysteryFN, javax.swing.GroupLayout.DEFAULT_SIZE, 959, Short.MAX_VALUE)))
+                                .addComponent(mysteryFN, javax.swing.GroupLayout.DEFAULT_SIZE, 1037, Short.MAX_VALUE)))
                         .addContainerGap())
                     .addGroup(debugPanelLayout.createSequentialGroup()
-                        .addComponent(clearDebugButton, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                        .addComponent(clearDebugButton, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(debugStateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -986,28 +1370,28 @@ public class CaFrame extends javax.swing.JFrame {
                     .addComponent(identifyFileButton)
                     .addComponent(MultiParseFileButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout DebugTabLayout = new javax.swing.GroupLayout(DebugTab);
-        DebugTab.setLayout(DebugTabLayout);
-        DebugTabLayout.setHorizontalGroup(
-            DebugTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(DebugTabLayout.createSequentialGroup()
+        javax.swing.GroupLayout debugTabLayout = new javax.swing.GroupLayout(debugTab);
+        debugTab.setLayout(debugTabLayout);
+        debugTabLayout.setHorizontalGroup(
+            debugTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(debugTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(debugPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        DebugTabLayout.setVerticalGroup(
-            DebugTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(DebugTabLayout.createSequentialGroup()
+        debugTabLayout.setVerticalGroup(
+            debugTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(debugTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(debugPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(debugPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(134, Short.MAX_VALUE))
         );
 
-        appTabs.addTab("Debug", DebugTab);
+        appTabs.addTab("Debug", debugTab);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1015,14 +1399,14 @@ public class CaFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(appTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 1228, Short.MAX_VALUE)
+                .addComponent(appTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 1306, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(appTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 830, Short.MAX_VALUE)
+                .addComponent(appTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1295,6 +1679,11 @@ public class CaFrame extends javax.swing.JFrame {
         logDbg("Key saved to file \"%s\"\n", keyFN1.getText());
 }//GEN-LAST:event_genKeyButtonActionPerformed
 
+    private void logException(Throwable ex) {
+        String fmt = "Exception:\n%s\n";
+        String msg = String.format(fmt, getEST(ex));
+        logError(msg);
+    }
     private void setKeyFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setKeyFileButtonActionPerformed
         setFileName(keyFN1);
 }//GEN-LAST:event_setKeyFileButtonActionPerformed
@@ -1604,25 +1993,272 @@ public class CaFrame extends javax.swing.JFrame {
         logDbg("   maxMem = %d\n", maxMem);
     }//GEN-LAST:event_displayMemoryActionPerformed
 
+    private void setDirWalkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setDirWalkButtonActionPerformed
+        setFileName(crtLoadBaseDir);
+    }//GEN-LAST:event_setDirWalkButtonActionPerformed
+
+    private void updateCrtPathTab() {
+        crtsLoadedCountTextField.setText(String.format("%d", x509MapValList.size()));
+        crtMapCountTextField.setText(String.format("%d", x509Map.values().size()));
+        crtChainerCountTextField.setText(String.format("%d", x509Chainer.getX509Certs().size()));
+        crtsInRootCAs.setText(String.format("%d", rootCAs.size()));
+        crtsInImds.setText(String.format("%d", imds.size()));
+    }
+
+    private void loadCrtPathCrtsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadCrtPathCrtsButtonActionPerformed
+        File dirWalkFiles = new File(crtLoadBaseDir.getText());
+        File singleCrtFile = new File(crtPathFN.getText());
+        try {
+            List<File> files = RsaFileUtils.dirWalk(dirWalkFiles, null);
+            files.add(singleCrtFile);
+            List<X509MapValue> mapList = RsaFileUtils.readX509Files(files);
+            x509MapValList.addAll(mapList);
+            updateCrtPathTab();
+            return;
+        } catch (Exception ex) {
+            logException(ex);
+            updateCrtPathTab();
+        }
+    }//GEN-LAST:event_loadCrtPathCrtsButtonActionPerformed
+
+    private void clearCertPathCrtsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearCertPathCrtsButtonActionPerformed
+        x509MapValList = new ArrayList<X509MapValue>();
+        updateCrtPathTab();
+    }//GEN-LAST:event_clearCertPathCrtsButtonActionPerformed
+
+    private void loadCrtPathMapButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadCrtPathMapButtonActionPerformed
+        x509Map.putAll(x509MapValList);
+        updateCrtPathTab();
+    }//GEN-LAST:event_loadCrtPathMapButtonActionPerformed
+
+    private void clearCrtPathMapButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearCrtPathMapButtonActionPerformed
+        x509Map.clear();
+        updateCrtPathTab();
+    }//GEN-LAST:event_clearCrtPathMapButtonActionPerformed
+
+    private void loadChainerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadChainerButtonActionPerformed
+        for (X509MapValue mapVal : x509MapValList) {
+            X509Certificate x509obj = mapVal.getX509CertificateObject();
+            x509Chainer.getX509Certs().add(x509obj);
+        }
+        updateCrtPathTab();
+    }//GEN-LAST:event_loadChainerButtonActionPerformed
+
+    private void clearChainerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearChainerButtonActionPerformed
+        x509Chainer = new X509Chainer();
+        updateCrtPathTab();
+    }//GEN-LAST:event_clearChainerButtonActionPerformed
+
+    private void crtPathCrtFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crtPathCrtFileButtonActionPerformed
+        setFileName(crtPathFN);
+        updateCrtPathTab();
+    }//GEN-LAST:event_crtPathCrtFileButtonActionPerformed
+
+    private X509CertificateObject readCrtPathFN() {
+        File file = new File(crtPathFN.getText());
+        byte[] pemBytes;
+        X509CertificateObject x509obj;
+
+
+        try {
+            pemBytes = RsaFileUtils.readFile(file);
+        } catch (IOException ex) {
+            pth.redWrite("Error reading %s into byte array\n", file.getName());
+            pth.writeException(ex);
+            return null;
+        }
+        try {
+            x509obj = (X509CertificateObject) PemUtils.fromPem(pemBytes);
+        } catch (PemException ex) {
+            pth.redWrite("Error decodeing contents of \"%s\" to X509Certificate object", file.getName());
+            pth.writeException(ex);
+            return null;
+        }
+        return x509obj;
+    }
+
+    private void displayChain(List<X509Certificate> certs) {
+        for (int i = 0; i < certs.size(); i++) {
+            String pemString;
+            X509CertificateObject x509obj;
+            X509Reader x509reader;
+            X509Certificate curX509 = certs.get(i);
+            try {
+                x509reader = X509Reader.newX509Reader(curX509);
+            } catch (CertificateException ex) {
+                pth.redWrite("Error creating reader for crtPath[%d] Skipping\n", i);
+                pth.writeException(ex);
+                continue;
+            }
+            x509obj = x509reader.getX509CertificateObject();
+            try {
+                pemString = PemUtils.toPemString(x509obj);
+            } catch (PemException ex) {
+                pemString = "UNABLE TO ENCODE PEM";
+            }
+
+            String subjectName = x509reader.getSubjectName();
+            String issuerName = x509reader.getIssuerName();
+            pth.write("hashCode: %d\n",((X509Certificate)x509obj).hashCode());
+            pth.write("Subject: %s\n", (subjectName == null) ? "null" : subjectName);
+            pth.write("Issuer: %s\n", (issuerName == null) ? "null" : issuerName);
+            pth.write("Serial: %s\n", x509reader.getSerial().toString(16));
+            pth.write("PubKeyMod: %s\n", x509reader.getPubModulus().toString(16));
+            pth.write("%s\n", pemString);
+            Set<X509MapValue> resultSet = x509Map.fromX509CertificateObject(x509obj);
+            for (X509MapValue mapVal : resultSet) {
+                pth.write("%s\n", mapVal);
+            }
+            pth.write("\n\n");
+        }
+    }
+
+    private void buildNieveChainButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buildNieveChainButtonActionPerformed
+        File file = new File(crtPathFN.getText());
+        X509CertificateObject x509obj = readCrtPathFN();
+        String pemString;
+        if (x509obj == null) {
+            return; // The exception was already reported
+        }
+        X509Certificate x509;
+        x509 = (X509Certificate) x509obj;
+        List<X509Certificate> certs = x509Chainer.buildPath(x509);
+        pth.greenWrite("Found %d crts\n\n", certs.size());
+        certs.add(0, x509); // Add the Users crt to the beginning of the chain to make things clearer
+        displayChain(certs);
+    }//GEN-LAST:event_buildNieveChainButtonActionPerformed
+
+    private void clearCrtPathMessagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearCrtPathMessagesButtonActionPerformed
+        pth.clear();
+    }//GEN-LAST:event_clearCrtPathMessagesButtonActionPerformed
+
+    private void loadRootCAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadRootCAsButtonActionPerformed
+        for (X509MapValue mapVal : x509MapValList) {
+            X509CertificateObject x509obj = mapVal.getX509CertificateObject();
+            rootCAs.add(x509obj);
+        }
+        updateCrtPathTab();
+    }//GEN-LAST:event_loadRootCAsButtonActionPerformed
+
+    private void clearRootCAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearRootCAsButtonActionPerformed
+        rootCAs = new HashSet<X509CertificateObject>();
+        updateCrtPathTab();
+
+    }//GEN-LAST:event_clearRootCAsButtonActionPerformed
+
+    private void loadImdsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadImdsButtonActionPerformed
+        for (X509MapValue mapVal : x509MapValList) {
+            X509CertificateObject x509obj = mapVal.getX509CertificateObject();
+            imds.add(x509obj);
+        }
+        updateCrtPathTab();
+    }//GEN-LAST:event_loadImdsButtonActionPerformed
+
+    private void clearImdsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearImdsButtonActionPerformed
+        imds = new HashSet<X509CertificateObject>();
+        updateCrtPathTab();
+    }//GEN-LAST:event_clearImdsButtonActionPerformed
+
+    private void displayX509CertificateHashCodes(String preMsg, List x509s) throws CertificateEncodingException, CertificateParsingException {
+        X509CertificateObject x509obj;
+        int hashCode;
+        for (Object obj : x509s) {
+            if (obj instanceof X509CertificateObject) {
+                x509obj = (X509CertificateObject) obj;
+                hashCode = x509obj.hashCode();
+            } else if (obj instanceof X509Certificate) {
+                X509Certificate x509 = (X509Certificate) obj;
+                x509obj = X509Reader.newX509Reader(x509).getX509CertificateObject();
+                hashCode = x509.hashCode();
+            } else {
+                String fmt = "%s could not be cast to X509CertificateObject";
+                String msg = String.format(fmt, obj.getClass().getSimpleName());
+                throw new ClassCastException(msg);
+            }
+            X509Reader xr = new X509Reader(x509obj);
+
+            String subjName = (xr.getSubjectName() == null) ? "null" : xr.getSubjectName();
+            String issuerName = (xr.getIssuerName() == null) ? "null" : xr.getIssuerName();
+            pth.greenWrite("%s%10d= \"%s\" <-- \"%s\"\n", preMsg, hashCode, subjName,issuerName);
+
+        }
+
+    }
+
+    private void buildPXIXPathButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buildPXIXPathButtonActionPerformed
+        X509PathBuilder<X509CertificateObject> pathBuilder = new X509PathBuilder<X509CertificateObject>();
+        pathBuilder.getRootCAs().addAll(rootCAs);
+        pathBuilder.getIntermediates().addAll(imds);
+        X509CertificateObject userCrt = readCrtPathFN();
+        X509Reader x509reader;
+        List<X509Certificate> foundCrts = new ArrayList<X509Certificate>();
+        List<X509CertificateObject> x509objs = new ArrayList<X509CertificateObject>();
+        if (userCrt == null) {
+            return;
+        }
+        try {
+            foundCrts = pathBuilder.buildPath(userCrt);
+        } catch (GeneralSecurityException ex) {
+            pth.writeException(ex);
+            return;
+        } catch (X509PathBuildException ex) {
+            pth.writeException(ex);
+            return;
+        }
+        pth.greenWrite(String.format("Found %d certs\n", foundCrts.size()));
+        displayChain(foundCrts);
+    }//GEN-LAST:event_buildPXIXPathButtonActionPerformed
+
+    private void clearCrtPathFNButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearCrtPathFNButtonActionPerformed
+        crtPathFN.setText("");
+    }//GEN-LAST:event_clearCrtPathFNButtonActionPerformed
+
+    private void clearLoadBaseDirNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearLoadBaseDirNameButtonActionPerformed
+        crtLoadBaseDir.setText("");
+    }//GEN-LAST:event_clearLoadBaseDirNameButtonActionPerformed
+
+    private void displayRootImdHashCodesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_displayRootImdHashCodesActionPerformed
+        try {
+            displayX509CertificateHashCodes("rootCAs:", new ArrayList<X509CertificateObject>(rootCAs));
+            displayX509CertificateHashCodes("intermediates:", new ArrayList<X509CertificateObject>(imds));
+        } catch (CertificateEncodingException ex) {
+            pth.writeException(ex);
+            return;
+        } catch (CertificateParsingException ex) {
+            pth.writeException(ex);
+            return;
+        }
+    }//GEN-LAST:event_displayRootImdHashCodesActionPerformed
+
+    private void displayCrtHashCodeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_displayCrtHashCodeButtonActionPerformed
+        try {
+            X509CertificateObject userCrt = readCrtPathFN();
+            ArrayList<X509CertificateObject> userCrtAsSingleList = new ArrayList<X509CertificateObject>();
+            userCrtAsSingleList.add(userCrt);
+            displayX509CertificateHashCodes("crt:", userCrtAsSingleList);
+        } catch (CertificateEncodingException ex) {
+            pth.writeException(ex);
+            return;
+
+        } catch (CertificateParsingException ex) {
+            pth.writeException(ex);
+            return;
+        }
+    }//GEN-LAST:event_displayCrtHashCodeButtonActionPerformed
+
     private void userInit() {
         RsaConst.init();
-        StyledDocument doc = (StyledDocument) debugMessagesPane.getStyledDocument();
-
-        Style red = doc.addStyle("red", null);
-        StyleConstants.setForeground(red, Color.red);
-        this.redStyle = red;
-
-        Style green = doc.addStyle("green", null);
-        StyleConstants.setForeground(green, Color.green);
-        this.greenStyle = green;
-
-        setDebugLogStyle(this.greenStyle);
-
-        this.debugMessagesDoc = doc;
 
         rsaMapper = new ButtonGroupMapper();
         rsaMapper.add(loadRsaRadio, LOAD_RSA);
         rsaMapper.add(saveRsaRadio, SAVE_RSA);
+        x509MapValList = new ArrayList<X509MapValue>();
+        x509Map = new X509Map();
+        x509Chainer = new X509Chainer();
+        dbg = new CaTextPane(debugMessagesPane);
+        pth = new CaTextPane(crtPathMessagesPane);
+        rootCAs = new HashSet<X509CertificateObject>();
+        imds = new HashSet<X509CertificateObject>();
     }
 
     private File chooseFilePopUp() {
@@ -1631,6 +2267,8 @@ public class CaFrame extends javax.swing.JFrame {
         File file = null;
 
         fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        fc.setMultiSelectionEnabled(false);
         ret = fc.showSaveDialog(jLabel1);
         if (ret == JFileChooser.APPROVE_OPTION) {
             file = fc.getSelectedFile();
@@ -1662,16 +2300,17 @@ public class CaFrame extends javax.swing.JFrame {
         });
     }
 
-    private void setDebugLogStyle(Style style) {
-        this.currStyle = style;
+    public void logDbg(String fmt, Object... objs) {
+        dbg.write(fmt, objs);
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel CSRSigningPanel;
-    private javax.swing.JPanel DebugTab;
+    private javax.swing.JPanel CrtPathMessageBorder;
     private javax.swing.JButton GenerateCsrButton;
     private javax.swing.JButton MultiParseFileButton;
-    private javax.swing.JPanel VerifyPanel;
     private javax.swing.JTabbedPane appTabs;
+    private javax.swing.JButton buildNieveChainButton;
+    private javax.swing.JButton buildPXIXPathButton;
     private javax.swing.JTextField cTextField;
     private javax.swing.JButton caCertButton;
     private javax.swing.JTextField caCertFN;
@@ -1683,10 +2322,28 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JTextPane certText;
     private javax.swing.JTextPane chainText;
     private javax.swing.JButton clearCertButton;
+    private javax.swing.JButton clearCertPathCrtsButton;
     private javax.swing.JButton clearChainButton;
+    private javax.swing.JButton clearChainerButton;
+    private javax.swing.JButton clearCrtPathFNButton;
+    private javax.swing.JButton clearCrtPathMapButton;
+    private javax.swing.JButton clearCrtPathMessagesButton;
     private javax.swing.JButton clearDebugButton;
+    private javax.swing.JButton clearImdsButton;
     private javax.swing.JButton clearKeyButton;
+    private javax.swing.JButton clearLoadBaseDirNameButton;
+    private javax.swing.JButton clearRootCAsButton;
     private javax.swing.JTextField cnTextField;
+    private javax.swing.JTextField crtChainerCountTextField;
+    private javax.swing.JTextField crtLoadBaseDir;
+    private javax.swing.JTextField crtMapCountTextField;
+    private javax.swing.JButton crtPathCrtFileButton;
+    private javax.swing.JTextField crtPathFN;
+    private javax.swing.JTextPane crtPathMessagesPane;
+    private javax.swing.JPanel crtPathTab;
+    private javax.swing.JTextField crtsInImds;
+    private javax.swing.JTextField crtsInRootCAs;
+    private javax.swing.JTextField crtsLoadedCountTextField;
     private javax.swing.JButton csrButton2;
     private javax.swing.JTextField csrFN1;
     private javax.swing.JTextField csrFN2;
@@ -1699,7 +2356,10 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JTextPane debugMessagesPane;
     private javax.swing.JPanel debugPanel;
     private javax.swing.JButton debugStateButton;
+    private javax.swing.JPanel debugTab;
+    private javax.swing.JButton displayCrtHashCodeButton;
     private javax.swing.JButton displayMemory;
+    private javax.swing.JButton displayRootImdHashCodes;
     private javax.swing.JTextField emailTextField;
     private javax.swing.JButton genKeyButton;
     private javax.swing.JButton identifyFileButton;
@@ -1714,7 +2374,12 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1723,11 +2388,11 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTextField keyFN1;
     private javax.swing.JTextField keyFN2;
     private javax.swing.JButton keyFnButton1;
@@ -1736,7 +2401,13 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JTextPane keyText;
     private javax.swing.JPanel keycertandchainPanel;
     private javax.swing.JTextField lTextField;
+    private javax.swing.JButton loadChainerButton;
+    private javax.swing.JButton loadCrtPathCrtsButton;
+    private javax.swing.JButton loadCrtPathMapButton;
+    private javax.swing.JButton loadImdsButton;
+    private javax.swing.JButton loadRootCAsButton;
     private javax.swing.JRadioButton loadRsaRadio;
+    private javax.swing.JPanel loadX509MapsBorder;
     private javax.swing.JPanel lsRSAPanel;
     private javax.swing.JTextField mysteryFN;
     private javax.swing.JTextField newCsrKeySizeTextField;
@@ -1746,6 +2417,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JRadioButton saveRsaRadio;
     private javax.swing.JCheckBox selfSignCA;
     private javax.swing.JTextField serialTextField;
+    private javax.swing.JButton setDirWalkButton;
     private javax.swing.JButton setKeyFileButton;
     private javax.swing.JButton setMysteryFileButton;
     private javax.swing.JButton setOutputCrtFileButton;
@@ -1757,45 +2429,38 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton verifyKeyAndCertButton;
     private javax.swing.JButton verifyKeyCertChain;
     private javax.swing.JPanel verifyKeyCertPanel;
+    private javax.swing.JPanel verifyKeyCrtPanel;
+    private javax.swing.JPanel verifyPanel;
     private javax.swing.JButton vkcCertButton;
     private javax.swing.JTextField vkcCertFN;
     private javax.swing.JButton vkcKeyButton;
     private javax.swing.JTextField vkcKeyFN;
     private javax.swing.JPanel x509OptionsPanel;
     // End of variables declaration//GEN-END:variables
-    private Style redStyle;
-    private Style greenStyle;
-    private Style currStyle;
-    private StyledDocument debugMessagesDoc;
     private static final int SB_INIT_CAPACITY = 4096;
     private static final int MAX_FILESIZE = 1024 * 1024 * 2;
     private ButtonGroupMapper rsaMapper;
-
-    // sends the string.formatter style string to the debugMessages textarea of
-    // the frame
-    public void logDbg(String format, Object... args) {
-        String msg = String.format(format, args);
-
-        StyledDocument doc = debugMessagesDoc;
-        try {
-            doc.insertString(doc.getLength(), msg, currStyle);
-        } catch (BadLocationException ex) {
-            Logger.getLogger(CaFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    private List<X509MapValue> x509MapValList;
+    private X509Map x509Map;
+    private X509Chainer x509Chainer;
+    private CaTextPane dbg;
+    private CaTextPane pth;
+    private Set<X509CertificateObject> rootCAs;
+    private Set<X509CertificateObject> imds;
+    private int nopCount = 0;
 
     private void logError(String format, Object... args) {
-        setDebugLogStyle(redStyle);
+        dbg.setRed();
         logDbg(format, args);
-        setDebugLogStyle(greenStyle);
+        dbg.setGreen();
     }
 
     private void logErrorList(List<String> el) {
-        setDebugLogStyle(redStyle);
+        dbg.setRed();
         for (String err : el) {
             logDbg(err + "\n");
         }
-        setDebugLogStyle(greenStyle);
+        dbg.setGreen();
     }
 
     private KeyPair getKeyPairFromBytes(byte[] pemBytes) throws PemException {
@@ -1850,5 +2515,11 @@ public class CaFrame extends javax.swing.JFrame {
         msg = String.format("\tload or save RSA set to %s\n", val);
         sb.append(msg);
         return sb.toString();
+    }
+
+    private int nop() {
+        int oldCount = nopCount;
+        nopCount++;
+        return oldCount;
     }
 }

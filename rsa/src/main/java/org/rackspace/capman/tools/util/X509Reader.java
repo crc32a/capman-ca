@@ -29,6 +29,10 @@ public class X509Reader {
     private static final String AuthKeyIdOid = "2.5.29.35";
     private X509CertificateObject x509obj;
 
+    public X509Reader(X509CertificateObject x509obj) {
+        this.x509obj = x509obj;
+    }
+
     public static X509Reader newX509Reader(String x509PemString) throws X509ReaderDecodeException {
         String msg;
         Object obj;
@@ -55,9 +59,6 @@ public class X509Reader {
         return x509Reader;
     }
 
-    public X509Reader(X509CertificateObject x509obj) {
-        this.x509obj = x509obj;
-    }
 
     // Acts as a don't repeat your self base method. <Rolls Eyes>
     private String getCN(X500Principal x500principal) throws IOException {
@@ -102,7 +103,7 @@ public class X509Reader {
         return x509obj;
     }
 
-    public X509Certificate getX509Certificate() throws CertificateEncodingException {
+    public X509Certificate getX509Certificate() {
         X509Certificate x509Certificate = (X509Certificate) x509obj;
         return x509Certificate;
     }
