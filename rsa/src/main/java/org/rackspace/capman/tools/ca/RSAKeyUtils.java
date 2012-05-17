@@ -22,9 +22,12 @@ import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
 import org.rackspace.capman.tools.ca.primitives.Debug;
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class RSAKeyUtils {
-
+    static{
+        RsaConst.init();
+    }
     private static final BigInteger m16bit = new BigInteger("ffff", 16);
 
     public static RsaPair genRSAPair(int bits, int certainity) throws NoSuchAlgorithmException {

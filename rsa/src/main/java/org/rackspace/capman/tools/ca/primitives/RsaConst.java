@@ -23,7 +23,7 @@ public class RsaConst {
     public static final int DEFAULT_PRIME_CERTAINTY = 32;
     public static final Hashtable oids;
     public static final Hashtable algorithms;
-    public static int initCount = 0;
+    private static int initCount = 0;
 
 
     static {
@@ -105,9 +105,13 @@ public class RsaConst {
 
     }
 
-    // Static initializers aren't executed intill a method of the object is
-    // accesses for the first time.
+    // Static initializers aren't executed intill a method of the class is
+    // accessed for the first time.
     public static void init() {
         initCount++;
+    }
+
+    public static int initCount(){
+        return initCount;
     }
 }

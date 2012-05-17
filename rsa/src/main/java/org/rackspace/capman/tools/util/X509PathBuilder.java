@@ -6,7 +6,6 @@ import java.security.NoSuchProviderException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathBuilder;
 import java.security.cert.CertPathBuilderException;
-import java.security.cert.CertPathBuilderResult;
 import java.security.cert.CertStore;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
@@ -15,22 +14,25 @@ import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bouncycastle.jce.provider.X509CertificateObject;
-import org.rackspace.capman.tools.util.exceptions.X509PathBuildException;
+import org.bouncycastle.jce.provider.AnnotatedException;
+
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
+import org.rackspace.capman.tools.ca.exceptions.X509PathBuildException;
 
 // Use this one instead of X509Chainer
 public class X509PathBuilder<E extends X509Certificate> {
-
     private Set<E> rootCAs;
     private Set<E> intermediates;
+
+    static {
+        RsaConst.init();
+    }
 
     public X509PathBuilder() {
         rootCAs = new HashSet<E>();
@@ -47,15 +49,25 @@ public class X509PathBuilder<E extends X509Certificate> {
         intermediates = new HashSet<E>();
     }
 
-    public List<X509Certificate> buildPath(E userCrt) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, X509PathBuildException {
-        List<X509Certificate> discoveredPath = new ArrayList<X509Certificate>();
+    public X509BuiltPath<E> buildPath(E userCrt) throws X509PathBuildException   {
+        List<E> discoveredPath = new ArrayList<E>();
 
         // Build Crt Store
-        List<E> colStoreCrts = new ArrayList<E>();
+        Set<E> colStoreCrts = new HashSet<E>();
         colStoreCrts.addAll(intermediates);
         colStoreCrts.add(userCrt); // Don't forget to add the End cert
+        colStoreCrts.removeAll(rootCAs); // rootCAs are the endpoint so remove them incase they are in the intermediates
         CollectionCertStoreParameters ccsp = new CollectionCertStoreParameters(colStoreCrts);
-        CertStore crtStore = CertStore.getInstance("Collection", ccsp, "BC");
+        CertStore crtStore;
+        try {
+            crtStore = CertStore.getInstance("Collection", ccsp, "BC");
+        } catch (InvalidAlgorithmParameterException ex) {
+            throw new X509PathBuildException("InvalidAlgorithmParemeter when initializing CollectionStore",ex);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new X509PathBuildException("NoSuchAlgorithmException when initializing CollectionStore",ex);
+        } catch (NoSuchProviderException ex) {
+            throw new X509PathBuildException("NoSuchProviderException when initializing CollectionStore",ex);
+        }
         X509CertSelector userCrtSelector = new X509CertSelector();
         userCrtSelector.setCertificate(userCrt);
 
@@ -67,12 +79,24 @@ public class X509PathBuilder<E extends X509Certificate> {
         }
 
         // Setup the path builder
-        PKIXBuilderParameters pbp = new PKIXBuilderParameters(anchors, userCrtSelector);
+        PKIXBuilderParameters pbp;
+        try {
+            pbp = new PKIXBuilderParameters(anchors, userCrtSelector);
+        } catch (InvalidAlgorithmParameterException ex) {
+            throw new X509PathBuildException("InvalidAlgorithmParameter when initializing PKIXBuilderParameters",ex);
+        }
         pbp.addCertStore(crtStore);
         pbp.setRevocationEnabled(false);
         pbp.setMaxPathLength(25);
 
-        CertPathBuilder pathBuilder = CertPathBuilder.getInstance("PKIX", "BC");
+        CertPathBuilder pathBuilder;
+        try {
+            pathBuilder = CertPathBuilder.getInstance("PKIX", "BC");
+        } catch (NoSuchAlgorithmException ex) {
+            throw new X509PathBuildException("NoSuchAlgorithmException when initializing pathBuilder",ex);
+        } catch (NoSuchProviderException ex) {
+            throw new X509PathBuildException("NoSuchProviderException when initializing pathBuilder",ex);
+        }
         PKIXCertPathBuilderResult buildResponse;
         try {
             buildResponse = (PKIXCertPathBuilderResult) pathBuilder.build(pbp);
@@ -82,7 +106,6 @@ public class X509PathBuilder<E extends X509Certificate> {
             throw new X509PathBuildException(ex);
         }
         CertPath builtCrtPath = buildResponse.getCertPath();
-
         Iterator crtIterator = builtCrtPath.getCertificates().iterator();
         while (crtIterator.hasNext()) {
             Object obj = crtIterator.next();
@@ -91,11 +114,16 @@ public class X509PathBuilder<E extends X509Certificate> {
                 String msg = String.format(fmt, obj.getClass().getSimpleName());
                 throw new IllegalStateException(msg);
             } else {
-                discoveredPath.add((X509Certificate) obj);
+                discoveredPath.add((E)obj);
             }
         }
-
-        return discoveredPath;
+        TrustAnchor topAnchor;
+        TrustAnchor mostTrustedAnchor = buildResponse.getTrustAnchor();
+        Object obj = mostTrustedAnchor.getTrustedCert();
+        System.out.printf("hashCode=%d\n",obj.hashCode());
+        E topCrt = (E)mostTrustedAnchor.getTrustedCert();
+        X509BuiltPath<E> builtPath = new X509BuiltPath<E>(discoveredPath,topCrt);
+        return builtPath;
     }
 
     public Set<E> getRootCAs() {

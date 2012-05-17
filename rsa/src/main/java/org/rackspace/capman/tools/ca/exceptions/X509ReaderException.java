@@ -1,4 +1,4 @@
-package org.rackspace.capman.tools.util.exceptions;
+package org.rackspace.capman.tools.ca.exceptions;
 
 public class X509ReaderException extends CapManUtilException {
     public X509ReaderException(){

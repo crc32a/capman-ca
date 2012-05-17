@@ -11,10 +11,14 @@ import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 
 public class PrivKeyReader {
 
+    static {
+        RsaConst.init();
+    }
     private JCERSAPrivateCrtKey privKey;
 
     public PrivKeyReader(JCERSAPrivateCrtKey privKey) {
@@ -97,12 +101,11 @@ public class PrivKeyReader {
             return null;
         }
         byte[] keyIdBytes = skis.getKeyIdentifier();
-        if(keyIdBytes == null){
+        if (keyIdBytes == null) {
             return null;
         }
         String out = StaticHelpers.bytes2hex(keyIdBytes);
         return out;
 
     }
-
 }

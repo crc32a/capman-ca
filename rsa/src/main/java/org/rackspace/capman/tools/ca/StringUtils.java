@@ -2,9 +2,13 @@ package org.rackspace.capman.tools.ca;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class StringUtils {
+
+    private static String USASCII = "US-ASCII";
 
     public static String displayParsedInt(String strIn) {
         try {
@@ -83,26 +87,44 @@ public class StringUtils {
         StringBuilder sb = new StringBuilder();
         Object[] oarray = objects.toArray();
         int nobjects = oarray.length;
-        if(nobjects==0){
+        if (nobjects == 0) {
             return "";
         }
-        for(int i=0;i<nobjects -1; i++){
-            sb.append(String.format("%s%s",oarray[i].toString(),delim));
+        for (int i = 0; i < nobjects - 1; i++) {
+            sb.append(String.format("%s%s", oarray[i].toString(), delim));
         }
-        sb.append(String.format("%s",oarray[nobjects-1]));
+        sb.append(String.format("%s", oarray[nobjects - 1]));
         return sb.toString();
+    }
+
+    public static String asciiString(byte[] asciiBytes) {
+        try {
+            return new String(asciiBytes, USASCII);
+        } catch (UnsupportedEncodingException ex) {
+            return null; // Impossable exception
+        }
     }
 
     public static byte[] asciiBytes(String asciiStr) {
         byte[] out = null;
         try {
-            out = asciiStr.getBytes("US-ASCII");
+            out = asciiStr.getBytes(USASCII);
             return out;
         } catch (UnsupportedEncodingException ex) {
             // Impossable Exception as Java Spec says all Implementations will
             // support US-ASCII. But incase the impossible does happen
             // return null
             return out;
+        }
+    }
+
+    // checks if the strings are equal but will conclude the strings
+    // are not equal if either is null.
+    public static boolean strEquals(String a, String b) {
+        if (a == null || b == null) {
+            return false;
+        } else {
+            return a.equals(b);
         }
     }
 }

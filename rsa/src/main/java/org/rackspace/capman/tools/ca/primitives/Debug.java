@@ -5,7 +5,6 @@ import java.net.URL;
 import org.rackspace.capman.tools.ca.StringUtils;
 
 public class Debug {
-
     public static String classLoaderInfo(Class<?> cls){
         ClassLoader cl = cls.getClassLoader();
         int hc = cl.hashCode();

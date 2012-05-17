@@ -7,12 +7,17 @@ public class PemBlock {
     private int lineNum;
     private int startByte;
     private int stopByte;
+    private String startLine;
+    private String endLine;
     private byte[] pemData;
     private Object decodedObject;
 
     public PemBlock() {
         pemData = null;
         decodedObject = null;
+        lineNum = -1;
+        startByte = -1;
+        stopByte = -1;
     }
 
     public PemBlock(int lineNum, byte[] pemData, Object decodedObject) {
@@ -69,5 +74,21 @@ public class PemBlock {
 
     public void setStopByte(int stopByte) {
         this.stopByte = stopByte;
+    }
+
+    public String getStartLine() {
+        return startLine;
+    }
+
+    public void setStartLine(String startLine) {
+        this.startLine = startLine;
+    }
+
+    public String getEndLine() {
+        return endLine;
+    }
+
+    public void setEndLine(String endLine) {
+        this.endLine = endLine;
     }
 }

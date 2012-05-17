@@ -33,6 +33,7 @@ public class CsrUtils {
     public static final String FAILED;
 
     static {
+        RsaConst.init();
         PASSED = "PASSED";
         FAILED = "FAILED";
     }

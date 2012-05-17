@@ -29,6 +29,10 @@ public class ZeusUtil {
     
     private static final String ERRORDECODINGCERT = "Error Decoding Cert";
 
+    static{
+        RsaConst.init();
+    }
+
     public static ZeusCertFile getCertFile(String key, String cert, String chain) {
         StringBuilder certSB = new StringBuilder(RsaConst.PAGESIZE);
         String fmt;

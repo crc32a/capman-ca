@@ -1,9 +1,14 @@
 package org.rackspace.capman.tools.util;
 
+import java.security.cert.X509Certificate;
 import org.bouncycastle.jce.provider.X509CertificateObject;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class X509MapValue {
 
+    static {
+        RsaConst.init();
+    }
     private X509CertificateObject x509CertificateObject;
     private String fileName;
     private int lineNum;
@@ -18,6 +23,10 @@ public class X509MapValue {
         return x509CertificateObject;
     }
 
+    public X509Certificate getX509Certificate() {
+        return (X509Certificate) x509CertificateObject;
+    }
+
     public String getFileName() {
         return fileName;
     }
@@ -29,7 +38,7 @@ public class X509MapValue {
     @Override
     public int hashCode() {
         int xh = (this.x509CertificateObject == null) ? 0 : this.x509CertificateObject.hashCode();
-        int fh = (this.fileName==null)?0:this.fileName.hashCode();
+        int fh = (this.fileName == null) ? 0 : this.fileName.hashCode();
         int lh = this.lineNum;
         return (((37 + xh) * 23 + fh) * 47 + lh);
     }
@@ -54,7 +63,7 @@ public class X509MapValue {
     }
 
     @Override
-    public String toString(){
-        return String.format("%s[%d]",fileName,lineNum);
+    public String toString() {
+        return String.format("%s[%d]", fileName, lineNum);
     }
 }

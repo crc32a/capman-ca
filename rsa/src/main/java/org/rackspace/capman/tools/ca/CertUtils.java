@@ -53,6 +53,10 @@ public class CertUtils {
     public static final String SUBJECT_NOT_AFTER_FAIL = "subject Cert Not After Fail";
     public static final String SUBJECT_NOT_BEFORE_FAIL = "subject Cert Not Before Fail";
 
+    static{
+        RsaConst.init();
+    }
+
     public static X509Certificate signCSR(PKCS10CertificationRequest req,
             RsaPair keys, X509Certificate caCrt, int days, BigInteger serial) throws NullKeyException, RsaException {
         long nowMillis;

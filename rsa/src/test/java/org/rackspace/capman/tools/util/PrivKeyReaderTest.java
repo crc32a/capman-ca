@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 
 public class PrivKeyReaderTest {
 

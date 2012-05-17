@@ -2,12 +2,16 @@ package org.rackspace.capman.tools.ca.zeus;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class ZeusCertFile {
 
     private String private_key;
     private String public_cert;
     private List<String> errorList;
+    static {
+        RsaConst.init();
+    }
     public ZeusCertFile() {
         errorList = new ArrayList<String>();
     }

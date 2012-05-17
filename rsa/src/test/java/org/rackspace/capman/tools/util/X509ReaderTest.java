@@ -12,8 +12,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderDecodeException;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderNoSuchExtensionException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderNoSuchExtensionException;
 
 public class X509ReaderTest {
 
@@ -77,9 +77,9 @@ public class X509ReaderTest {
             + "kEnLnXeZT36K/uRHIbgBrzYRAE1ZNnYRcqnUKJjzBC5i+hIYAme1+TGC0D5bP3nK\n"
             + "HHt/1nKUQmnEVy+LhqdDCwDCNmGvPZI=\n"
             + "-----END CERTIFICATE-----\n";
-    private X509Reader caCrtReader;
-    private X509Reader testCrtReader;
-    private X509Reader pkcs8CrtReader;
+    private X509Inspector caCrtReader;
+    private X509Inspector testCrtReader;
+    private X509Inspector pkcs8CrtReader;
     private PrivKeyReader caKeyReader;
     private PrivKeyReader testKeyReader;
 
@@ -97,13 +97,13 @@ public class X509ReaderTest {
     @Before
     public void setUp() throws X509ReaderDecodeException {
         RsaConst.init();
-        caCrtReader = X509Reader.newX509Reader(caCrtPem);
+        caCrtReader = X509Inspector.newX509Inspector(caCrtPem);
         caKeyReader = PrivKeyReader.newPrivKeyReader(PrivKeyReaderTest.caKeyPem);
 
-        testCrtReader = X509Reader.newX509Reader(testCrtPem);
+        testCrtReader = X509Inspector.newX509Inspector(testCrtPem);
         testKeyReader = PrivKeyReader.newPrivKeyReader(PrivKeyReaderTest.testKeyPem);
 
-        pkcs8CrtReader = X509Reader.newX509Reader(pkcs8CrtPem);
+        pkcs8CrtReader = X509Inspector.newX509Inspector(pkcs8CrtPem);
 
     }
 

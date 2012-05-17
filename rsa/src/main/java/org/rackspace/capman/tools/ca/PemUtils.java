@@ -30,17 +30,18 @@ import static org.rackspace.capman.tools.ca.primitives.ByteLineReader.appendLF;
 
 public class PemUtils {
 
-    private static final byte[] BEG_PRV;
-    private static final byte[] END_PRV;
-    private static final byte[] BEG_CSR;
-    private static final byte[] END_CSR;
-    private static final byte[] BEG_CRT;
-    private static final byte[] END_CRT;
+    public static final byte[] BEG_PRV;
+    public static final byte[] END_PRV;
+    public static final byte[] BEG_CSR;
+    public static final byte[] END_CSR;
+    public static final byte[] BEG_CRT;
+    public static final byte[] END_CRT;
     private static final int CR = 13;
     private static final int LF = 10;
     private static final int PAGESIZE = 4096;
 
     static {
+        RsaConst.init();
         BEG_PRV = StringUtils.asciiBytes("-----BEGIN RSA PRIVATE KEY-----");
         END_PRV = StringUtils.asciiBytes("-----END RSA PRIVATE KEY-----");
         BEG_CSR = StringUtils.asciiBytes("-----BEGIN CERTIFICATE REQUEST-----");
@@ -163,6 +164,7 @@ public class PemUtils {
                 if (isBegPemBlock(line)) {
                     bos = new ByteArrayOutputStream(PAGESIZE);
                     pemBlock = new PemBlock();
+                    pemBlock.setStartLine(StringUtils.asciiString(line));
                     pemBlock.setLineNum(lc);
                     pemBlock.setDecodedObject(null);
                     pemBlock.setPemData(null);
@@ -180,6 +182,7 @@ public class PemUtils {
                     writeLine(bos, line);
                     byte[] bytes = bos.toByteArray();
                     pemBlock.setPemData(bytes);
+                    pemBlock.setEndLine(StringUtils.asciiString(line));
                     try {
                         decodedObject = PemUtils.fromPem(bytes);
                     } catch (PemException ex) {

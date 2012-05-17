@@ -1,5 +1,5 @@
 
-package org.rackspace.capman.tools.util.exceptions;
+package org.rackspace.capman.tools.ca.exceptions;
 
 public class PrivKeyReaderException extends CapManUtilException{
     public PrivKeyReaderException(Throwable cause) {

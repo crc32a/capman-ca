@@ -20,27 +20,32 @@ import org.rackspace.capman.tools.ca.exceptions.PemException;
 import sun.security.x509.X500Name;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderDecodeException;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderNoSuchExtensionException;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderNoSuchExtensionException;
 
-public class X509Reader {
+public class X509Inspector {
     private static final String X500NameFormat = "RFC2253";
     private static final String SubjKeyIdOid = "2.5.29.14";
     private static final String AuthKeyIdOid = "2.5.29.35";
     private X509CertificateObject x509obj;
 
-    public X509Reader(X509CertificateObject x509obj) {
+    static{
+        RsaConst.init();
+    }
+
+    public X509Inspector(X509CertificateObject x509obj) {
         this.x509obj = x509obj;
     }
 
-    public static X509Reader newX509Reader(String x509PemString) throws X509ReaderDecodeException {
+    public static X509Inspector newX509Inspector(String x509PemString) throws X509ReaderDecodeException {
         String msg;
         Object obj;
         X509CertificateObject x509obj;
         try {
             obj = PemUtils.fromPemString(x509PemString);
         } catch (PemException ex) {
-            throw new X509ReaderDecodeException("Error got null when decoding pemString", ex);
+            throw new X509ReaderDecodeException("Error decoding pemString", ex);
         }
         try {
             x509obj = (X509CertificateObject) obj;
@@ -48,14 +53,14 @@ public class X509Reader {
             msg = String.format("Error casting %s to %s", obj.getClass().getName(), "X509CertificateObject");
             throw new X509ReaderDecodeException(msg, ex);
         }
-        return new X509Reader(x509obj);
+        return new X509Inspector(x509obj);
     }
 
-    public static X509Reader newX509Reader(X509Certificate x509Cert) throws CertificateEncodingException, CertificateParsingException {
+    public static X509Inspector newX509Inspector(X509Certificate x509Cert) throws CertificateEncodingException, CertificateParsingException {
         byte[] encoded = x509Cert.getEncoded();
         X509CertificateStructure x509Struct = X509CertificateStructure.getInstance(encoded);
         X509CertificateObject x509obj = new X509CertificateObject(x509Struct);
-        X509Reader x509Reader = new X509Reader(x509obj);
+        X509Inspector x509Reader = new X509Inspector(x509obj);
         return x509Reader;
     }
 

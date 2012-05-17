@@ -1,17 +1,23 @@
 package org.rackspace.capman.tools.util;
 
+import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.bouncycastle.jce.provider.X509CertificateObject;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class X509Map {
 
     private Set<X509MapValue> mapValSet;
     private Map<String, Set<X509MapValue>> fileMap;
     private Map<X509CertificateObject, Set<X509MapValue>> x509Map;
+
+    static {
+        RsaConst.init();
+    }
 
     public X509Map() {
         mapValSet = new HashSet<X509MapValue>();
@@ -68,7 +74,7 @@ public class X509Map {
         return x509Map.keySet();
     }
 
-    public Set<X509MapValue> fromFile(String fileName) {
+    public Set<X509MapValue> getFile(String fileName) {
         Set<X509MapValue> resultSet = fileMap.get(fileName);
         if (resultSet == null) {
             return new HashSet<X509MapValue>(); // Its impolite to return null when an Empty list is better
@@ -76,7 +82,7 @@ public class X509Map {
         return resultSet;
     }
 
-    public Set<X509MapValue> fromX509CertificateObject(X509CertificateObject x509obj) {
+    public Set<X509MapValue> getX509CertificateObject(X509CertificateObject x509obj) {
         Set<X509MapValue> resultSet = x509Map.get(x509obj);
         if (resultSet == null) {
             return new HashSet<X509MapValue>(); // See above comment
@@ -86,5 +92,23 @@ public class X509Map {
 
     public Set<X509MapValue> values() {
         return new HashSet<X509MapValue>(mapValSet);
+    }
+    
+    public Set<X509CertificateObject> valuesAsX509CertificateObjects(){
+        Set<X509CertificateObject> values = new HashSet<X509CertificateObject>();
+        for(X509MapValue mapVal : mapValSet){
+            X509CertificateObject x509obj = mapVal.getX509CertificateObject();
+            values.add(x509obj);
+        }
+        return values;
+    }
+
+    public Set<X509Certificate> valuesAsX509Certificates(){
+        Set<X509Certificate> values = new HashSet<X509Certificate>();
+        for(X509MapValue mapVal : mapValSet){
+            X509Certificate x509 = mapVal.getX509Certificate();
+            values.add(x509);
+        }
+        return values;
     }
 }

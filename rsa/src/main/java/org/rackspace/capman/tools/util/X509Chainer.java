@@ -11,10 +11,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 // Nieve chain builder. Experiments suggest its useless for production
 public class X509Chainer {
-
+    static {
+        RsaConst.init();
+    }
     private Set<X509Certificate> x509Certs;
 
     public X509Chainer() {

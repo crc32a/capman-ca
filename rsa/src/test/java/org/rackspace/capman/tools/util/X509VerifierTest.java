@@ -15,13 +15,13 @@ import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.junit.Assert;
-import org.rackspace.capman.tools.util.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 
 public class X509VerifierTest {
 
-    private X509Reader caCrtReader;
-    private X509Reader testCrtReader;
-    private X509Reader pkcs8CrtReader;
+    private X509Inspector caCrtReader;
+    private X509Inspector testCrtReader;
+    private X509Inspector pkcs8CrtReader;
     private PrivKeyReader caKeyReader;
     private PrivKeyReader testKeyReader;
     private PrivKeyReader pkcs8KeyReader;
@@ -49,9 +49,9 @@ public class X509VerifierTest {
     @Before
     public void setUp() throws X509ReaderDecodeException  {
         RsaConst.init();
-        caCrtReader = X509Reader.newX509Reader(X509ReaderTest.caCrtPem);
-        testCrtReader = X509Reader.newX509Reader(X509ReaderTest.testCrtPem);
-        pkcs8CrtReader = X509Reader.newX509Reader(X509ReaderTest.pkcs8CrtPem);
+        caCrtReader = X509Inspector.newX509Inspector(X509ReaderTest.caCrtPem);
+        testCrtReader = X509Inspector.newX509Inspector(X509ReaderTest.testCrtPem);
+        pkcs8CrtReader = X509Inspector.newX509Inspector(X509ReaderTest.pkcs8CrtPem);
 
         caKeyReader = PrivKeyReader.newPrivKeyReader(PrivKeyReaderTest.caKeyPem);
         testKeyReader = PrivKeyReader.newPrivKeyReader(PrivKeyReaderTest.testKeyPem);

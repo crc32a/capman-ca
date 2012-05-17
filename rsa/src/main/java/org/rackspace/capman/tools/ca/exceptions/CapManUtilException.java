@@ -1,4 +1,4 @@
-package org.rackspace.capman.tools.util.exceptions;
+package org.rackspace.capman.tools.ca.exceptions;
 
 public class CapManUtilException extends Exception{
 

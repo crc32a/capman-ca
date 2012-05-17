@@ -41,6 +41,10 @@ public class RsaPair {
     private RSAKeyParameters pub = null;
     public static final String ERRORDECODINGKEY = "Error Decoding Key";
 
+    static {
+        RsaConst.init();
+    }
+
     public RsaPair() {
     }
 

@@ -22,11 +22,16 @@ import java.util.regex.Pattern;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
-import org.rackspace.capman.tools.util.exceptions.CapManUtilException;
+import org.rackspace.capman.tools.ca.primitives.RsaConst;
+import org.rackspace.capman.tools.ca.exceptions.CapManUtilException;
 
 public class RsaFileUtils {
 
     private static final int BUFFSIZE = 64 * 1024;
+
+    static {
+        RsaConst.init();
+    }
 
     public static byte[] readFile(String fileName) throws FileNotFoundException, IOException {
         File file = new File(fileName);
@@ -95,10 +100,10 @@ public class RsaFileUtils {
     // For Jython
     public static List<X509MapValue> readX509File(String fileName) throws FileNotFoundException, IOException {
         File file = new File(fileName);
-        return readX509File(file);
+        return readX509FileToMapVals(file);
     }
 
-    public static List<X509MapValue> readX509File(File file) throws FileNotFoundException, IOException {
+    public static List<X509MapValue> readX509FileToMapVals(File file) throws FileNotFoundException, IOException {
         List<X509MapValue> valMapList = new ArrayList<X509MapValue>();
         byte[] pemBytes = readFile(file);
         List<PemBlock> blocks = PemUtils.parseMultiPem(pemBytes);
@@ -117,12 +122,12 @@ public class RsaFileUtils {
         return valMapList;
     }
 
-    public static List<X509MapValue> readX509Files(Collection<File> files) {
+    public static List<X509MapValue> readX509FilesToMapVals(Collection<File> files) {
         List<X509MapValue> mapVals = new ArrayList<X509MapValue>();
         for (File file : files) {
             List<X509MapValue> fileMapVals;
             try {
-                fileMapVals = readX509File(file);
+                fileMapVals = readX509FileToMapVals(file);
             } catch (FileNotFoundException ex) {
                 String msg = String.format("File not found %s SKIPPING x509 read\n", file.getAbsolutePath());
                 Logger.getLogger(RsaFileUtils.class.getName()).log(Level.WARNING, msg, ex);
