@@ -11,6 +11,7 @@ import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
+import org.rackspace.capman.tools.ca.exceptions.PrivKeyDecodeException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 
@@ -57,14 +58,14 @@ public class PrivKeyReader {
         return privKey.getCrtCoefficient();
     }
 
-    public static PrivKeyReader newPrivKeyReader(String pemString) throws X509ReaderDecodeException {
+    public static PrivKeyReader newPrivKeyReader(String pemString) throws PrivKeyDecodeException  {
         JCERSAPrivateCrtKey privKey;
         Object obj;
         String msg;
         try {
             obj = PemUtils.fromPemString(pemString);
         } catch (PemException ex) {
-            throw new X509ReaderDecodeException("Error decoding x509 cert", ex);
+            throw new PrivKeyDecodeException("Error decoding Keyt", ex);
         }
         if (obj instanceof KeyPair) {
             KeyPair kp = (KeyPair) obj;
@@ -75,7 +76,7 @@ public class PrivKeyReader {
             privKey = (JCERSAPrivateCrtKey) obj;
         } catch (ClassCastException ex) {
             msg = String.format("Error casting %s to %s", obj.getClass().getName(), "JCERSAPrivateCrtKey");
-            throw new X509ReaderDecodeException(msg, ex);
+            throw new PrivKeyDecodeException(msg, ex);
         }
         return new PrivKeyReader(privKey);
     }

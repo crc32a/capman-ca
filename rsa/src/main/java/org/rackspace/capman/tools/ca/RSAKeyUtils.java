@@ -1,10 +1,14 @@
 package org.rackspace.capman.tools.ca;
 
+import java.security.NoSuchProviderException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.math.BigInteger;
 
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -14,7 +18,6 @@ import org.bouncycastle.asn1.x509.RSAPublicKeyStructure;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.bouncycastle.jce.provider.JCERSAPublicKey;
-import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.exceptions.ConversionException;
 import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
@@ -22,9 +25,11 @@ import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
 import org.rackspace.capman.tools.ca.primitives.Debug;
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
+import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class RSAKeyUtils {
+    public static final int DEFAULT_KEY_SIZE = 2048;
     static{
         RsaConst.init();
     }
@@ -34,7 +39,7 @@ public class RSAKeyUtils {
         return RsaPair.getInstance(bits, certainity);
     }
 
-    public static List<String> verifyKeyAndCert(KeyPair kp, X509CertificateObject cert) {
+    public static List<String> verifyKeyAndCert(KeyPair kp, X509Certificate cert) {
         List<String> errorList = new ArrayList<String>();
         RsaPair rp;
         try {
@@ -46,7 +51,7 @@ public class RSAKeyUtils {
         return verifyKeyAndCert(rp, cert);
     }
 
-    public static List<String> verifyKeyAndCert(RsaPair rp, X509CertificateObject cert) {
+    public static List<String> verifyKeyAndCert(RsaPair rp, X509Certificate cert) {
         List<String> errorList = new ArrayList<String>();
         JCERSAPublicKey certPub = null;
         JCERSAPublicKey keyPub = null;
@@ -96,7 +101,7 @@ public class RSAKeyUtils {
         KeyPair kp = null;
         JCERSAPublicKey certPub = null;
         JCERSAPublicKey keyPub = null;
-        X509CertificateObject cert = null;
+        X509Certificate cert = null;
         try {
             Object obj = PemUtils.fromPem(keyPem);
             if (obj instanceof JCERSAPrivateCrtKey) {
@@ -112,7 +117,7 @@ public class RSAKeyUtils {
         }
 
         try {
-            cert = (X509CertificateObject) PemUtils.fromPem(certPem);
+            cert = (X509Certificate) PemUtils.fromPem(certPem);
         } catch (PemException ex) {
             errorList.add("Error decoding Cert from Pem Data");
         } catch (ClassCastException ex) {
@@ -154,5 +159,25 @@ public class RSAKeyUtils {
         } else {
             return String.format("(%s,%s)", "None", "None");
         }
+    }
+
+    public static KeyPair genKeyPair(int keySize) throws RsaException{
+        SecureRandom sr;
+        KeyPairGenerator kpGen;
+        try {
+            sr = SecureRandom.getInstance("SHA1PRNG");
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new RsaException("Could not generate RSA Key",ex);
+        }        
+        try {
+            kpGen = KeyPairGenerator.getInstance("RSA", "BC");
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new RsaException("No such Algo RSA");
+        } catch (NoSuchProviderException ex) {
+            throw new RsaException("No such Provider BC");
+        }
+        kpGen.initialize(keySize);
+        KeyPair kp = kpGen.generateKeyPair();
+        return kp;
     }
 }

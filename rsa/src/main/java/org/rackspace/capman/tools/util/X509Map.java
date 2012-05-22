@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.bouncycastle.jce.provider.X509CertificateObject;
+
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class X509Map {
@@ -82,7 +83,7 @@ public class X509Map {
         return resultSet;
     }
 
-    public Set<X509MapValue> getX509CertificateObject(X509CertificateObject x509obj) {
+    public Set<X509MapValue> getX509CertificateObject(X509Certificate x509obj) {
         Set<X509MapValue> resultSet = x509Map.get(x509obj);
         if (resultSet == null) {
             return new HashSet<X509MapValue>(); // See above comment
@@ -94,10 +95,10 @@ public class X509Map {
         return new HashSet<X509MapValue>(mapValSet);
     }
     
-    public Set<X509CertificateObject> valuesAsX509CertificateObjects(){
-        Set<X509CertificateObject> values = new HashSet<X509CertificateObject>();
+    public Set<X509Certificate> valuesAsX509CertificateObjects(){
+        Set<X509Certificate> values = new HashSet<X509Certificate>();
         for(X509MapValue mapVal : mapValSet){
-            X509CertificateObject x509obj = mapVal.getX509CertificateObject();
+            X509Certificate x509obj = mapVal.getX509CertificateObject();
             values.add(x509obj);
         }
         return values;

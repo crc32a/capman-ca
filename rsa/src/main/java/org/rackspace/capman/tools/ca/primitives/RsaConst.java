@@ -17,7 +17,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.rackspace.capman.tools.ca.StringUtils;
 
 public class RsaConst {
-    public static final String SIGNATURE_ALGO = "SHA1WITHRSA";
+    public static final String DEFAULT_SIGNATURE_ALGO = "SHA1WITHRSA";
     public static final BigInteger E = new BigInteger("65537");
     public static final int PAGESIZE = 4096;
     public static final int DEFAULT_PRIME_CERTAINTY = 32;

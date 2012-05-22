@@ -6,6 +6,8 @@ import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.security.auth.x500.X500Principal;
@@ -20,25 +22,33 @@ import org.rackspace.capman.tools.ca.exceptions.PemException;
 import sun.security.x509.X500Name;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
+import org.rackspace.capman.tools.ca.CertUtils;
+import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderNoSuchExtensionException;
 
 public class X509Inspector {
+
     private static final String X500NameFormat = "RFC2253";
     private static final String SubjKeyIdOid = "2.5.29.14";
     private static final String AuthKeyIdOid = "2.5.29.35";
     private X509CertificateObject x509obj;
 
-    static{
+    static {
         RsaConst.init();
     }
 
-    public X509Inspector(X509CertificateObject x509obj) {
+    public X509Inspector(X509CertificateObject x509obj) throws NotAnX509CertificateException {
+        if (x509obj == null) {
+            String msg = "Resusing to accept null object in "
+                    + "call to X509Inspector(X509CertificateObject) constructor";
+            throw new NotAnX509CertificateException();
+        }
         this.x509obj = x509obj;
     }
 
-    public static X509Inspector newX509Inspector(String x509PemString) throws X509ReaderDecodeException {
+    public static X509Inspector newX509Inspector(String x509PemString) throws X509ReaderDecodeException, NotAnX509CertificateException {
         String msg;
         Object obj;
         X509CertificateObject x509obj;
@@ -56,14 +66,13 @@ public class X509Inspector {
         return new X509Inspector(x509obj);
     }
 
-    public static X509Inspector newX509Inspector(X509Certificate x509Cert) throws CertificateEncodingException, CertificateParsingException {
+    public static X509Inspector newX509Inspector(X509Certificate x509Cert) throws CertificateEncodingException, CertificateParsingException, NotAnX509CertificateException {
         byte[] encoded = x509Cert.getEncoded();
         X509CertificateStructure x509Struct = X509CertificateStructure.getInstance(encoded);
         X509CertificateObject x509obj = new X509CertificateObject(x509Struct);
         X509Inspector x509Reader = new X509Inspector(x509obj);
         return x509Reader;
     }
-
 
     // Acts as a don't repeat your self base method. <Rolls Eyes>
     private String getCN(X500Principal x500principal) throws IOException {
@@ -160,9 +169,9 @@ public class X509Inspector {
             return null;
         }
         GeneralName[] nameObjs = genNames.getNames();
-        for(int i=0;i<nameObjs.length;i++){
-            if(nameObjs[i].getTagNo() == 4){
-                X509Name name = (X509Name)nameObjs[i].getName();
+        for (int i = 0; i < nameObjs.length; i++) {
+            if (nameObjs[i].getTagNo() == 4) {
+                X509Name name = (X509Name) nameObjs[i].getName();
                 dirName = name.toString();
                 break;
             }
@@ -177,7 +186,7 @@ public class X509Inspector {
         }
         byte[] authIdBytes;
         authIdBytes = authKIS.getKeyIdentifier();
-        if(authIdBytes==null){
+        if (authIdBytes == null) {
             return null;
         }
         String out = StaticHelpers.bytes2hex(authIdBytes);
@@ -210,7 +219,7 @@ public class X509Inspector {
         return subjKeyId;
     }
 
-    public PublicKey getPublicKey(){
+    public PublicKey getPublicKey() {
         PublicKey pubKey = x509obj.getPublicKey();
         return pubKey;
     }
@@ -227,5 +236,21 @@ public class X509Inspector {
             throw new X509ReaderDecodeException("Unable to decode AuthorityKeyIdentifier from Cert", ex);
         }
         return authKeyId;
+    }
+
+    public boolean isExpired(Date date){
+        Date dateObj = (date==null)?new Date(System.currentTimeMillis()):date;
+        return CertUtils.isCertExpired(x509obj, date);
+    }
+
+    public boolean isPremature(Date date) {
+        Date dateObj = (date==null)?new Date(System.currentTimeMillis()):date;
+        return CertUtils.isCertPremature(x509obj, date);
+    }
+
+    public boolean isDateValid(Date date){
+        Date dateObj = (date==null)?new Date(System.currentTimeMillis()):date;
+        return CertUtils.isCertDateValid(x509obj, date);
+
     }
 }

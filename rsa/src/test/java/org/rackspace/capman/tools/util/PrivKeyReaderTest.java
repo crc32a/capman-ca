@@ -2,8 +2,11 @@ package org.rackspace.capman.tools.util;
 
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
+import org.rackspace.capman.tools.ca.exceptions.PrivKeyDecodeException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -11,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderException;
 
 public class PrivKeyReaderTest {
 
@@ -82,6 +86,34 @@ public class PrivKeyReaderTest {
             + "V0ozFm1Kecdu1Le+mp5Mad3qktlMB7Euifsj8QlT2KN5AQ==\n"
             + "-----END RSA PRIVATE KEY-----\n";
 
+    public static final String key2048bit = "-----BEGIN RSA PRIVATE KEY-----\n"
+            + "MIIEpQIBAAKCAQEAo5ZrBNCUIeKU8gfptbq9CpkUeZwRasJmij4lGJBaRrTeOpeX\n"
+            + "z6lMEqiN49+UvE3NF6LuMCx/sb+/gAU+BGS/pAauJ/TbIESHF4dDzfUMr5nOk0Ae\n"
+            + "slfST3QX4wAgVDkuuxxHP0K+jL85qaYBGsLL4HETKMDZKXvOcCORSq0ZCy7D1sP0\n"
+            + "wCHomtX7k1RE7EgWsKDOumj+7SH/9jnBMKrHNqtj3xBZt18tugSyfeZVwQgGOW+m\n"
+            + "f7A96tLmw1XQgoAxQqTTZkjFIMjM5JEFOeX8Bia0CzixTMGN2BjnuafkoUxslaF4\n"
+            + "APmRu6n4xGlDuDuKpAFHEYg2nyPkezpsBX5s7QIDAQABAoIBAQCWoBG6RTOgX7k1\n"
+            + "ggO3yVH3SCyKLSH8YzN3ZvFRRNla8X8OBDdMhl39cCX2BBA3sot9kBAxW0fYqu3x\n"
+            + "OuJ3uSycI2qIb/S0KWUaTPop0dD0f3KuMwQQwrxrXEICSkN6SYy1zLvti89YWVsG\n"
+            + "0kuCEIsZBgTWKXvLrqvOpXFKiUfd+qBKJjPqV+7Thna5ffoznnE+fTPaKozKwknm\n"
+            + "tdMd6pG7vdhht8/vEf6s0qCNRkStpZhbs0OjGCziqp6Zs0IzrmUdDP4QLiNlt1Fh\n"
+            + "HLSkN9fuD3z6PanQ3DLcqeZTZEaZ6dSiJljS7VeUfYQbR8jhydqNzL8wbzIhH8l+\n"
+            + "ZzL7KS0hAoGBANRcfXQpi/YAcdBeo2s/ugI2PxTlg/r2kaNFa03iJKYXvOHWS9eF\n"
+            + "kNtEW5LfvJYWWQNz99e71pFksYqTqeEerJvB37xrluyIPjyOo2oxuRvQNCeTX5jR\n"
+            + "XY4NFVwTWVaPYCC1zTK6y4jiOL+We44Kip6sgLS9kGZAA+gQnLRX1EmHAoGBAMU0\n"
+            + "IWGq7sKqujGnhQUKfqay/4f6cAh0WEaGP5guqk9AMYT9IDQ98qVpMxh9uP7yJiTx\n"
+            + "Mx5TDj7BBCIqpAt2OAFhMqovAqxKGOgiJU8BVacRF6ow8FOTXBwPcrdXHeDas+4n\n"
+            + "DdFvjxa4+aeUK2SGNW8kPImEEOrxu3LEwSTIDSLrAoGBAKaiQKrC4xlQdf5cFH1W\n"
+            + "jv2nVU5vXmWxzsu/8Bg4CCvwWn0Xa4GdQ/JaLEUOnOtkc8p62BKHSTHjQlEL13RX\n"
+            + "XngF5Cr0fYPy0GsyPdZZV/gUIqifQpcmSfPqHkWWxTZf4L0qCu7wlj89y+vCCAeI\n"
+            + "DAfAMmogiUtClg4l4uC8Pk7HAoGBAKkoBlpY3WVuPTjKkXe5gNpNQJPLZr5Zzj7w\n"
+            + "eSx5Gu3QCqog1rb5TGJG0uV3MnC+Faoqm8avR9DckEcefIi4Z2IHlgYVPR28kZDN\n"
+            + "eWNDqc0dBEegowWNqb0II0bRG3f9IcpvBZNZNkwvbzcoCfC4jq0/UA5Fkp11rWzN\n"
+            + "CUAbuejxAoGAC+A33jMXrI8i+a/rHCtnyfG+mqbMV8+XOrXVH6jpVns8WmTGovPK\n"
+            + "fQHzylx4AGlmn3X+zvahzEJZUvaClsQVaEJh0jykl4/48swkv3LNWrQVxPJGehk2\n"
+            + "NYdiC1EDRLo2B+3mFOu8UbVz6e0q3KiWkLBxxDbMwzn7diCJdap6rDo=\n"
+            + "-----END RSA PRIVATE KEY-----\n";
+
     public PrivKeyReaderTest() {
     }
 
@@ -103,7 +135,7 @@ public class PrivKeyReaderTest {
     }
 
     @Test
-    public void shouldGetCorrectAttrsFromKey() throws X509ReaderDecodeException  {
+    public void shouldGetCorrectAttrsFromKey() throws X509ReaderDecodeException, PrivKeyDecodeException {
         PrivKeyReader pkr = PrivKeyReader.newPrivKeyReader(pkcs1);
         Assert.assertEquals(N, pkr.getN());
         Assert.assertEquals(E, pkr.getE());
@@ -111,7 +143,7 @@ public class PrivKeyReaderTest {
     }
 
     @Test
-    public void pkcs8ShouldMatchPkcs1() throws X509ReaderDecodeException {
+    public void pkcs8ShouldMatchPkcs1() throws X509ReaderDecodeException, PrivKeyDecodeException {
         PrivKeyReader pk1 = PrivKeyReader.newPrivKeyReader(pkcs1);
         PrivKeyReader pk8 = PrivKeyReader.newPrivKeyReader(pkcs8);
 
@@ -127,10 +159,10 @@ public class PrivKeyReaderTest {
         Assert.assertEquals(pk1.getD(), pk8.getD());
         Assert.assertEquals(pk1.getdP(), pk8.getdP());
         Assert.assertEquals(pk1.getdQ(), pk8.getdQ());
-        Assert.assertEquals(pk1.getQinv(),pk8.getQinv());
+        Assert.assertEquals(pk1.getQinv(), pk8.getQinv());
     }
 
-    public void pkcs8ShouldBeCodedbackToPkcs1ForZeus() throws X509ReaderDecodeException, PemException {
+    public void pkcs8ShouldBeCodedbackToPkcs1ForZeus() throws PrivKeyDecodeException, PemException {
         PrivKeyReader pk8 = PrivKeyReader.newPrivKeyReader(pkcs8);
         String pkcs1Out = PemUtils.toPemString(pk8.getPrivKey());
         Assert.assertEquals(pkcs1, pkcs1Out);

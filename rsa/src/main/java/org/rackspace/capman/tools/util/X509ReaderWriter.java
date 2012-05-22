@@ -36,8 +36,8 @@ public class X509ReaderWriter {
         END_CSR = asciiString(PemUtils.END_CSR);
         END_CRT = asciiString(PemUtils.END_CRT);
     }
-    
-    public static ResponseWithExcpetions<String> writeX509ObjectSet(Collection<X509CertificateObject> x509objs) throws NotAnX509CertificateException {
+
+    public static ResponseWithExcpetions<String> writeSet(Collection<X509CertificateObject> x509objs) {
         StringBuilder sb = new StringBuilder(PAGESIZE * 4);
         List<Exception> exceptions = new ArrayList<Exception>();
         for (X509CertificateObject x509obj : x509objs) {
@@ -54,7 +54,7 @@ public class X509ReaderWriter {
         return new ResponseWithExcpetions<String>(exceptions, sb.toString());
     }
 
-    public static ResponseWithExcpetions<Set<X509CertificateObject>> readX509ObjectSet(String pemString) throws NotAnX509CertificateException {
+    public static ResponseWithExcpetions<Set<X509CertificateObject>> readSet(String pemString) {
         ResponseWithExcpetions<Set<X509CertificateObject>> resp;
         List<Exception> exceptions = new ArrayList<Exception>();
         byte[] pemBytes = StringUtils.asciiBytes(pemString);
@@ -68,7 +68,7 @@ public class X509ReaderWriter {
                 exceptions.add(buildNotX509ObjectException(null, block.getLineNum(), asciiString(block.getPemData()), null));
                 continue;
             }
-            if (!(block.getDecodedObject() instanceof X509CertificateObject)) {               
+            if (!(block.getDecodedObject() instanceof X509CertificateObject)) {
                 exceptions.add(buildNotX509ObjectException(null, block.getLineNum(), asciiString(block.getPemData()), null));
                 continue;
             }

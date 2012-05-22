@@ -2,8 +2,15 @@ package org.rackspace.capman.tools.util;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.TimeZone;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class StaticHelpers {
@@ -100,5 +107,69 @@ public class StaticHelpers {
         union.addAll(bCopy);
         union.removeAll(intersection);
         return union;
+    }
+
+    public static Date calendarToDate(Calendar cal){
+        return cal.getTime();
+    }
+
+    public static Calendar dateToCalendar(Date date){
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(date.getTime());
+        return cal;
+    }
+
+    public static Calendar utcCalendarFromTuple(int... tup) {
+        Calendar cal;
+        TimeZone utc;
+        int year = (tup.length > 0) ? tup[0] : 0;
+        int month = (tup.length > 1) ? tup[1] - 1 : 0;
+        int day = (tup.length > 2) ? tup[2] : 0;
+        int hour = (tup.length > 3) ? tup[3] : 0;
+        int min = (tup.length > 4) ? tup[4] : 0;
+        int sec = (tup.length > 5) ? tup[5] : 0;
+        long ms = ((tup.length > 6) ? tup[6] : 0)%1000;
+        utc = TimeZone.getTimeZone("GMT");
+        cal = Calendar.getInstance();
+        cal.clear();
+        cal.setTimeZone(utc);
+        cal.set(year,month,day,hour,min,sec);
+
+        long calInMillis = cal.getTimeInMillis();
+        cal.setTimeInMillis(calInMillis + ms);
+        return cal;
+    }
+
+    public static Date dateFromTuple(int ... tup){
+        return utcCalendarFromTuple(tup).getTime();
+    }
+
+    public static String getCalendarString(Calendar cal) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSS");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("z");
+
+        String dateStr = dateFormat.format(cal.getTime());
+        String zoneStr = timeFormat.format(cal.getTime());
+        String readableString = String.format("%s %s", dateStr, zoneStr);
+        return readableString;
+    }
+
+    public static String getDateString(Date date){
+        return getCalendarString(dateToCalendar(date));
+    }
+
+    public static Date currDate(){
+        return new Date(System.currentTimeMillis());
+    }
+
+
+    public List<Throwable> getExceptionCausesList(Throwable th) {
+        List<Throwable> causes = new ArrayList<Throwable>();
+        Throwable t = th;
+        while (t != th) {
+            causes.add(t);
+            t.getCause();
+        }
+        return causes;
     }
 }

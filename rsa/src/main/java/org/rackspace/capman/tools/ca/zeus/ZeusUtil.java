@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca.zeus;
 
+import org.bouncycastle.jce.provider.X509CertificateObject;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyPair;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.logging.Logger;
 
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
-import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.rackspace.capman.tools.ca.exceptions.ConversionException;
 import org.rackspace.capman.tools.ca.exceptions.NullKeyException;

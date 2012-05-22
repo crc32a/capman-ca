@@ -18,10 +18,8 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.provider.JCERSAPublicKey;
-import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
@@ -40,9 +38,16 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.rackspace.capman.tools.ca.PemUtils;
+import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 
@@ -52,13 +57,29 @@ public class CertUtils {
     public static final String ISSUER_NOT_BEFORE_FAIL = "issuer Cert Not Before Fail";
     public static final String SUBJECT_NOT_AFTER_FAIL = "subject Cert Not After Fail";
     public static final String SUBJECT_NOT_BEFORE_FAIL = "subject Cert Not Before Fail";
+    public static final int DEFAULT_NOT_AFTER_YEARS = 2;
 
-    static{
+    static {
         RsaConst.init();
     }
 
+    @Deprecated
+    public static X509Certificate signCSR(PKCS10CertificationRequest req, RsaPair rp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
+        KeyPair kp = rp.toJavaSecurityKeyPair();
+        return signCSR(req, kp, caCrt, days, serial);
+    }
+
+    @Deprecated
+    public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
+        long nowMillis = System.currentTimeMillis();
+        Date notBefore = new Date(nowMillis);
+        Date notAfter = new Date((long) days * 24 * 60 * 60 * 1000 + nowMillis);
+        return signCSR(req, kp, caCrt, notBefore, notAfter, serial);
+    }
+
     public static X509Certificate signCSR(PKCS10CertificationRequest req,
-            RsaPair keys, X509Certificate caCrt, int days, BigInteger serial) throws NullKeyException, RsaException {
+            KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
+            BigInteger serial) throws RsaException {
         long nowMillis;
         int i;
         Date notBefore;
@@ -76,21 +97,17 @@ public class CertUtils {
         AuthorityKeyIdentifierStructure authKeyId;
         SubjectKeyIdentifierStructure subjKeyId;
 
-        KeyPair kp = keys.toJavaSecurityKeyPair();
         caPub = kp.getPublic();
         caPriv = kp.getPrivate();
 
-        nowMillis = System.currentTimeMillis();
-        notBefore = new Date(nowMillis);
-        notAfter = new Date((long) days * 24 * 60 * 60 * 1000 + nowMillis);
-
-
+        notBefore = notBeforeIn;
+        notAfter = notAfterIn;
         try {
             crtPub = req.getPublicKey();
         } catch (GeneralSecurityException ex) {
             throw new RsaException("Unable to fetch public key from CSR", ex);
         }
-        JcaContentSignerBuilder sigBuilder = new JcaContentSignerBuilder(RsaConst.SIGNATURE_ALGO);
+        JcaContentSignerBuilder sigBuilder = new JcaContentSignerBuilder(RsaConst.DEFAULT_SIGNATURE_ALGO);
         sigBuilder.setProvider("BC");
 
         try {
@@ -147,6 +164,7 @@ public class CertUtils {
         return crt;
     }
 
+    @Deprecated
     public static X509Certificate selfSignCsrCA(PKCS10CertificationRequest req, RsaPair keys, int days) throws RsaException {
         long nowMillis = System.currentTimeMillis();
         Date notBefore = new Date(nowMillis);
@@ -170,7 +188,7 @@ public class CertUtils {
         KeyPair kp = keys.toJavaSecurityKeyPair();
         priv = kp.getPrivate();
         pub = kp.getPublic();
-        JcaContentSignerBuilder sigBuilder = new JcaContentSignerBuilder(RsaConst.SIGNATURE_ALGO);
+        JcaContentSignerBuilder sigBuilder = new JcaContentSignerBuilder(RsaConst.DEFAULT_SIGNATURE_ALGO);
         sigBuilder.setProvider("BC");
         ContentSigner signer;
         try {
@@ -208,7 +226,53 @@ public class CertUtils {
         return cert;
     }
 
-    public static List<String> verifyIssuerAndSubjectCert(X509CertificateObject issuerCert, X509CertificateObject subjectCert) {
+    public static X509Certificate selfSignCsrCA(PKCS10CertificationRequest req, KeyPair kp, Date notBefore, Date notAfter) throws RsaException {
+        PrivateKey priv;
+        PublicKey pub;
+        String msg;
+        X509Certificate cert = null;
+        SubjectKeyIdentifierStructure subjKeyId;
+        int i;
+
+        try {
+            if (!req.verify()) {
+                throw new RsaException("CSR was invalid");
+            }
+        } catch (GeneralSecurityException ex) {
+            throw new RsaException("Could not verify CSR", ex);
+        }
+        X500Name subject = X500Name.getInstance(req.getCertificationRequestInfo().getSubject());
+        X500Name issuer = X500Name.getInstance(req.getCertificationRequestInfo().getSubject());
+        priv = kp.getPrivate();
+        pub = kp.getPublic();
+        JcaContentSignerBuilder sigBuilder = new JcaContentSignerBuilder(RsaConst.DEFAULT_SIGNATURE_ALGO);
+        sigBuilder.setProvider("BC");
+        ContentSigner signer;
+        try {
+            signer = sigBuilder.build(priv);
+        } catch (OperatorCreationException ex) {
+            throw new RsaException("Error creating signature", ex);
+        }
+        BigInteger serial = BigInteger.ONE;
+        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(issuer, serial, notBefore, notAfter, subject, pub);
+
+        certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(true));//This is a CA crt
+        try {
+            subjKeyId = new SubjectKeyIdentifierStructure(pub);
+        } catch (InvalidKeyException ex) {
+            throw new RsaException("Ivalid public key when attempting to encode Subjectkey identifier", ex);
+        }
+        certBuilder.addExtension(X509Extension.subjectKeyIdentifier, false, subjKeyId.getDERObject());
+        X509CertificateHolder certHolder = certBuilder.build(signer);
+        try {
+            cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+        } catch (CertificateException ex) {
+            throw new RsaException("Error generating x509 certificate", ex);
+        }
+        return cert;
+    }
+
+    public static List<String> verifyIssuerAndSubjectCert(X509Certificate issuerCert, X509Certificate subjectCert) {
         List<String> errorList = new ArrayList<String>();
         PublicKey parentPub = null;
         try {
@@ -250,10 +314,10 @@ public class CertUtils {
 
     public static List<String> verifyIssuerAndSubjectCert(byte[] issuerCertPem, byte[] subjectCertPem) {
         List<String> errorList = new ArrayList<String>();
-        X509CertificateObject issuerCert = null;
-        X509CertificateObject subjectCert = null;
+        X509Certificate issuerCert = null;
+        X509Certificate subjectCert = null;
         try {
-            issuerCert = (X509CertificateObject) PemUtils.fromPem(issuerCertPem);
+            issuerCert = (X509Certificate) PemUtils.fromPem(issuerCertPem);
         } catch (PemException ex) {
             errorList.add("Error decodeing issuer Cert data to X509Certificate");
         } catch (ClassCastException ex) {
@@ -261,7 +325,7 @@ public class CertUtils {
         }
 
         try {
-            subjectCert = (X509CertificateObject) PemUtils.fromPem(subjectCertPem);
+            subjectCert = (X509Certificate) PemUtils.fromPem(subjectCertPem);
         } catch (PemException ex) {
             errorList.add("Error decodeing subject Cert data to X509Certificate");
         } catch (ClassCastException ex) {
@@ -275,7 +339,7 @@ public class CertUtils {
         return verifyIssuerAndSubjectCert(issuerCert, subjectCert);
     }
 
-    public static String certToStr(X509CertificateObject cert) {
+    public static String certToStr(X509Certificate cert) {
         StringBuilder sb = new StringBuilder(RsaConst.PAGESIZE);
         String subjectStr = cert.getSubjectX500Principal().toString();
         String issuerStr = cert.getIssuerX500Principal().toString();
@@ -302,7 +366,7 @@ public class CertUtils {
         return sb.toString();
     }
 
-    public static boolean isSelfSigned(X509CertificateObject cert) {
+    public static boolean isSelfSigned(X509Certificate cert) {
         PublicKey pubKey = cert.getPublicKey();
         try {
             cert.verify(pubKey);
@@ -321,14 +385,79 @@ public class CertUtils {
     }
 
     public static boolean isSelfSigned(byte[] certPem) {
-        X509CertificateObject cert;
+        X509Certificate cert;
         try {
-            cert = (X509CertificateObject) PemUtils.fromPem(certPem);
+            cert = (X509Certificate) PemUtils.fromPem(certPem);
         } catch (PemException ex) {
             return false;
         } catch (ClassCastException ex) {
             return false;
         }
         return isSelfSigned(cert);
+    }
+
+    public static boolean isCertExpired(X509Certificate x509, Date date) {
+        Date dateObj = date;
+        if (date == null) {
+            dateObj = new Date(System.currentTimeMillis());
+        }
+        Date x509after = x509.getNotAfter();
+        boolean isExpiredCert = x509after.before(dateObj);
+        return isExpiredCert;
+    }
+
+    public static boolean isCertPremature(X509Certificate x509, Date date) {
+        Date dateObj = date;
+        if (date == null) {
+            dateObj = new Date(System.currentTimeMillis());
+        }
+        Date x509Before = x509.getNotBefore();
+        boolean isPrematureCert = x509Before.after(dateObj);
+        return isPrematureCert;
+    }
+
+    public static boolean isCertDateValid(X509Certificate x509, Date date) {
+        return !isCertPremature(x509, date) && !isCertExpired(x509, date);
+    }
+
+    public static X509Certificate quickSelfSign(KeyPair kpIn, String subjectName, Date notBefore, Date notAfter) throws RsaException {
+        KeyPair kp;
+        kp = kpIn;
+        if (kp == null) {
+            kp = RSAKeyUtils.genKeyPair(RSAKeyUtils.DEFAULT_KEY_SIZE);  // If you pass in null you'll never see the key again
+        }
+        PKCS10CertificationRequest csr = CsrUtils.newCsr(subjectName, kp, true);
+        X509Certificate x509 = CertUtils.selfSignCsrCA(csr, kp, notBefore, notAfter);
+        return x509;
+    }
+
+    public static Set<X509Certificate> getExpiredCerts(Set<X509Certificate> certs, Date date) {
+        Set<X509Certificate> expiredCerts = new HashSet<X509Certificate>();
+        for (X509Certificate x509 : certs) {
+            if (isCertExpired(x509, date)) {
+                expiredCerts.add(x509);
+            }
+        }
+        return expiredCerts;
+    }
+
+    public static Set<X509Certificate> getPrematureCerts(Set<X509Certificate> certs, Date date) {
+        Set<X509Certificate> prematureCerts = new HashSet<X509Certificate>();
+        for (X509Certificate x509 : certs) {
+            if (isCertPremature(x509, date)) {
+                prematureCerts.add(x509);
+            }
+        }
+        return prematureCerts;
+    }
+
+    public static Set<X509Certificate> getValidDateCerts(Set<X509Certificate> certs, Date date) {
+        Set<X509Certificate> validDateCerts = new HashSet<X509Certificate>();
+        for (X509Certificate x509 : certs) {
+            if (isCertDateValid(x509, date)) {
+                validDateCerts.add(x509);
+            }
+        }
+        return validDateCerts;
     }
 }

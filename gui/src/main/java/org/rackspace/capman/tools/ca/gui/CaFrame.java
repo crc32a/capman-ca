@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca.gui;
 
+import org.bouncycastle.jce.provider.X509CertificateObject;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -8,10 +9,11 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
-import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.PemUtils;
 import java.io.File;
@@ -36,6 +38,7 @@ import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import static org.rackspace.capman.tools.ca.StringUtils.getEST;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.rackspace.capman.tools.ca.CsrUtils;
+import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import org.rackspace.capman.tools.ca.gui.utils.CaTextPane;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
 import org.rackspace.capman.tools.ca.zeus.ZeusCertFile;
@@ -1464,8 +1467,8 @@ public class CaFrame extends javax.swing.JFrame {
             PKCS10CertificationRequest req = (PKCS10CertificationRequest) obj;
             msg = String.format(fmt, CsrUtils.csrToStr(req));
             logDbg("%s\n", msg);
-        } else if (obj instanceof X509CertificateObject) {
-            X509CertificateObject cert = (X509CertificateObject) obj;
+        } else if (obj instanceof X509Certificate) {
+            X509Certificate cert = (X509Certificate) obj;
             String certStr = CertUtils.certToStr(cert);
             logDbg("%s", certStr);
         }
@@ -1694,7 +1697,7 @@ public class CaFrame extends javax.swing.JFrame {
         String csrFile = csrFN2.getText();
         String crtOutFile = certOutFN.getText();
         X509Certificate crt;
-        X509CertificateObject caCrt;
+        X509Certificate caCrt;
         BigInteger serial;
         RsaPair keys;
         PKCS10CertificationRequest req;
@@ -1793,7 +1796,7 @@ public class CaFrame extends javax.swing.JFrame {
                 return;
             }
             try {
-                caCrt = (X509CertificateObject) PemUtils.fromPem(caCrtBytes);
+                caCrt = (X509Certificate) PemUtils.fromPem(caCrtBytes);
             } catch (RsaException ex) {
                 fmt = "Error translating \"%s\" to X509Certificate\n%s\n";
                 logError(fmt, caCrtFile, getEST(ex));
@@ -2052,10 +2055,10 @@ public class CaFrame extends javax.swing.JFrame {
         updateCrtPathTab();
     }//GEN-LAST:event_crtPathCrtFileButtonActionPerformed
 
-    private X509CertificateObject readCrtPathFN() {
+    private X509Certificate readCrtPathFN() {
         File file = new File(crtPathFN.getText());
         byte[] pemBytes;
-        X509CertificateObject x509obj;
+        X509Certificate x509obj;
 
 
         try {
@@ -2066,7 +2069,7 @@ public class CaFrame extends javax.swing.JFrame {
             return null;
         }
         try {
-            x509obj = (X509CertificateObject) PemUtils.fromPem(pemBytes);
+            x509obj = (X509Certificate) PemUtils.fromPem(pemBytes);
         } catch (PemException ex) {
             pth.redWrite("Error decodeing contents of \"%s\" to X509Certificate object", file.getName());
             pth.writeException(ex);
@@ -2078,13 +2081,17 @@ public class CaFrame extends javax.swing.JFrame {
     private void displayChain(List<? extends X509Certificate> certs) {
         for (int i = 0; i < certs.size(); i++) {
             String pemString;
-            X509CertificateObject x509obj;
+            X509Certificate x509obj;
             X509Inspector x509reader;
             X509Certificate curX509 = certs.get(i);
             try {
                 x509reader = X509Inspector.newX509Inspector(curX509);
             } catch (CertificateException ex) {
                 pth.redWrite("Error creating reader for crtPath[%d] Skipping\n", i);
+                pth.writeException(ex);
+                continue;
+            } catch (NotAnX509CertificateException ex) {
+                pth.redWrite("Skipping null object in crtPath[%d]", i);
                 pth.writeException(ex);
                 continue;
             }
@@ -2113,7 +2120,7 @@ public class CaFrame extends javax.swing.JFrame {
 
     private void buildNieveChainButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buildNieveChainButtonActionPerformed
         File file = new File(crtPathFN.getText());
-        X509CertificateObject x509obj = readCrtPathFN();
+        X509Certificate x509obj = readCrtPathFN();
         String pemString;
         if (x509obj == null) {
             return; // The exception was already reported
@@ -2132,65 +2139,78 @@ public class CaFrame extends javax.swing.JFrame {
 
     private void loadRootCAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadRootCAsButtonActionPerformed
         for (X509MapValue mapVal : x509MapValList) {
-            X509CertificateObject x509obj = mapVal.getX509CertificateObject();
+            X509Certificate x509obj = mapVal.getX509CertificateObject();
             rootCAs.add(x509obj);
         }
         updateCrtPathTab();
     }//GEN-LAST:event_loadRootCAsButtonActionPerformed
 
     private void clearRootCAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearRootCAsButtonActionPerformed
-        rootCAs = new HashSet<X509CertificateObject>();
+        rootCAs = new HashSet<X509Certificate>();
         updateCrtPathTab();
 
     }//GEN-LAST:event_clearRootCAsButtonActionPerformed
 
     private void loadImdsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadImdsButtonActionPerformed
         for (X509MapValue mapVal : x509MapValList) {
-            X509CertificateObject x509obj = mapVal.getX509CertificateObject();
+            X509Certificate x509obj = mapVal.getX509CertificateObject();
             imds.add(x509obj);
         }
         updateCrtPathTab();
     }//GEN-LAST:event_loadImdsButtonActionPerformed
 
     private void clearImdsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearImdsButtonActionPerformed
-        imds = new HashSet<X509CertificateObject>();
+        imds = new HashSet<X509Certificate>();
         updateCrtPathTab();
     }//GEN-LAST:event_clearImdsButtonActionPerformed
 
     private void displayX509CertificateHashCodes(String preMsg, List x509s) throws CertificateEncodingException, CertificateParsingException {
         X509CertificateObject x509obj;
         int hashCode;
-        for (Object obj : x509s) {
+        for (int i = 0; i < x509s.size(); i++) {
+            Object obj = x509s.get(i);
+            X509Inspector xr;
             if (obj instanceof X509CertificateObject) {
                 x509obj = (X509CertificateObject) obj;
                 hashCode = x509obj.hashCode();
+                try {
+                    xr = new X509Inspector(x509obj);
+                } catch (NotAnX509CertificateException ex) {
+                    pth.redWrite("Skipping null object in crtPath[%d]", i);
+                    pth.writeException(ex);
+                    continue;
+                }
             } else if (obj instanceof X509Certificate) {
                 X509Certificate x509 = (X509Certificate) obj;
-                x509obj = X509Inspector.newX509Inspector(x509).getX509CertificateObject();
+                try {
+                    xr = X509Inspector.newX509Inspector(x509);
+                } catch (NotAnX509CertificateException ex) {
+                    pth.redWrite("Skipping null object in crtPath[%d]", i);
+                    pth.writeException(ex);
+                    continue;
+                }
+                x509obj = xr.getX509CertificateObject();
                 hashCode = x509.hashCode();
             } else {
-                String fmt = "%s could not be cast to X509CertificateObject";
-                String msg = String.format(fmt, obj.getClass().getSimpleName());
-                throw new ClassCastException(msg);
+                String fmt = "Skipping crtPath[%d] could not cast to X509CertificateObject";
+                pth.redWrite(fmt, i);
+                continue;
             }
-            X509Inspector xr = new X509Inspector(x509obj);
 
             String subjName = (xr.getSubjectName() == null) ? "null" : xr.getSubjectName();
             String issuerName = (xr.getIssuerName() == null) ? "null" : xr.getIssuerName();
             pth.greenWrite("%s%10d= \"%s\" <-- \"%s\"\n", preMsg, hashCode, subjName, issuerName);
-
         }
-
     }
 
     private void buildPXIXPathButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buildPXIXPathButtonActionPerformed
-        X509PathBuilder<X509CertificateObject> pathBuilder = new X509PathBuilder<X509CertificateObject>();
-        X509BuiltPath<X509CertificateObject> builtPath;
+        X509PathBuilder<X509Certificate> pathBuilder = new X509PathBuilder<X509Certificate>();
+        X509BuiltPath<X509Certificate> builtPath;
         pathBuilder.getRootCAs().addAll(rootCAs);
         pathBuilder.getIntermediates().addAll(imds);
-        X509CertificateObject userCrt = readCrtPathFN();
+        X509Certificate userCrt = readCrtPathFN();
         X509Inspector x509reader;
-        List<X509CertificateObject> x509objs;
+        List<X509Certificate> x509objs;
         if (userCrt == null) {
             return;
         }
@@ -2200,12 +2220,12 @@ public class CaFrame extends javax.swing.JFrame {
             pth.writeException(ex);
             return;
         }
-        X509CertificateObject topCrt = builtPath.getRoot();
+        X509Certificate topCrt = builtPath.getRoot();
         x509objs = builtPath.getPath();
         pth.greenWrite(String.format("Found %d certs\n", x509objs.size()));
         displayChain(x509objs);
         pth.greenWrite("RootCA for this crt:\n");
-        x509objs = new ArrayList<X509CertificateObject>();
+        x509objs = new ArrayList<X509Certificate>();
         x509objs.add(topCrt);
         displayChain(x509objs);
     }//GEN-LAST:event_buildPXIXPathButtonActionPerformed
@@ -2220,8 +2240,8 @@ public class CaFrame extends javax.swing.JFrame {
 
     private void displayRootImdHashCodesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_displayRootImdHashCodesActionPerformed
         try {
-            displayX509CertificateHashCodes("rootCAs:", new ArrayList<X509CertificateObject>(rootCAs));
-            displayX509CertificateHashCodes("intermediates:", new ArrayList<X509CertificateObject>(imds));
+            displayX509CertificateHashCodes("rootCAs:", new ArrayList<X509Certificate>(rootCAs));
+            displayX509CertificateHashCodes("intermediates:", new ArrayList<X509Certificate>(imds));
         } catch (CertificateEncodingException ex) {
             pth.writeException(ex);
             return;
@@ -2233,8 +2253,8 @@ public class CaFrame extends javax.swing.JFrame {
 
     private void displayCrtHashCodeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_displayCrtHashCodeButtonActionPerformed
         try {
-            X509CertificateObject userCrt = readCrtPathFN();
-            ArrayList<X509CertificateObject> userCrtAsSingleList = new ArrayList<X509CertificateObject>();
+            X509Certificate userCrt = readCrtPathFN();
+            ArrayList<X509Certificate> userCrtAsSingleList = new ArrayList<X509Certificate>();
             if (userCrt != null) {
                 userCrtAsSingleList.add(userCrt);
             }
@@ -2258,8 +2278,8 @@ public class CaFrame extends javax.swing.JFrame {
         x509Chainer = new X509Chainer();
         dbg = new CaTextPane(debugMessagesPane);
         pth = new CaTextPane(crtPathMessagesPane);
-        rootCAs = new HashSet<X509CertificateObject>();
-        imds = new HashSet<X509CertificateObject>();
+        rootCAs = new HashSet<X509Certificate>();
+        imds = new HashSet<X509Certificate>();
     }
 
     private File chooseFilePopUp() {
@@ -2446,8 +2466,8 @@ public class CaFrame extends javax.swing.JFrame {
     private X509Chainer x509Chainer;
     private CaTextPane dbg;
     private CaTextPane pth;
-    private Set<X509CertificateObject> rootCAs;
-    private Set<X509CertificateObject> imds;
+    private Set<X509Certificate> rootCAs;
+    private Set<X509Certificate> imds;
     private int nopCount = 0;
 
     private void logError(String format, Object... args) {

@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -112,7 +113,7 @@ public class RsaFileUtils {
             if (decodedObj == null) {
                 continue;
             }
-            if (!(decodedObj instanceof X509CertificateObject)) {
+            if (!(decodedObj instanceof X509Certificate)) {
                 continue;
             }
             X509CertificateObject x509obj = (X509CertificateObject) block.getDecodedObject();

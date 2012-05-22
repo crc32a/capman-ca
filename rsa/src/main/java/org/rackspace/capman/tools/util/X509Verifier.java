@@ -1,10 +1,10 @@
 package org.rackspace.capman.tools.util;
 
-import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.CertUtils;
 import java.security.KeyPair;
 import java.util.List;
+import org.bouncycastle.jce.provider.X509CertificateObject;
 
 
 // Simple class that merges functionality from CertUtils and KeyUtils
