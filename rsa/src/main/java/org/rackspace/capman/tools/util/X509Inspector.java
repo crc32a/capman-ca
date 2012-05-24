@@ -238,18 +238,18 @@ public class X509Inspector {
         return authKeyId;
     }
 
-    public boolean isExpired(Date date){
-        Date dateObj = (date==null)?new Date(System.currentTimeMillis()):date;
+    public boolean isExpired(Date date) {
+        Date dateObj = (date == null) ? new Date(System.currentTimeMillis()) : date;
         return CertUtils.isCertExpired(x509obj, date);
     }
 
     public boolean isPremature(Date date) {
-        Date dateObj = (date==null)?new Date(System.currentTimeMillis()):date;
+        Date dateObj = (date == null) ? new Date(System.currentTimeMillis()) : date;
         return CertUtils.isCertPremature(x509obj, date);
     }
 
-    public boolean isDateValid(Date date){
-        Date dateObj = (date==null)?new Date(System.currentTimeMillis()):date;
+    public boolean isDateValid(Date date) {
+        Date dateObj = (date == null) ? new Date(System.currentTimeMillis()) : date;
         return CertUtils.isCertDateValid(x509obj, date);
 
     }

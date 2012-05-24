@@ -29,16 +29,20 @@ import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class RSAKeyUtils {
+
     public static final int DEFAULT_KEY_SIZE = 2048;
-    static{
+
+    static {
         RsaConst.init();
     }
     private static final BigInteger m16bit = new BigInteger("ffff", 16);
 
+    @Deprecated
     public static RsaPair genRSAPair(int bits, int certainity) throws NoSuchAlgorithmException {
         return RsaPair.getInstance(bits, certainity);
     }
 
+    @Deprecated
     public static List<String> verifyKeyAndCert(KeyPair kp, X509Certificate cert) {
         List<String> errorList = new ArrayList<String>();
         RsaPair rp;
@@ -51,6 +55,7 @@ public class RSAKeyUtils {
         return verifyKeyAndCert(rp, cert);
     }
 
+    @Deprecated
     public static List<String> verifyKeyAndCert(RsaPair rp, X509Certificate cert) {
         List<String> errorList = new ArrayList<String>();
         JCERSAPublicKey certPub = null;
@@ -95,6 +100,7 @@ public class RSAKeyUtils {
         return errorList;
     }
 
+    @Deprecated
     public static List<String> verifyKeyAndCert(byte[] keyPem, byte[] certPem) {
         List<String> errorList = new ArrayList<String>();
         RsaPair rp;
@@ -161,14 +167,14 @@ public class RSAKeyUtils {
         }
     }
 
-    public static KeyPair genKeyPair(int keySize) throws RsaException{
+    public static KeyPair genKeyPair(int keySize) throws RsaException {
         SecureRandom sr;
         KeyPairGenerator kpGen;
         try {
             sr = SecureRandom.getInstance("SHA1PRNG");
         } catch (java.security.NoSuchAlgorithmException ex) {
-            throw new RsaException("Could not generate RSA Key",ex);
-        }        
+            throw new RsaException("Could not generate RSA Key", ex);
+        }
         try {
             kpGen = KeyPairGenerator.getInstance("RSA", "BC");
         } catch (java.security.NoSuchAlgorithmException ex) {

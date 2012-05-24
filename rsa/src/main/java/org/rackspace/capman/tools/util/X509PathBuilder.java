@@ -14,6 +14,7 @@ import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -49,7 +50,13 @@ public class X509PathBuilder<E extends X509Certificate> {
         intermediates = new HashSet<E>();
     }
 
+
     public X509BuiltPath<E> buildPath(E userCrt) throws X509PathBuildException   {
+        return buildPath(userCrt,null);
+    }
+
+
+    public X509BuiltPath<E> buildPath(E userCrt,Date date) throws X509PathBuildException   {
         List<E> discoveredPath = new ArrayList<E>();
 
         // Build Crt Store
@@ -88,6 +95,7 @@ public class X509PathBuilder<E extends X509Certificate> {
         pbp.addCertStore(crtStore);
         pbp.setRevocationEnabled(false);
         pbp.setMaxPathLength(25);
+        pbp.setDate(date);
 
         CertPathBuilder pathBuilder;
         try {
@@ -120,7 +128,6 @@ public class X509PathBuilder<E extends X509Certificate> {
         TrustAnchor topAnchor;
         TrustAnchor mostTrustedAnchor = buildResponse.getTrustAnchor();
         Object obj = mostTrustedAnchor.getTrustedCert();
-        System.out.printf("hashCode=%d\n",obj.hashCode());
         E topCrt = (E)mostTrustedAnchor.getTrustedCert();
         X509BuiltPath<E> builtPath = new X509BuiltPath<E>(discoveredPath,topCrt);
         return builtPath;

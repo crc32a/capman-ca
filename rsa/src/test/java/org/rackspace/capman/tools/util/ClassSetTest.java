@@ -1,11 +1,14 @@
 package org.rackspace.capman.tools.util;
 
 import ClassSetClasses.ChildOfObjectOnly;
+import java.io.UnsupportedEncodingException;
 import java.util.Set;
 import ClassSetClasses.SomeBase;
 import ClassSetClasses.SomeOtherSubOfBase;
 import ClassSetClasses.SubSomeBase;
 import ClassSetClasses.SubSubSomeBase;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -62,7 +65,6 @@ public class ClassSetTest {
         failFalse(ClassSet.isSuperOf(SubSomeBase.class, SubSubSomeBase.class));
         failTrue(ClassSet.isSuperOf(SomeBase.class, Object.class));
         failTrue(ClassSet.isSuperOf(SubSubSomeBase.class, SomeBase.class));
-
     }
 
     private boolean superMatches(ClassSet main, Class target,

@@ -1,5 +1,10 @@
 package org.rackspace.capman.tools.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchProviderException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.Collection;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -99,5 +104,13 @@ public class X509ReaderWriter {
             ex = new NotAnX509CertificateException(sb.toString());
         }
         return ex;
+    }
+
+    public static Collection<X509Certificate> nonPemUtilRead(String pem) throws CertificateException, NoSuchProviderException, UnsupportedEncodingException {
+        Collection x509s;
+        CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC");
+        ByteArrayInputStream bais = new ByteArrayInputStream(pem.getBytes("US-ASCII"));
+        x509s = cf.generateCertificates(bais);
+        return x509s;
     }
 }

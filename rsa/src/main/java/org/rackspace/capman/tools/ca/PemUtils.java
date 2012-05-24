@@ -36,18 +36,23 @@ public class PemUtils {
     public static final byte[] END_CSR;
     public static final byte[] BEG_CRT;
     public static final byte[] END_CRT;
+    public static final byte[] BEG_RSA;
+    public static final byte[] END_RSA;
     private static final int CR = 13;
     private static final int LF = 10;
     private static final int PAGESIZE = 4096;
 
     static {
         RsaConst.init();
+
         BEG_PRV = StringUtils.asciiBytes("-----BEGIN RSA PRIVATE KEY-----");
         END_PRV = StringUtils.asciiBytes("-----END RSA PRIVATE KEY-----");
         BEG_CSR = StringUtils.asciiBytes("-----BEGIN CERTIFICATE REQUEST-----");
         END_CSR = StringUtils.asciiBytes("-----END CERTIFICATE REQUEST-----");
         BEG_CRT = StringUtils.asciiBytes("-----BEGIN CERTIFICATE-----");
         END_CRT = StringUtils.asciiBytes("-----END CERTIFICATE-----");
+        BEG_RSA = StringUtils.asciiBytes("-----BEGIN PRIVATE KEY-----");
+        END_RSA = StringUtils.asciiBytes("-----END PRIVATE KEY-----");
     }
 
     public static byte[] readFileToByteArray(String fileName) throws FileNotFoundException, IOException {
@@ -85,7 +90,7 @@ public class PemUtils {
 
     public static Object fromPemString(String pem) throws PemException {
         try {
-            byte[] pemBytes = pem.getBytes("US-ASCII");
+            byte[] pemBytes = pem.getBytes(RsaConst.USASCII);
             return fromPem(pemBytes);
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(PemUtils.class.getName()).log(Level.SEVERE, null, ex);
@@ -115,7 +120,7 @@ public class PemUtils {
         byte[] pemBytes = toPem(obj);
         String out;
         try {
-            out = new String(pemBytes, "US-ASCII");
+            out = new String(pemBytes, RsaConst.USASCII);
         } catch (UnsupportedEncodingException ex) {
             throw new PemException("Could not encode Object to PEM", ex);
         }
@@ -142,6 +147,12 @@ public class PemUtils {
         return out;
     }
 
+    public static List<PemBlock> parseMultiPem(String multiPemString) {
+        byte[] multiPemBytes;
+        multiPemBytes = StringUtils.asciiBytes(multiPemString);
+        return parseMultiPem(multiPemBytes);
+    }
+
     public static List<PemBlock> parseMultiPem(byte[] multiPemBytes) {
         List<PemBlock> pemBlocks = new ArrayList<PemBlock>();
         ByteLineReader br = new ByteLineReader(multiPemBytes);
@@ -155,6 +166,7 @@ public class PemUtils {
         while (br.bytesAvailable() > 0) {
             currBytePos = br.getBytesRead();
             byte[] line = br.readLine(true);
+            line = ByteLineReader.trim(line); // Incase some one whitespaces their crt :(
             lc++;
             if (isEmptyLine(line)) {
                 continue;
@@ -220,6 +232,9 @@ public class PemUtils {
         if (cmpBytes(line, BEG_CRT)) {
             return true;
         }
+        if (cmpBytes(line, BEG_RSA)) {
+            return true;
+        }
         return false;
     }
 
@@ -231,6 +246,9 @@ public class PemUtils {
             return true;
         }
         if (cmpBytes(line, END_CRT)) {
+            return true;
+        }
+        if (cmpBytes(line, END_RSA)) {
             return true;
         }
         return false;

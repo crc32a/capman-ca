@@ -89,4 +89,27 @@ public class ClassSet extends HashSet<Class> {
         }
         return expectedParent.isAssignableFrom(expectedChild);
     }
+
+    public static ClassSet fromInstances(Collection<Object>objs) {
+        ClassSet classSetOut = new ClassSet();
+        for(Object obj : objs){
+            if(obj==null){
+                continue;
+            }
+            classSetOut.add(obj.getClass());
+        }
+        return classSetOut;
+    }
+
+    public List<String> classNames() {
+        List<String> names = new ArrayList<String>();
+        for (Class classInSet : this) {
+            if (classInSet == null) {
+                continue;
+            }
+            names.add(classInSet.getName());
+        }
+        Collections.sort(names);
+        return names;
+    }
 }

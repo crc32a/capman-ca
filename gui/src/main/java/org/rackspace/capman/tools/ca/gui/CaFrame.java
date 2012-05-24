@@ -41,8 +41,7 @@ import org.rackspace.capman.tools.ca.CsrUtils;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import org.rackspace.capman.tools.ca.gui.utils.CaTextPane;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
-import org.rackspace.capman.tools.ca.zeus.ZeusCertFile;
-import org.rackspace.capman.tools.ca.zeus.ZeusUtil;
+
 import org.rackspace.capman.tools.util.X509BuiltPath;
 import org.rackspace.capman.tools.util.X509Chainer;
 import org.rackspace.capman.tools.util.X509Map;
@@ -1947,25 +1946,6 @@ public class CaFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_clearKeyButtonActionPerformed
 
     private void verifyKeyCertChainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_verifyKeyCertChainActionPerformed
-        String key;
-        String cert;
-        String chain;
-
-        key = (keyText.getText().length() > 0) ? keyText.getText() : null;
-        cert = (certText.getText().length() > 0) ? certText.getText() : null;
-        chain = (chainText.getText().length() > 0) ? chainText.getText() : null;
-        ZeusCertFile zcf;
-        List<String> errorList;
-        zcf = ZeusUtil.getCertFile(key, cert, chain);
-        if (zcf.isError()) {
-            for (String errorStr : zcf.getErrorList()) {
-                logError("%s\n", errorStr);
-            }
-        } else {
-            logDbg("Certificate key and chain are valid");
-            logDbg(String.format("reencoded Key:\n%s\n", zcf.getPrivate_key()));
-            logDbg(String.format("\n\ncrt:\n%s\n\n", zcf.getPublic_cert()));
-        }
 
     }//GEN-LAST:event_verifyKeyCertChainActionPerformed
 

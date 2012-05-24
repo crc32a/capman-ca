@@ -45,11 +45,14 @@ import java.util.List;
 import java.util.Set;
 import javax.security.auth.x500.X500Principal;
 import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
+import org.rackspace.capman.tools.ca.zeus.primitives.ErrorEntry;
+import org.rackspace.capman.tools.ca.zeus.primitives.ErrorType;
 
 public class CertUtils {
 
@@ -69,7 +72,6 @@ public class CertUtils {
         return signCSR(req, kp, caCrt, days, serial);
     }
 
-    @Deprecated
     public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
         long nowMillis = System.currentTimeMillis();
         Date notBefore = new Date(nowMillis);
@@ -272,6 +274,7 @@ public class CertUtils {
         return cert;
     }
 
+    @Deprecated
     public static List<String> verifyIssuerAndSubjectCert(X509Certificate issuerCert, X509Certificate subjectCert) {
         List<String> errorList = new ArrayList<String>();
         PublicKey parentPub = null;
@@ -312,6 +315,7 @@ public class CertUtils {
         return errorList;
     }
 
+    @Deprecated
     public static List<String> verifyIssuerAndSubjectCert(byte[] issuerCertPem, byte[] subjectCertPem) {
         List<String> errorList = new ArrayList<String>();
         X509Certificate issuerCert = null;
@@ -339,6 +343,7 @@ public class CertUtils {
         return verifyIssuerAndSubjectCert(issuerCert, subjectCert);
     }
 
+    @Deprecated
     public static String certToStr(X509Certificate cert) {
         StringBuilder sb = new StringBuilder(RsaConst.PAGESIZE);
         String subjectStr = cert.getSubjectX500Principal().toString();
@@ -441,6 +446,50 @@ public class CertUtils {
         return expiredCerts;
     }
 
+    public static List<ErrorEntry> validateKeyMatchesCert(JCERSAPublicKey key, X509CertificateObject x509obj) {
+        List<ErrorEntry> errors = new ArrayList<ErrorEntry>();
+        JCERSAPublicKey certPub;
+        Object obj = x509obj.getPublicKey();
+        if (!(obj instanceof JCERSAPublicKey)) {
+            errors.add(new ErrorEntry(ErrorType.UNREADABLE_CERT, "Unable to extract public RSA key from x509 certificate", true,null));
+            return errors;
+        }
+        certPub = (JCERSAPublicKey) obj;
+
+        if (!(certPub.getModulus().equals(key.getModulus()))) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Modulus between user cert and key did not match", true,null));
+        }
+
+        if (!(certPub.getPublicExponent().equals(key.getPublicExponent()))){
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Cert and key public exponent do not match", true,null));
+        }
+        return errors;
+    }
+
+
+    public static List<ErrorEntry> validateKeySignsCert(JCERSAPublicKey key,X509CertificateObject x509obj){
+        List<ErrorEntry> errors = new ArrayList<ErrorEntry>();
+        JCERSAPublicKey certPub;
+        Object obj = x509obj.getPublicKey();
+        if (!(obj instanceof JCERSAPublicKey)) {
+            errors.add(new ErrorEntry(ErrorType.UNREADABLE_CERT, "Unable to extract public RSA key from x509 certificate", true,null));
+            return errors;
+        }
+        try {
+            x509obj.verify(key);
+        } catch (CertificateException ex) {
+            errors.add(new ErrorEntry(ErrorType.UNKNOWN, "Unknown CertificateException",true,ex));
+        } catch (NoSuchAlgorithmException ex) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Unknown signing Algorithm", true, ex));
+        } catch (InvalidKeyException ex) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH,"Key does not match certificate",true,ex));
+        } catch (NoSuchProviderException ex) {
+            errors.add(new ErrorEntry(ErrorType.UNKNOWN,"Could not find BouncyCastle provider",true,ex));
+        } catch (SignatureException ex) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Ivalid Signature", true, ex));
+        }
+        return errors;
+    }
     public static Set<X509Certificate> getPrematureCerts(Set<X509Certificate> certs, Date date) {
         Set<X509Certificate> prematureCerts = new HashSet<X509Certificate>();
         for (X509Certificate x509 : certs) {

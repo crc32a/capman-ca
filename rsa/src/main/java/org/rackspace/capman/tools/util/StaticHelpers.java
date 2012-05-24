@@ -8,7 +8,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
@@ -109,11 +108,20 @@ public class StaticHelpers {
         return union;
     }
 
-    public static Date calendarToDate(Calendar cal){
+    // Shortcut to fetching the object stored in a single element Set
+    public static <U> Object getFirst(Set<U> a) {
+        List<U> aList = new ArrayList(a);
+        if (aList.size() < 1) {
+            return null;
+        }
+        return aList.get(0);
+    }
+
+    public static Date calendarToDate(Calendar cal) {
         return cal.getTime();
     }
 
-    public static Calendar dateToCalendar(Date date){
+    public static Calendar dateToCalendar(Date date) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(date.getTime());
         return cal;
@@ -128,19 +136,19 @@ public class StaticHelpers {
         int hour = (tup.length > 3) ? tup[3] : 0;
         int min = (tup.length > 4) ? tup[4] : 0;
         int sec = (tup.length > 5) ? tup[5] : 0;
-        long ms = ((tup.length > 6) ? tup[6] : 0)%1000;
+        long ms = ((tup.length > 6) ? tup[6] : 0) % 1000;
         utc = TimeZone.getTimeZone("GMT");
         cal = Calendar.getInstance();
         cal.clear();
         cal.setTimeZone(utc);
-        cal.set(year,month,day,hour,min,sec);
+        cal.set(year, month, day, hour, min, sec);
 
         long calInMillis = cal.getTimeInMillis();
         cal.setTimeInMillis(calInMillis + ms);
         return cal;
     }
 
-    public static Date dateFromTuple(int ... tup){
+    public static Date dateFromTuple(int... tup) {
         return utcCalendarFromTuple(tup).getTime();
     }
 
@@ -154,22 +162,37 @@ public class StaticHelpers {
         return readableString;
     }
 
-    public static String getDateString(Date date){
+    public static String getDateString(Date date) {
         return getCalendarString(dateToCalendar(date));
     }
 
-    public static Date currDate(){
+    public static Date currDate() {
         return new Date(System.currentTimeMillis());
     }
 
-
-    public List<Throwable> getExceptionCausesList(Throwable th) {
+    public static List<Throwable> getExceptionCausesList(Throwable th) {
         List<Throwable> causes = new ArrayList<Throwable>();
-        Throwable t = th;
-        while (t != th) {
+        Throwable t;
+        t = th;
+        while (t != null) {
             causes.add(t);
-            t.getCause();
+            t = t.getCause();
         }
         return causes;
+    }
+
+    public static int ubyte2int(byte in) {
+        return (in >= 0) ? (int) in : (int) in + 256;
+    }
+
+    public static byte int2ubyte(int in) {
+        in &= 0xff;
+        return (in < 128) ? (byte) in : (byte) (in - 256);
+    }
+
+    public static boolean isByteWhiteSpace(byte byteIn) {
+        int ch;
+        ch = ubyte2int(byteIn);
+        return (ch >= 0x09 && ch <= 0x0d) || (ch >= 0x1c && ch <= 0x20);
     }
 }

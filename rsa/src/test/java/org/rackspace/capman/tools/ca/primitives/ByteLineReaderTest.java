@@ -119,6 +119,35 @@ public class ByteLineReaderTest {
         assertFalse(ByteLineReader.cmpBytes(line1result,line2result));
     }
 
+    @Test
+    public void testChop(){
+        byte[] line1 = asciiBytes("ABCDEF\n");
+        byte[] line2 = asciiBytes("ABCDEF");
+        byte[] line3 = asciiBytes("test \n");
+        byte[] line4 = asciiBytes("test ");
+        assertTrue(bytesMatchString("ABCDEF", ByteLineReader.chopLine(line1)));
+        assertTrue(bytesMatchString("ABCDEF", ByteLineReader.chopLine(line2)));
+        assertTrue(bytesMatchString("test ", ByteLineReader.chopLine(line3)));
+        assertTrue(bytesMatchString("test ", ByteLineReader.chopLine(line4)));
+    }
+
+    @Test
+    public void testTrime(){
+        byte[] line1 = asciiBytes(" trim this  ");
+        byte[] line2 = asciiBytes("             ");
+        byte[] line3 = asciiBytes(" \u001eRecord Seperator\u001f  ");
+        assertTrue(bytesMatchString("trim this",ByteLineReader.trim(line1)));
+        assertTrue(bytesMatchString("",ByteLineReader.trim(line2)));
+        assertTrue(bytesMatchString("Record Seperator",ByteLineReader.trim(line3)));
+
+        assertTrue(bytesMatchString("test",ByteLineReader.trim(asciiBytes("     test"))));
+        assertTrue(bytesMatchString("test",ByteLineReader.trim(asciiBytes("   test  "))));
+        assertTrue(bytesMatchString("test",ByteLineReader.trim(asciiBytes("test     "))));
+        assertTrue(bytesMatchString("",ByteLineReader.trim(asciiBytes("     "))));
+        assertTrue(bytesMatchString("",ByteLineReader.trim(asciiBytes(""))));
+        assertFalse(bytesMatchString("FAIL",ByteLineReader.trim(asciiBytes("PFFT"))));
+    }
+
     public boolean bytesMatchString(String expectedStr, byte[] b) {
         return ByteLineReader.cmpBytes(asciiBytes(expectedStr), b);
     }
