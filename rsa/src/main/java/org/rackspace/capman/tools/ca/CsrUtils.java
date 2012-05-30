@@ -125,9 +125,9 @@ public class CsrUtils {
         sb.append(String.format("Version: %s\n", version));
         sb.append(String.format("Subject Name: %s\n", x500Name.toString()));
         sb.append(String.format("CSR validation: %s\n", validStr));
-        boolean oidFound = RsaConst.oids.containsKey(algoId);
+        boolean oidFound = RsaConst.oids.containsKey(algoId.toString());
         if (oidFound) {
-            sigName = (String) RsaConst.oids.get(algoId);
+            sigName = (String) RsaConst.oids.get(algoId.toString());
         } else {
             sigName = req.getSignatureAlgorithm().getAlgorithm().getId();
         }

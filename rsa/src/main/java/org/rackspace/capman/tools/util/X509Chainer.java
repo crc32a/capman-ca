@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.Set;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
-// Nieve chain builder. Experiments suggest its useless for production
+// Nieve chain builder. Experiments suggest its useless for production dont use
+@Deprecated
 public class X509Chainer {
     static {
         RsaConst.init();
