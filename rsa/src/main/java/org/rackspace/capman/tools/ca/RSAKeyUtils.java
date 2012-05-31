@@ -35,7 +35,7 @@ public class RSAKeyUtils {
     static {
         RsaConst.init();
     }
-    private static final BigInteger m16bit = new BigInteger("ffff", 16);
+    private static final BigInteger m16bit = new BigInteger("10001", 16);
 
     @Deprecated
     public static RsaPair genRSAPair(int bits, int certainity) throws NoSuchAlgorithmException {
@@ -185,5 +185,25 @@ public class RSAKeyUtils {
         kpGen.initialize(keySize);
         KeyPair kp = kpGen.generateKeyPair();
         return kp;
+    }
+
+    public static String shortKey(Object obj) {
+        if (obj == null) {
+            return "null";
+        } else if (obj instanceof JCERSAPublicKey) {
+            JCERSAPublicKey pubKey;
+            pubKey = (JCERSAPublicKey) obj;
+            String shortMod = pubKey.getModulus().mod(m16bit).toString(16);
+            String shortE = pubKey.getPublicExponent().mod(m16bit).toString(16);
+            return String.format("(%s,%s)", shortMod, shortE);
+        } else if (obj instanceof JCERSAPrivateCrtKey) {
+            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey)obj;
+            JCERSAPublicKey pubKey = HackedProviderAccessor.newJCERSAPublicKey(privKey);
+            return shortKey(pubKey);
+        }else if (obj instanceof KeyPair){
+            KeyPair kp = (KeyPair)obj;
+            return shortKey(kp.getPrivate());
+        }
+        return "NaK";
     }
 }
