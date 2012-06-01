@@ -64,6 +64,7 @@ public class CsrUtils {
         return ca;
     }
 
+    @Deprecated
     public static PKCS10CertificationRequest newCsr(String subjStr, RsaPair rsaPair,
             boolean isCa) throws RsaException {
         KeyPair kp = rsaPair.toJavaSecurityKeyPair();

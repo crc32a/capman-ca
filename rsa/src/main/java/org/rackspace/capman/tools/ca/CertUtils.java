@@ -126,7 +126,9 @@ public class CertUtils {
         }
         // If the user left a blank serial number then use the current time for the serial number
         serialNum = (serial == null) ? BigInteger.valueOf(System.currentTimeMillis()) : serial;
-        subject = new X500Principal(req.getCertificationRequestInfo().getSubject().toString());
+        byte[] encodedSubject = req.getCertificationRequestInfo().getSubject().toASN1Object().getDEREncoded();
+        subject = new X500Principal(encodedSubject);
+        //subject = new X500Principal(req.getCertificationRequestInfo().getSubject().toString());
         issuer = caCrt.getSubjectX500Principal();
         certBuilder = new JcaX509v3CertificateBuilder(issuer, serialNum,
                 notBefore, notAfter, subject, crtPub);
@@ -274,7 +276,6 @@ public class CertUtils {
         return cert;
     }
 
-    @Deprecated
     public static List<String> verifyIssuerAndSubjectCert(X509Certificate issuerCert, X509Certificate subjectCert) {
         List<String> errorList = new ArrayList<String>();
         PublicKey parentPub = null;
@@ -315,7 +316,6 @@ public class CertUtils {
         return errorList;
     }
 
-    @Deprecated
     public static List<String> verifyIssuerAndSubjectCert(byte[] issuerCertPem, byte[] subjectCertPem) {
         List<String> errorList = new ArrayList<String>();
         X509Certificate issuerCert = null;
@@ -358,7 +358,7 @@ public class CertUtils {
         sb.append(String.format("   n = %s\n", n));
         sb.append(String.format("   e = %s\n", e));
         sb.append(String.format("ShortPub = %s\n", RSAKeyUtils.shortPub(pub)));
-        sb.append(String.format("pubModSize = %d\n",RSAKeyUtils.modSize(pub)));
+        sb.append(String.format("pubModSize = %d\n", RSAKeyUtils.modSize(pub)));
         String valid = "Valid";
         try {
             cert.checkValidity();
@@ -447,50 +447,73 @@ public class CertUtils {
         return expiredCerts;
     }
 
+    public static List<ErrorEntry> validateKeyMatchesCrt(KeyPair kp, X509CertificateObject x509obj) {
+        List<ErrorEntry> errors = new ArrayList<ErrorEntry>();
+        Object obj = kp.getPublic();
+        if (!(obj instanceof JCERSAPublicKey)) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Could not retrieve public key from keypair", true, null));
+            return errors;
+        }
+        JCERSAPublicKey pubKey = (JCERSAPublicKey) obj;
+        return validateKeyMatchesCert(pubKey, x509obj);
+    }
+
     public static List<ErrorEntry> validateKeyMatchesCert(JCERSAPublicKey key, X509CertificateObject x509obj) {
         List<ErrorEntry> errors = new ArrayList<ErrorEntry>();
         JCERSAPublicKey certPub;
         Object obj = x509obj.getPublicKey();
         if (!(obj instanceof JCERSAPublicKey)) {
-            errors.add(new ErrorEntry(ErrorType.UNREADABLE_CERT, "Unable to extract public RSA key from x509 certificate", true,null));
+            errors.add(new ErrorEntry(ErrorType.UNREADABLE_CERT, "Unable to extract public RSA key from x509 certificate", true, null));
             return errors;
         }
         certPub = (JCERSAPublicKey) obj;
 
         if (!(certPub.getModulus().equals(key.getModulus()))) {
-            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Modulus between user cert and key did not match", true,null));
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Modulus between user cert and key did not match", true, null));
         }
 
-        if (!(certPub.getPublicExponent().equals(key.getPublicExponent()))){
-            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Cert and key public exponent do not match", true,null));
+        if (!(certPub.getPublicExponent().equals(key.getPublicExponent()))) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Cert and key public exponent do not match", true, null));
         }
         return errors;
     }
 
+    public static List<ErrorEntry> validateKeySignsCert(KeyPair kp, X509CertificateObject x509obj) {
+        List<ErrorEntry> errors = new ArrayList<ErrorEntry>();
+        Object obj = kp.getPublic();
+        if (!(obj instanceof JCERSAPublicKey)) {
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Could not retrieve public key from keypair", true, null));
+            return errors;
+        }
+        JCERSAPublicKey pubKey = (JCERSAPublicKey) obj;
+        return validateKeySignsCert(pubKey, x509obj);
 
-    public static List<ErrorEntry> validateKeySignsCert(JCERSAPublicKey key,X509CertificateObject x509obj){
+    }
+
+    public static List<ErrorEntry> validateKeySignsCert(JCERSAPublicKey key, X509CertificateObject x509obj) {
         List<ErrorEntry> errors = new ArrayList<ErrorEntry>();
         JCERSAPublicKey certPub;
         Object obj = x509obj.getPublicKey();
         if (!(obj instanceof JCERSAPublicKey)) {
-            errors.add(new ErrorEntry(ErrorType.UNREADABLE_CERT, "Unable to extract public RSA key from x509 certificate", true,null));
+            errors.add(new ErrorEntry(ErrorType.UNREADABLE_CERT, "Unable to extract public RSA key from x509 certificate", true, null));
             return errors;
         }
         try {
             x509obj.verify(key);
         } catch (CertificateException ex) {
-            errors.add(new ErrorEntry(ErrorType.UNKNOWN, "Unknown CertificateException",true,ex));
+            errors.add(new ErrorEntry(ErrorType.UNKNOWN, "Unknown CertificateException", true, ex));
         } catch (NoSuchAlgorithmException ex) {
             errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Unknown signing Algorithm", true, ex));
         } catch (InvalidKeyException ex) {
-            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH,"Key does not match certificate",true,ex));
+            errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Key does not match certificate", true, ex));
         } catch (NoSuchProviderException ex) {
-            errors.add(new ErrorEntry(ErrorType.UNKNOWN,"Could not find BouncyCastle provider",true,ex));
+            errors.add(new ErrorEntry(ErrorType.UNKNOWN, "Could not find BouncyCastle provider", true, ex));
         } catch (SignatureException ex) {
             errors.add(new ErrorEntry(ErrorType.KEY_CERT_MISMATCH, "Ivalid Signature", true, ex));
         }
         return errors;
     }
+
     public static Set<X509Certificate> getPrematureCerts(Set<X509Certificate> certs, Date date) {
         Set<X509Certificate> prematureCerts = new HashSet<X509Certificate>();
         for (X509Certificate x509 : certs) {

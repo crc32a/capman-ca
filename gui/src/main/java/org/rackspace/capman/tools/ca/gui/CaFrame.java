@@ -1415,10 +1415,9 @@ public class CaFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(appTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addComponent(appTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE))
         );
 
         pack();
@@ -1458,12 +1457,12 @@ public class CaFrame extends javax.swing.JFrame {
 
 }//GEN-LAST:event_identifyFileButtonActionPerformed
 
-    private void printKnownPemObject(Object obj){
+    private void printKnownPemObject(Object obj) {
         String fmt;
         String msg;
         RsaPair rsaPair;
 
-        if(obj == null){
+        if (obj == null) {
             logError("Can't decode a null object");
             return;
         }
@@ -1482,7 +1481,7 @@ public class CaFrame extends javax.swing.JFrame {
                 String privName = priv.getClass().getCanonicalName();
                 logDbg("Privkey type = %s\n", privName);
                 logDbg("Publickey type = %s\n", pubName);
-                logDbg("modSize = %d\n",RSAKeyUtils.modSize(kp));
+                logDbg("modSize = %d\n", RSAKeyUtils.modSize(kp));
                 rsaPair = new RsaPair(kp);
                 logDbg("%s", rsaPair.toString());
             } catch (ConversionException ex) {
@@ -1534,9 +1533,8 @@ public class CaFrame extends javax.swing.JFrame {
         String keyFile = keyFN2.getText();
         String csrFile = csrFN1.getText();
         String subjStr;
-        KeyPair jKeyPair;
-        RsaPair rsaPair;
-        int bits;
+        KeyPair kp;
+        int keySize;
         byte[] csrBytes;
         byte[] keyBytes;
         PKCS10CertificationRequest csr;
@@ -1546,7 +1544,7 @@ public class CaFrame extends javax.swing.JFrame {
                 logDbg("Loading key from file \"%s\"\n", keyFile);
                 try {
                     keyBytes = PemUtils.readFileToByteArray(keyFile);
-                    jKeyPair = getKeyPairFromBytes(keyBytes);
+                    kp = getKeyPairFromBytes(keyBytes);
                 } catch (PemException ex) {
                     logError("Error decoding keypair\n%s\n", getEST(ex));
                     return;
@@ -1554,17 +1552,11 @@ public class CaFrame extends javax.swing.JFrame {
                     logError("Error reading from %s\n%s\n", keyFile, getEST(ex));
                     return;
                 }
-                try {
-                    rsaPair = new RsaPair(jKeyPair);
-                } catch (ConversionException ex) {
-                    logError("Error converting keypair\n%s\n", getEST(ex));
-                    return;
-                }
                 break;
             default:
                 logDbg("Generating fresh key\n");
                 try {
-                    bits = Integer.parseInt(newCsrKeySizeTextField.getText());
+                    keySize = Integer.parseInt(newCsrKeySizeTextField.getText());
                 } catch (NumberFormatException ex) {
                     tmpStr = newCsrKeySizeTextField.getText();
                     fmt = "Error converting %s to an integer\n%s\n";
@@ -1573,16 +1565,17 @@ public class CaFrame extends javax.swing.JFrame {
                     return;
                 }
                 try {
-                    rsaPair = RSAKeyUtils.genRSAPair(bits, RsaConst.DEFAULT_PRIME_CERTAINTY);
-                } catch (NoSuchAlgorithmException ex) {
+                    kp = RSAKeyUtils.genKeyPair(keySize);
+                } catch (RsaException ex) {
+
                     fmt = "Error generating %d bit key\n%s\n";
-                    msg = String.format(fmt, bits, getEST(ex));
+                    msg = String.format(fmt, keySize, getEST(ex));
                     logError("%s\n", msg);
                     return;
                 }
                 try {
                     logDbg("Writing key to pem format\n");
-                    keyBytes = rsaPair.getPrivAsPem();
+                    keyBytes = PemUtils.toPem(kp);
                     logDbg("Saving key pem file to \"%s\"\n", keyFile);
                     PemUtils.writeFileFromByteArray(keyFile, keyBytes);
                 } catch (IOException ex) {
@@ -1628,7 +1621,7 @@ public class CaFrame extends javax.swing.JFrame {
         }
         logDbg("Encoding subjectName as \"%s\"\n", subjStr);
         try {
-            csr = CsrUtils.newCsr(subjStr, rsaPair, caCheckBox.isSelected());
+            csr = CsrUtils.newCsr(subjStr, kp, caCheckBox.isSelected());
         } catch (RsaException ex) {
             fmt = "Error generating csr\n%s\n";
             msg = String.format(fmt, getEST(ex));
@@ -1670,7 +1663,7 @@ public class CaFrame extends javax.swing.JFrame {
         String fmt;
         int keySize;
         String fileName;
-        RsaPair key;
+        KeyPair kp;
         FileWriter fw;
         try {
             keySize = Integer.parseInt(keySizeTextField.getText());
@@ -1681,17 +1674,16 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            key = RSAKeyUtils.genRSAPair(keySize, RsaConst.DEFAULT_PRIME_CERTAINTY);
-        } catch (NoSuchAlgorithmException ex) {
+            kp = RSAKeyUtils.genKeyPair(keySize);
+        } catch (RsaException ex) {
+
             logError(String.format("%s\n", getEST(ex)));
             return;
         }
-
-        logDbg("new Key Generated\n%s\n", key.toString());
-
+        logDbg("new Key Generated\n%s\n", kp.toString());
         try {
-            pem = key.getPrivAsPem();
-        } catch (RsaException ex) {
+            pem = PemUtils.toPem(kp);
+        } catch (PemException ex) {
             logError(String.format("%s\n", getEST(ex)));
             return;
         }
@@ -1886,7 +1878,7 @@ public class CaFrame extends javax.swing.JFrame {
                 continue;
             }
             logDbg("Block starting at line %d decoded to object \"%s\"\n", lineNum, className);
-            if(obj == null){
+            if (obj == null) {
                 continue;
             }
             printKnownPemObject(obj);
@@ -1982,23 +1974,23 @@ public class CaFrame extends javax.swing.JFrame {
         String crt = certText.getText();
         String chain = chainText.getText();
         Set<X509CertificateObject> roots = new HashSet<X509CertificateObject>();
-        for(X509Certificate root : rootCAs){
-            roots.add((X509CertificateObject)root);
+        for (X509Certificate root : rootCAs) {
+            roots.add((X509CertificateObject) root);
         }
         ZeusUtils zu = new ZeusUtils(roots);
         ZeusCrtFile zcf = zu.buildZeusCrtFile(key, crt, chain);
         List<ErrorEntry> errors = zcf.getErrors();
-        if(!errors.isEmpty()){
+        if (!errors.isEmpty()) {
             int i;
-            int last_i = errors.size() -1;
-            for(i=0;i<=last_i;i++){
+            int last_i = errors.size() - 1;
+            for (i = 0; i <= last_i; i++) {
                 ErrorEntry error = errors.get(i);
-                logError("Error %d of %d:\n%s\n\n",i,last_i,error.toString(true));
+                logError("Error %d of %d:\n%s\n\n", i, last_i, error.toString(true));
             }
-        }else{
+        } else {
             String zkey = zcf.getPrivate_key();
             String zcrt = zcf.getPublic_cert();
-            logDbg("No Errors\nZuesKey:\n%s\n\nZeusCrt:\n%s\n\n", zkey,zcrt);
+            logDbg("No Errors\nZuesKey:\n%s\n\nZeusCrt:\n%s\n\n", zkey, zcrt);
         }
     }//GEN-LAST:event_verifyKeyCertChainActionPerformed
 
