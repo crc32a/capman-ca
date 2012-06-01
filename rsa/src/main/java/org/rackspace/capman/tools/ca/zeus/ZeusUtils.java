@@ -101,12 +101,12 @@ public class ZeusUtils {
                 errors.add(new ErrorEntry(ErrorType.NO_PATH_TO_ROOT, "No Path to root", true, ex));
                 return zcf;
             }
-            StringBuilder sb = new StringBuilder(RsaConst.PAGESIZE);
+            StringBuilder zcrtString = new StringBuilder(RsaConst.PAGESIZE);
             List<ErrorEntry> certWriteErrors = new ArrayList<ErrorEntry>();
             for (X509CertificateObject x509obj : builtPath.getPath()) {
                 try {
                     String x509String = PemUtils.toPemString(x509obj);
-                    sb.append(x509String);
+                    zcrtString.append(x509String);
                 } catch (PemException ex) {
                     certWriteErrors.add(new ErrorEntry(ErrorType.COULDENT_ENCODE_CERT, "Coulden't encode intermediate", true, ex));
                 }
@@ -115,6 +115,7 @@ public class ZeusUtils {
                     return zcf;
                 }
             }
+            zcf.setPublic_cert(zcrtString.toString());
         }
         if (kp != null) {
             try {

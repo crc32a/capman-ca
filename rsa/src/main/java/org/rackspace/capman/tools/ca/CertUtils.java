@@ -49,7 +49,7 @@ import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
-import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
+import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import org.rackspace.capman.tools.ca.zeus.primitives.ErrorEntry;
 import org.rackspace.capman.tools.ca.zeus.primitives.ErrorType;
@@ -358,6 +358,7 @@ public class CertUtils {
         sb.append(String.format("   n = %s\n", n));
         sb.append(String.format("   e = %s\n", e));
         sb.append(String.format("ShortPub = %s\n", RSAKeyUtils.shortPub(pub)));
+        sb.append(String.format("pubModSize = %d\n",RSAKeyUtils.modSize(pub)));
         String valid = "Valid";
         try {
             cert.checkValidity();

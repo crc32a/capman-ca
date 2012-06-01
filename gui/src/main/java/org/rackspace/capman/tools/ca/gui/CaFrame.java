@@ -41,6 +41,8 @@ import org.rackspace.capman.tools.ca.CsrUtils;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import org.rackspace.capman.tools.ca.gui.utils.CaTextPane;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
+import org.rackspace.capman.tools.ca.zeus.primitives.ErrorEntry;
+import org.rackspace.capman.tools.ca.zeus.primitives.ZeusCrtFile;
 
 import org.rackspace.capman.tools.util.X509BuiltPath;
 import org.rackspace.capman.tools.util.X509Chainer;
@@ -49,6 +51,7 @@ import org.rackspace.capman.tools.util.X509MapValue;
 import org.rackspace.capman.tools.util.X509PathBuilder;
 import org.rackspace.capman.tools.util.X509Inspector;
 import org.rackspace.capman.tools.ca.exceptions.X509PathBuildException;
+import org.rackspace.capman.tools.ca.zeus.ZeusUtils;
 import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
 import static org.rackspace.capman.tools.ca.gui.utils.GuiConst.*;
 
@@ -155,6 +158,7 @@ public class CaFrame extends javax.swing.JFrame {
         clearCertButton = new javax.swing.JButton();
         jLabel15 = new javax.swing.JLabel();
         clearChainButton = new javax.swing.JButton();
+        jLabel21 = new javax.swing.JLabel();
         crtPathTab = new javax.swing.JPanel();
         loadX509MapsBorder = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
@@ -826,6 +830,8 @@ public class CaFrame extends javax.swing.JFrame {
             }
         });
 
+        jLabel21.setText("<html><small><span style=\"color:blue\">(be sure to add your roots via the </span>Crt Path<span style=\"color:blue\"> tab)</span></small></html>\n        ");
+
         javax.swing.GroupLayout verifyKeyCrtPanelLayout = new javax.swing.GroupLayout(verifyKeyCrtPanel);
         verifyKeyCrtPanel.setLayout(verifyKeyCrtPanelLayout);
         verifyKeyCrtPanelLayout.setHorizontalGroup(
@@ -856,7 +862,10 @@ public class CaFrame extends javax.swing.JFrame {
                                 .addComponent(jLabel15)
                                 .addGap(18, 18, 18)
                                 .addComponent(clearChainButton, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE))))
-                    .addComponent(verifyKeyCertChain, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
+                        .addComponent(verifyKeyCertChain, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 423, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         verifyKeyCrtPanelLayout.setVerticalGroup(
@@ -876,7 +885,9 @@ public class CaFrame extends javax.swing.JFrame {
                         .addGap(12, 12, 12)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18)
-                .addComponent(verifyKeyCertChain)
+                .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(verifyKeyCertChain)
+                    .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(36, Short.MAX_VALUE))
         );
 
@@ -888,13 +899,13 @@ public class CaFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(verifyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(verifyPanelLayout.createSequentialGroup()
-                        .addComponent(verifyKeyCertPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(596, Short.MAX_VALUE))
-                    .addGroup(verifyPanelLayout.createSequentialGroup()
                         .addComponent(keycertandchainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(518, 518, 518))
                     .addGroup(verifyPanelLayout.createSequentialGroup()
                         .addComponent(verifyKeyCrtPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(verifyPanelLayout.createSequentialGroup()
+                        .addComponent(verifyKeyCertPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
         verifyPanelLayout.setVerticalGroup(
@@ -1196,7 +1207,7 @@ public class CaFrame extends javax.swing.JFrame {
 
         crtPathMessagesPane.setBackground(new java.awt.Color(0, 0, 0));
         crtPathMessagesPane.setEditable(false);
-        crtPathMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        crtPathMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 12));
         crtPathMessagesPane.setForeground(new java.awt.Color(0, 255, 0));
         jScrollPane5.setViewportView(crtPathMessagesPane);
 
@@ -1416,14 +1427,14 @@ public class CaFrame extends javax.swing.JFrame {
     private void identifyFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_identifyFileButtonActionPerformed
         String fmt;
         String msg;
+        Object obj;
+        RsaPair rsaPair;
         byte[] pem;
         File file;
         long flen;
         int i;
         String mysteryFileName;
         mysteryFileName = mysteryFN.getText();
-        Object obj;
-        RsaPair rsaPair;
         try {
             pem = PemUtils.readFileToByteArray(mysteryFileName);
         } catch (IOException ex) {
@@ -1437,12 +1448,26 @@ public class CaFrame extends javax.swing.JFrame {
         logDbg("%s", msg);
         try {
             obj = PemUtils.fromPem(pem);
+            printKnownPemObject(obj);
         } catch (PemException ex) {
             fmt = "Error decoding pem object\n%s\n";
             msg = String.format(fmt, getEST(ex));
             logError("%s", msg);
             return;
         }
+
+}//GEN-LAST:event_identifyFileButtonActionPerformed
+
+    private void printKnownPemObject(Object obj){
+        String fmt;
+        String msg;
+        RsaPair rsaPair;
+
+        if(obj == null){
+            logError("Can't decode a null object");
+            return;
+        }
+
         fmt = "Object parsed to %s\n";
         msg = String.format(fmt, obj.getClass().getCanonicalName());
         logDbg(fmt, msg);
@@ -1457,6 +1482,7 @@ public class CaFrame extends javax.swing.JFrame {
                 String privName = priv.getClass().getCanonicalName();
                 logDbg("Privkey type = %s\n", privName);
                 logDbg("Publickey type = %s\n", pubName);
+                logDbg("modSize = %d\n",RSAKeyUtils.modSize(kp));
                 rsaPair = new RsaPair(kp);
                 logDbg("%s", rsaPair.toString());
             } catch (ConversionException ex) {
@@ -1471,7 +1497,8 @@ public class CaFrame extends javax.swing.JFrame {
             String certStr = CertUtils.certToStr(cert);
             logDbg("%s", certStr);
         }
-}//GEN-LAST:event_identifyFileButtonActionPerformed
+
+    }
 
     private void setMysteryFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setMysteryFileButtonActionPerformed
         setFileName(mysteryFN);
@@ -1856,8 +1883,13 @@ public class CaFrame extends javax.swing.JFrame {
                 logDbg("\n\"\"\"\n%s\n\"\"\"\n", blockStr);
             } catch (UnsupportedEncodingException ex) {
                 logError("Could not decode to US-ASCII");
+                continue;
             }
             logDbg("Block starting at line %d decoded to object \"%s\"\n", lineNum, className);
+            if(obj == null){
+                continue;
+            }
+            printKnownPemObject(obj);
         }
 
     }//GEN-LAST:event_MultiParseFileButtonActionPerformed
@@ -1946,7 +1978,28 @@ public class CaFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_clearKeyButtonActionPerformed
 
     private void verifyKeyCertChainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_verifyKeyCertChainActionPerformed
-
+        String key = keyText.getText();
+        String crt = certText.getText();
+        String chain = chainText.getText();
+        Set<X509CertificateObject> roots = new HashSet<X509CertificateObject>();
+        for(X509Certificate root : rootCAs){
+            roots.add((X509CertificateObject)root);
+        }
+        ZeusUtils zu = new ZeusUtils(roots);
+        ZeusCrtFile zcf = zu.buildZeusCrtFile(key, crt, chain);
+        List<ErrorEntry> errors = zcf.getErrors();
+        if(!errors.isEmpty()){
+            int i;
+            int last_i = errors.size() -1;
+            for(i=0;i<=last_i;i++){
+                ErrorEntry error = errors.get(i);
+                logError("Error %d of %d:\n%s\n\n",i,last_i,error.toString(true));
+            }
+        }else{
+            String zkey = zcf.getPrivate_key();
+            String zcrt = zcf.getPublic_cert();
+            logDbg("No Errors\nZuesKey:\n%s\n\nZeusCrt:\n%s\n\n", zkey,zcrt);
+        }
     }//GEN-LAST:event_verifyKeyCertChainActionPerformed
 
     private void clearCertButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearCertButtonActionPerformed
@@ -2381,6 +2434,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;

@@ -15,7 +15,7 @@ import org.rackspace.capman.tools.ca.StringUtils;
 import static org.junit.Assert.*;
 import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
-import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
+import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 

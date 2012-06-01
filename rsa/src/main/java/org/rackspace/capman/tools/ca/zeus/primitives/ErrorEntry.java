@@ -1,6 +1,7 @@
 package org.rackspace.capman.tools.ca.zeus.primitives;
 
 import java.util.List;
+import org.rackspace.capman.tools.ca.StringUtils;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.util.StaticHelpers;
 
@@ -65,15 +66,7 @@ public class ErrorEntry {
         sb.append("Exceptions:\n");
         List<Throwable> exceptions = StaticHelpers.getExceptionCausesList(exception);
         for (Throwable ex : exceptions) {
-            String exName = ex.getClass().getName();
-            if (exName == null) {
-                exName = "null";
-            }
-            String exMsg = ex.getMessage();
-            if (exMsg == null) {
-                exMsg = "null";
-            }
-            sb.append(String.format("%s:%s\n", exName, exMsg));
+            sb.append(StringUtils.getEST(ex));
         }
         sb.append("}\n");
         return sb.toString();

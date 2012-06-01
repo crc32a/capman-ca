@@ -41,6 +41,7 @@ public class X509PathBuilder<E extends X509Certificate> {
 
     private Set<E> rootCAs;
     private Set<E> intermediates;
+    private static final BigInteger serial = new BigInteger("2");
 
     static {
         RsaConst.init();
@@ -143,45 +144,50 @@ public class X509PathBuilder<E extends X509Certificate> {
     }
 
     // Usefull for pretending to be a CA when you want to test a Chain
-    public static List<X509ChainEntry> newChain(List<String> subjNames, int keySize, Date notBefore, Date notAfter, int secDelta) throws NotAnX509CertificateException, RsaException {
+    public static List<X509ChainEntry> newChain(List<String> subjNames, int keySize, Date notBefore, Date notAfter) throws NotAnX509CertificateException, RsaException {
         List<X509ChainEntry> chain = new ArrayList<X509ChainEntry>();
-        Date before = new Date(notBefore.getTime());
-        Date after = new Date(notAfter.getTime());
-        BigInteger serial = new BigInteger("2");
-        X509ChainEntry subjEntry ;
-        long delta = (long) secDelta * 1000;
-        int userIdx = subjNames.size() - 1;
-        X509CertificateObject caCrt, crt;
-        PKCS10CertificationRequest csr;
-        KeyPair sigKey, key;
-        String subj;
-
-        key = RSAKeyUtils.genKeyPair(keySize);
-        subj = subjNames.get(0);
-        csr = CsrUtils.newCsr(subj, key, true);
-        X509Certificate obj = CertUtils.selfSignCsrCA(csr, key, before, after);
+        String rootSubj = subjNames.get(0);
+        KeyPair rootKey = RSAKeyUtils.genKeyPair(keySize);
+        PKCS10CertificationRequest rootCsr = CsrUtils.newCsr(rootSubj, rootKey, true);
+        Object obj = CertUtils.selfSignCsrCA(rootCsr, rootKey, notBefore, notAfter);
         if (!(obj instanceof X509CertificateObject)) {
-            throw new NotAnX509CertificateException();
+            String fmt = "Could not generate X509CertificateObject for subj \"%s\"";
+            String msg = String.format(fmt, rootSubj);
+            throw new NotAnX509CertificateException(msg);
         }
-        crt = (X509CertificateObject) obj;
-        subjEntry  = new X509ChainEntry(key, csr, crt);
-        chain.add(subjEntry );
-        for (int i = 1; i <= userIdx; i++) {
-            subj = subjNames.get(i);
-            key = RSAKeyUtils.genKeyPair(1024);
-            csr = CsrUtils.newCsr(subj, key, true);
-            before = new Date(before.getTime() + delta);
-            after = new Date(after.getTime() - delta);
-            sigKey = chain.get(chain.size() - 1).getKey();
-            caCrt = chain.get(chain.size() - 1).getX509obj();
-            obj = CertUtils.signCSR(csr, sigKey, caCrt, before, after, serial);
+        X509CertificateObject rootCrt = (X509CertificateObject)obj;
+        chain.add(new X509ChainEntry(rootKey,rootCsr,rootCrt));
+        List<String> subjNamesForSubChain = new ArrayList<String>();
+        for (int i = 1; i < subjNames.size(); i++) {
+            subjNamesForSubChain.add(subjNames.get(i));
+        }
+        chain.addAll(newChain(rootKey,rootCrt,subjNamesForSubChain,keySize,notBefore,notAfter));
+        return chain;
+    }
+
+    // Usefull for pretending to be a CA when you want to test a Chain
+    public static List<X509ChainEntry> newChain(KeyPair rootKey, X509CertificateObject rootCert, List<String> subjNames, int keySize, Date notBefore, Date notAfter) throws NotAnX509CertificateException, RsaException {
+        List<X509ChainEntry> chain = new ArrayList<X509ChainEntry>();
+        X509CertificateObject caCrt = rootCert;
+        X509CertificateObject crt;
+        Object obj;
+        PKCS10CertificationRequest csr;
+        KeyPair caKey = rootKey;
+        KeyPair key;
+
+        for (String subjName : subjNames) {
+            key = RSAKeyUtils.genKeyPair(keySize);
+            csr = CsrUtils.newCsr(subjName, key, true);
+            obj = CertUtils.signCSR(csr, caKey, caCrt, notBefore, notAfter, serial);
             if (!(obj instanceof X509CertificateObject)) {
-                throw new NotAnX509CertificateException();
+                String fmt = "Could not generate X509CertificateObject for subj \"%s\"";
+                String msg = String.format(fmt, subjName);
+                throw new NotAnX509CertificateException(msg);
             }
             crt = (X509CertificateObject) obj;
-            X509ChainEntry sigEntry = chain.get(chain.size()-1);
-            subjEntry  = new X509ChainEntry(key, csr, crt);
-            chain.add(subjEntry );
+            chain.add(new X509ChainEntry(key, csr, crt));
+            caCrt = crt;
+            caKey = key;
         }
         return chain;
     }

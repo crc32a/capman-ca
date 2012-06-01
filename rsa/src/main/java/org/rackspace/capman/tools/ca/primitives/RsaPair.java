@@ -33,7 +33,7 @@ import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.exceptions.ConversionException;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
-import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
+import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 
 public class RsaPair {
 
@@ -136,11 +136,11 @@ public class RsaPair {
         }
     }
 
-    public byte[] getPrivAsPem() throws NullKeyException, PemException {
+    public byte[] getPrivAsPem() throws NotAnRSAKeyException, PemException {
         byte[] out;
         PrivateKey jPriv;
         if (priv == null) {
-            throw new NullKeyException("No priv key in RsaPair");
+            throw new NotAnRSAKeyException("No priv key in RsaPair");
         }
         jPriv = HackedProviderAccessor.newJCERSAPrivateCrtKey(priv);
         out = PemUtils.toPem(jPriv);
@@ -251,15 +251,15 @@ public class RsaPair {
 
     // returns an implementation of java.security.KeyPair for pem
     // incodeing since the bouncy openssl PemWriter expects it.
-    public KeyPair toJavaSecurityKeyPair() throws NullKeyException {
+    public KeyPair toJavaSecurityKeyPair() throws NotAnRSAKeyException {
         PrivateKey jPriv;
         PublicKey jPub;
         if (priv == null && pub == null) {
-            throw new NullKeyException("keypair has no public or private key");
+            throw new NotAnRSAKeyException("keypair has no public or private key");
         } else if (priv == null) {
-            throw new NullKeyException("keypair has not private key");
+            throw new NotAnRSAKeyException("keypair has not private key");
         } else if (pub == null) {
-            throw new NullKeyException("keypair has not public key");
+            throw new NotAnRSAKeyException("keypair has not public key");
         }
         jPriv = HackedProviderAccessor.newJCERSAPrivateCrtKey(this.priv);
         jPub = HackedProviderAccessor.newJCERSAPublicKey(pub);

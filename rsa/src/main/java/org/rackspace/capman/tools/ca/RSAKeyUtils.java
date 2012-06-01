@@ -19,7 +19,7 @@ import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.bouncycastle.jce.provider.JCERSAPublicKey;
 import org.rackspace.capman.tools.ca.exceptions.ConversionException;
-import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
+import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
@@ -65,7 +65,7 @@ public class RSAKeyUtils {
             String objInfo = Debug.classLoaderInfo(obj.getClass());
             String jpkInfo = Debug.classLoaderInfo(JCERSAPublicKey.class);
             keyPub = (JCERSAPublicKey) obj;
-        } catch (NullKeyException ex) {
+        } catch (NotAnRSAKeyException ex) {
             errorList.add("privateKey or publicKey was null ");
             return errorList;
         } catch (ClassCastException ex) {
@@ -206,4 +206,25 @@ public class RSAKeyUtils {
         }
         return "NaK";
     }
+
+        public static int  modSize(Object obj) {
+        if (obj == null) {
+            return -1;
+        } else if (obj instanceof JCERSAPublicKey) {
+            JCERSAPublicKey pubKey;
+            pubKey = (JCERSAPublicKey) obj;
+            BigInteger modulus = pubKey.getModulus();
+            return modulus.bitLength();
+        } else if (obj instanceof JCERSAPrivateCrtKey) {
+            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey)obj;
+            JCERSAPublicKey pubKey = HackedProviderAccessor.newJCERSAPublicKey(privKey);
+            return modSize(pubKey);
+        }else if (obj instanceof KeyPair){
+            KeyPair kp = (KeyPair)obj;
+            return modSize(kp.getPrivate());
+        } else{
+            return -1;
+        }
+    }
+
 }

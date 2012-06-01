@@ -798,15 +798,15 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="verifyKeyCertPanel" min="-2" max="-2" attributes="1"/>
-                              <EmptySpace pref="596" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
                               <Component id="keycertandchainPanel" max="32767" attributes="1"/>
                               <EmptySpace min="-2" pref="518" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="verifyKeyCrtPanel" min="-2" max="-2" attributes="1"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="verifyKeyCertPanel" min="-2" max="-2" attributes="1"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -1036,7 +1036,11 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <Component id="verifyKeyCertChain" alignment="0" min="-2" pref="162" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="verifyKeyCertChain" min="-2" pref="162" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jLabel21" min="-2" pref="423" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1062,7 +1066,10 @@
                               </Group>
                           </Group>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="verifyKeyCertChain" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="verifyKeyCertChain" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace pref="36" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -1181,6 +1188,11 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearChainButtonActionPerformed"/>
                   </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel21">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;small&gt;&lt;span style=&quot;color:blue&quot;&gt;(be sure to add your roots via the &lt;/span&gt;Crt Path&lt;span style=&quot;color:blue&quot;&gt; tab)&lt;/span&gt;&lt;/small&gt;&lt;/html&gt;&#xa;        "/>
+                  </Properties>
                 </Component>
               </SubComponents>
             </Container>

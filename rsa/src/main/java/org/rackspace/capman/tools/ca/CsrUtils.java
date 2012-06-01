@@ -31,7 +31,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Vector;
 import javax.security.auth.x500.X500Principal;
-import org.rackspace.capman.tools.ca.exceptions.NullKeyException;
+import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 
 public class CsrUtils {

@@ -28,6 +28,8 @@ import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import org.rackspace.capman.tools.ca.exceptions.X509PathBuildException;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
+import org.rackspace.capman.tools.ca.zeus.ZeusUtils;
+import org.rackspace.capman.tools.ca.zeus.ZeusUtils;
 import org.rackspace.capman.tools.ca.zeus.primitives.ErrorEntry;
 import org.rackspace.capman.tools.ca.zeus.primitives.ZeusCrtFile;
 import org.rackspace.capman.tools.util.StaticHelpers;
@@ -36,10 +38,6 @@ import org.rackspace.capman.tools.util.X509ChainEntry;
 import org.rackspace.capman.tools.util.X509PathBuilder;
 import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
 
-/**
- *
- * @author crc
- */
 public class ZeusUtilsTest {
 
     private static KeyPair userKey;
@@ -77,10 +75,7 @@ public class ZeusUtilsTest {
         // Lastly add the end user subj
         String subjName = "CN=www.junit-mosso-apache2zeus-test.com";
         subjNames.add(subjName);
-
-
-        int secDelta = 24 * 60 * 60;
-        chainEntries = X509PathBuilder.newChain(subjNames, keySize, notBefore, notAfter, secDelta);
+        chainEntries = X509PathBuilder.newChain(subjNames, keySize, notBefore, notAfter);
         int lastIdx = chainEntries.size() - 1;
         rootCA = chainEntries.get(0).getX509obj();
         userCrt = chainEntries.get(lastIdx).getX509obj();
