@@ -86,6 +86,7 @@ public class PemUtils {
         ds.write(data);
         ds.flush();
         ds.close();
+        fs.close();
     }
 
     public static Object fromPemString(String pem) throws PemException {
@@ -110,6 +111,8 @@ public class PemUtils {
         try {
             out = pr.readObject();
             pr.close();
+            isr.close();
+            bas.close();
         } catch (IOException ex) {
             throw new PemException("Could not read PEM data", ex);
         }

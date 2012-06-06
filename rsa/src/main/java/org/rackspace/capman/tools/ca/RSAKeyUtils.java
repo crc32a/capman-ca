@@ -197,17 +197,17 @@ public class RSAKeyUtils {
             String shortE = pubKey.getPublicExponent().mod(m16bit).toString(16);
             return String.format("(%s,%s)", shortMod, shortE);
         } else if (obj instanceof JCERSAPrivateCrtKey) {
-            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey)obj;
+            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey) obj;
             JCERSAPublicKey pubKey = HackedProviderAccessor.newJCERSAPublicKey(privKey);
             return shortKey(pubKey);
-        }else if (obj instanceof KeyPair){
-            KeyPair kp = (KeyPair)obj;
+        } else if (obj instanceof KeyPair) {
+            KeyPair kp = (KeyPair) obj;
             return shortKey(kp.getPrivate());
         }
         return "NaK";
     }
 
-        public static int  modSize(Object obj) {
+    public static int modSize(Object obj) {
         if (obj == null) {
             return -1;
         } else if (obj instanceof JCERSAPublicKey) {
@@ -216,15 +216,14 @@ public class RSAKeyUtils {
             BigInteger modulus = pubKey.getModulus();
             return modulus.bitLength();
         } else if (obj instanceof JCERSAPrivateCrtKey) {
-            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey)obj;
+            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey) obj;
             JCERSAPublicKey pubKey = HackedProviderAccessor.newJCERSAPublicKey(privKey);
             return modSize(pubKey);
-        }else if (obj instanceof KeyPair){
-            KeyPair kp = (KeyPair)obj;
+        } else if (obj instanceof KeyPair) {
+            KeyPair kp = (KeyPair) obj;
             return modSize(kp.getPrivate());
-        } else{
+        } else {
             return -1;
         }
     }
-
 }

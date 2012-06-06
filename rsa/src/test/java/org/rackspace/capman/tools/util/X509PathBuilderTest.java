@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.junit.After;
@@ -144,6 +145,7 @@ public class X509PathBuilderTest {
         subjNames.add("O=Rackspace hosting, OU=Platform CloudSites, CN=IMD 3");
         subjNames.add("O=Rackspace hosting, OU=Platform CloudSites, CN=IMD 4");
         subjNames.add("O=Rackspace hosting, OU=Platform CloudSites, CN=IMD 5");
+        subjNames.add("O=Rackspace hosting, OU=Platform CloudSites,C=US,ST=Texas,L=San Antonio,CN=www.junit-mosso-apache2zeus-test.com");
         long now = System.currentTimeMillis();
         long hourAgo = 1000*60*60;
         long yearFromNow = 1000*60*60*24*365;
@@ -151,7 +153,7 @@ public class X509PathBuilderTest {
         Date before = new Date(now - hourAgo);
         Date after = new Date(now + yearFromNow);
         List<X509ChainEntry> chain = X509PathBuilder.newChain(rootKey, rootCrt, subjNames, keySize, before, after);
-        assertTrue(chain.size() == 5);
+        assertTrue(chain.size() == 6);
         for(int i=0;i<chain.size();i++){
             X509Certificate x509 = (X509Certificate)chain.get(i).getX509obj();
             String subj = x509.getSubjectX500Principal().getName();
@@ -190,8 +192,17 @@ public class X509PathBuilderTest {
             for(X509ChainEntry entry : chain){
                 pemChain.append(PemUtils.toPemString(entry.getX509obj()));
             }
+            // The users Site cert is at the end of the chain
+            X509ChainEntry userEntry = chain.get(chain.size() - 1);
+            KeyPair userKey = userEntry.getKey();
+            X509CertificateObject userCrt = userEntry.getX509obj();
+            PKCS10CertificationRequest userCsr = userEntry.getCsr();
             System.out.printf("chain:\n%s\n\n",pemChain.toString());
-            System.out.printf("\n\nRootCa:\n%s\n\n", PemUtils.toPemString(rootCrt));
+            System.out.printf("RootCa:\n%s\n\n", PemUtils.toPemString(rootCrt));
+            System.out.printf("RootKey:\n%s\n\n", PemUtils.toPemString(rootKey));
+            System.out.printf("userKey:\n%s\n\n",PemUtils.toPemString(userKey));
+            System.out.printf("userCrt:\n%s\n\n",PemUtils.toPemString(userCrt));
+            System.out.printf("userCsr:\n%s\n\n",PemUtils.toPemString(userCsr));
         }
     }
 }

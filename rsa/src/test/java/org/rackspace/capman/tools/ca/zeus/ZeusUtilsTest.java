@@ -84,10 +84,7 @@ public class ZeusUtilsTest {
         imdCrts = new HashSet<X509CertificateObject>();
         for (int i = 1; i < lastIdx; i++) {
             imdCrts.add(chainEntries.get(i).getX509obj());
-            System.out.printf("imd=%s\n",chainEntries.get(i).shortEntry());
         }
-
-
     }
 
     @AfterClass
@@ -126,11 +123,6 @@ public class ZeusUtilsTest {
             }
         }
 
-        System.out.printf("rootCrt:\n%s\n\n", rootCaStr);
-        System.out.printf("userKey:\n%s\n\n", userKeyStr);
-        System.out.printf("userCrt:\n%s\n\n", userCrtStr);
-        System.out.printf("imdCrts:\n%s\n\n", imdsString);
-        System.out.printf(wtf.toString());
         assertTrue(zcf.getErrors().isEmpty());
         List<PemBlock> parsedImds = PemUtils.parseMultiPem(imdsString);
         assertTrue(parsedImds.size() == 7);
