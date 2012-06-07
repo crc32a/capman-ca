@@ -115,7 +115,7 @@ public class ZeusUtilsTest {
         }
         String imdsString = sb.toString();
         ZeusUtils zu = new ZeusUtils(roots);
-        ZeusCrtFile zcf = zu.buildZeusCrtFile(userKeyStr, userCrtStr, imdsString);
+        ZeusCrtFile zcf = zu.buildZeusCrtFile(userKeyStr, userCrtStr, imdsString,false);
         for (ErrorEntry errors : zcf.getErrors()) {
             Throwable ex = errors.getException();
             if (ex != null) {

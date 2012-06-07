@@ -94,13 +94,12 @@ public class PemUtils {
             byte[] pemBytes = pem.getBytes(RsaConst.USASCII);
             return fromPem(pemBytes);
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(PemUtils.class.getName()).log(Level.SEVERE, null, ex);
             throw new PemException("Error decodeing PEM", ex);
         }
     }
 
     public static Object fromPem(byte[] pem) throws PemException {
-        Object out = null;
+        Object out;
         ByteArrayInputStream bas;
         InputStreamReader isr;
         PEMReader pr;

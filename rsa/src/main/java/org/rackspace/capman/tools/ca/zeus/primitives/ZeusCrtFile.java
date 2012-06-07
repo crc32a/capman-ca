@@ -1,7 +1,9 @@
 package org.rackspace.capman.tools.ca.zeus.primitives;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class ZeusCrtFile {
@@ -63,6 +65,15 @@ public class ZeusCrtFile {
 
     public void setPrivate_key(String private_key) {
         this.private_key = private_key;
+    }
+
+    public List<ErrorEntry> getErrorsMatchingTypes(ErrorType ...eTypes){
+        return ErrorEntry.matchErrorTypes(errors, eTypes);
+    }
+
+    public boolean containsErrorTypes(ErrorType ...eTypes){
+        List<ErrorEntry> errorEntries = getErrorsMatchingTypes(eTypes);
+        return !errorEntries.isEmpty();
     }
 
     public String errorStrings(boolean showException) {

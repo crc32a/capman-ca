@@ -70,7 +70,7 @@ public class StaticHelpers {
         return out;
     }
 
-    // Cause I keep forget what an set operations really look like
+    // Cause I keep forget what a Set operations really look like
     public static <U> Set<U> andSet(Set<U> a, Set<U> b) {
         Set<U> aCopy = new HashSet<U>(a);
         Set<U> bCopy = new HashSet<U>(b);

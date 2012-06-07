@@ -1,6 +1,9 @@
 package org.rackspace.capman.tools.ca.zeus.primitives;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.rackspace.capman.tools.ca.StringUtils;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.util.StaticHelpers;
@@ -12,10 +15,10 @@ public class ErrorEntry {
     private boolean fatal; // Is this an unignorable error
     private Throwable exception;
 
-    public ErrorEntry(ErrorType errorType, String errorDetail, boolean recoverable, Throwable exception) {
+    public ErrorEntry(ErrorType errorType, String errorDetail, boolean fatal, Throwable exception) {
         this.errorType = errorType;
         this.errorDetail = errorDetail;
-        this.fatal = recoverable;
+        this.fatal = fatal;
         this.exception = exception;
     }
 
@@ -70,5 +73,39 @@ public class ErrorEntry {
         }
         sb.append("}\n");
         return sb.toString();
+    }
+
+    public static List<ErrorEntry> filterErrorTypes(List<ErrorEntry> errorsIn, ErrorType... errorTypes) {
+        List<ErrorEntry> errorsOut = new ArrayList<ErrorEntry>();
+        Set<ErrorType> errorTypeSet = getErrorTypeSet(errorTypes);
+
+        for (ErrorEntry errorEntry : errorsIn) {
+            if (errorTypeSet.contains(errorEntry.getErrorType())) {
+                continue;
+            }
+            errorsOut.add(errorEntry);
+        }
+        return errorsOut;
+    }
+
+    public static List<ErrorEntry> matchErrorTypes(List<ErrorEntry> errorsIn, ErrorType... errorTypes) {
+        List<ErrorEntry> errorsOut = new ArrayList<ErrorEntry>();
+        Set<ErrorType> errorTypeSet = getErrorTypeSet(errorTypes);
+
+        for (ErrorEntry errorEntry : errorsIn) {
+            if (errorTypeSet.contains(errorEntry.getErrorType())) {
+                errorsOut.add(errorEntry);
+            }
+        }
+        return errorsOut;
+    }
+
+    public static Set<ErrorType> getErrorTypeSet(ErrorType... errorTypes) {
+        List<ErrorEntry> errorsOut = new ArrayList<ErrorEntry>();
+        Set<ErrorType> errorTypeSet = new HashSet<ErrorType>();
+        for (ErrorType errorType : errorTypes) {
+            errorTypeSet.add(errorType);
+        }
+        return errorTypeSet;
     }
 }
