@@ -161,6 +161,7 @@ public class CaFrame extends javax.swing.JFrame {
         jLabel21 = new javax.swing.JLabel();
         PKIXValidationRadio = new javax.swing.JRadioButton();
         lbaasValidationRadio = new javax.swing.JRadioButton();
+        showZcfExceptionsCheckBox = new javax.swing.JCheckBox();
         crtPathTab = new javax.swing.JPanel();
         loadX509MapsBorder = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
@@ -839,6 +840,8 @@ public class CaFrame extends javax.swing.JFrame {
 
         lbaasValidationRadio.setText("USE Lbaas validation");
 
+        showZcfExceptionsCheckBox.setText("Show Exceptions");
+
         javax.swing.GroupLayout verifyKeyCrtPanelLayout = new javax.swing.GroupLayout(verifyKeyCrtPanel);
         verifyKeyCrtPanel.setLayout(verifyKeyCrtPanelLayout);
         verifyKeyCrtPanelLayout.setHorizontalGroup(
@@ -872,11 +875,13 @@ public class CaFrame extends javax.swing.JFrame {
                     .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
                         .addComponent(verifyKeyCertChain, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 423, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(showZcfExceptionsCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(26, 26, 26)
                         .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(lbaasValidationRadio, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(PKIXValidationRadio, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 253, Short.MAX_VALUE))))
+                            .addComponent(PKIXValidationRadio, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
         verifyKeyCrtPanelLayout.setVerticalGroup(
@@ -895,15 +900,17 @@ public class CaFrame extends javax.swing.JFrame {
                             .addComponent(clearChainButton))
                         .addGap(12, 12, 12)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(verifyKeyCrtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(verifyKeyCertChain)
-                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(PKIXValidationRadio))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lbaasValidationRadio)
-                .addContainerGap(15, Short.MAX_VALUE))
+                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(showZcfExceptionsCheckBox))
+                    .addGroup(verifyKeyCrtPanelLayout.createSequentialGroup()
+                        .addComponent(PKIXValidationRadio)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbaasValidationRadio)))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout verifyPanelLayout = new javax.swing.GroupLayout(verifyPanel);
@@ -932,7 +939,7 @@ public class CaFrame extends javax.swing.JFrame {
                 .addComponent(keycertandchainPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(verifyKeyCrtPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addContainerGap(79, Short.MAX_VALUE))
         );
 
         appTabs.addTab("Verification", verifyPanel);
@@ -1988,33 +1995,35 @@ public class CaFrame extends javax.swing.JFrame {
         String key = keyText.getText();
         String crt = certText.getText();
         String chain = chainText.getText();
+        boolean showException = showZcfExceptionsCheckBox.isSelected();
         Set<X509CertificateObject> roots = new HashSet<X509CertificateObject>();
         for (X509Certificate root : rootCAs) {
             roots.add((X509CertificateObject) root);
         }
         ZeusUtils zu = new ZeusUtils(roots);
         ZeusCrtFile zcf;
-        boolean lbaasValidate=false;
+        boolean lbaasValidate = false;
         switch (validationMapper.getSelectedId()) {
             case LBAAS_VALIDATION:
-                dbg.greenWrite("validation=%s\n","lbaas");
+                dbg.greenWrite("validation=%s\n", "lbaas");
                 lbaasValidate = true;
                 break;
             case PKIX_VALIDATION:
-                dbg.greenWrite("valudation=%s\n","pkix");
+                dbg.greenWrite("valudation=%s\n", "pkix");
                 lbaasValidate = false;
                 break;
         }
         zcf = zu.buildZeusCrtFile(key, crt, chain, lbaasValidate);
         List<ErrorEntry> errors = zcf.getErrors();
-        if (!errors.isEmpty()) {
+        if (!zcf.getErrors().isEmpty()) {
             int i;
             int last_i = errors.size() - 1;
             for (i = 0; i <= last_i; i++) {
                 ErrorEntry error = errors.get(i);
-                logError("Error %d of %d:\n%s\n\n", i, last_i, error.toString(true));
+                logError("Error %d of %d:\n%s\n\n", i, last_i, error.toString(showException));
             }
-        } else {
+        }
+        if (!zcf.hasFatalErrors()) {
             String zkey = zcf.getPrivate_key();
             String zcrt = zcf.getPublic_cert();
             logDbg("No Errors\nZuesKey:\n%s\n\nZeusCrt:\n%s\n\n", zkey, zcrt);
@@ -2501,6 +2510,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton setMysteryFileButton;
     private javax.swing.JButton setOutputCrtFileButton;
     private javax.swing.JButton setParentCertButton;
+    private javax.swing.JCheckBox showZcfExceptionsCheckBox;
     private javax.swing.JButton signCSRButton;
     private javax.swing.JTextField stTextField;
     private javax.swing.JTextField subjectCertFN;

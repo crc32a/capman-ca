@@ -67,11 +67,11 @@ public class ZeusCrtFile {
         this.private_key = private_key;
     }
 
-    public List<ErrorEntry> getErrorsMatchingTypes(ErrorType ...eTypes){
+    public List<ErrorEntry> getErrorsMatchingTypes(ErrorType... eTypes) {
         return ErrorEntry.matchErrorTypes(errors, eTypes);
     }
 
-    public boolean containsErrorTypes(ErrorType ...eTypes){
+    public boolean containsErrorTypes(ErrorType... eTypes) {
         List<ErrorEntry> errorEntries = getErrorsMatchingTypes(eTypes);
         return !errorEntries.isEmpty();
     }

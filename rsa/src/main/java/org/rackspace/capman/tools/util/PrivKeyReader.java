@@ -58,7 +58,7 @@ public class PrivKeyReader {
         return privKey.getCrtCoefficient();
     }
 
-    public static PrivKeyReader newPrivKeyReader(String pemString) throws PrivKeyDecodeException  {
+    public static PrivKeyReader newPrivKeyReader(String pemString) throws PrivKeyDecodeException {
         JCERSAPrivateCrtKey privKey;
         Object obj;
         String msg;

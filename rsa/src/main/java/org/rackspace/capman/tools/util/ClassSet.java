@@ -90,10 +90,10 @@ public class ClassSet extends HashSet<Class> {
         return expectedParent.isAssignableFrom(expectedChild);
     }
 
-    public static ClassSet fromInstances(Collection<Object>objs) {
+    public static ClassSet fromInstances(Collection<Object> objs) {
         ClassSet classSetOut = new ClassSet();
-        for(Object obj : objs){
-            if(obj==null){
+        for (Object obj : objs) {
+            if (obj == null) {
                 continue;
             }
             classSetOut.add(obj.getClass());

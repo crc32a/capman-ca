@@ -19,11 +19,12 @@ import java.security.KeyPair;
 // a lot of usefull methods are locked provider only. Mechanism over policy forces
 // ugly Hacks.
 public class HackedProviderAccessor {
-    public static JCERSAPrivateCrtKey newJCERSAPrivateCrtKey(RSAPrivateCrtKeyParameters priv){
+
+    public static JCERSAPrivateCrtKey newJCERSAPrivateCrtKey(RSAPrivateCrtKeyParameters priv) {
         return new JCERSAPrivateCrtKey(priv);
     }
 
-    public static JCERSAPublicKey newJCERSAPublicKey(RSAKeyParameters pub){
+    public static JCERSAPublicKey newJCERSAPublicKey(RSAKeyParameters pub) {
         return new JCERSAPublicKey(pub);
     }
 
@@ -40,7 +41,7 @@ public class HackedProviderAccessor {
     public static KeyPair newKeyPair(JCERSAPrivateCrtKey jrpck) {
         PrivateKey privKey = (PrivateKey) jrpck;
         JCERSAPublicKey jrpk = newJCERSAPublicKey(jrpck);
-        PublicKey pubKey =  (PublicKey)jrpk;
+        PublicKey pubKey = (PublicKey) jrpk;
         KeyPair kp = new KeyPair(pubKey, privKey);
         return kp;
     }

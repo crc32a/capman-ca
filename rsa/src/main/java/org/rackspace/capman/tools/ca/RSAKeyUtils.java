@@ -7,6 +7,7 @@ import java.math.BigInteger;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -207,23 +208,32 @@ public class RSAKeyUtils {
         return "NaK";
     }
 
-    public static int modSize(Object obj) {
+    public static JCERSAPublicKey newJCERSAPublicKey(Object obj) throws NotAnRSAKeyException {
         if (obj == null) {
-            return -1;
+            throw new NotAnRSAKeyException("Key was null");
         } else if (obj instanceof JCERSAPublicKey) {
-            JCERSAPublicKey pubKey;
-            pubKey = (JCERSAPublicKey) obj;
-            BigInteger modulus = pubKey.getModulus();
-            return modulus.bitLength();
+            // already a JCERSAPublicKey
+            return (JCERSAPublicKey) obj;
         } else if (obj instanceof JCERSAPrivateCrtKey) {
-            JCERSAPrivateCrtKey privKey = (JCERSAPrivateCrtKey) obj;
-            JCERSAPublicKey pubKey = HackedProviderAccessor.newJCERSAPublicKey(privKey);
-            return modSize(pubKey);
+            return newJCERSAPublicKey(HackedProviderAccessor.newJCERSAPublicKey((JCERSAPrivateCrtKey) obj));
         } else if (obj instanceof KeyPair) {
-            KeyPair kp = (KeyPair) obj;
-            return modSize(kp.getPrivate());
+            return newJCERSAPublicKey(((KeyPair) obj).getPublic());
         } else {
+            throw new NotAnRSAKeyException(String.format("Object was of class %s", obj.getClass().getName()));
+        }
+    }
+
+    public static BigInteger getModulus(Object obj) throws NotAnRSAKeyException {
+        return newJCERSAPublicKey(obj).getModulus();
+    }
+
+    public static int modSize(Object obj) {
+        JCERSAPublicKey pubKey;
+        try {
+            pubKey = newJCERSAPublicKey(obj);
+        } catch (NotAnRSAKeyException ex) {
             return -1;
         }
+        return pubKey.getModulus().bitLength();
     }
 }

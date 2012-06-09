@@ -66,8 +66,6 @@ public class ZeusUtils {
         Map<X509CertificateObject, Integer> lineMap = new HashMap<X509CertificateObject, Integer>();
         String zkey = "";
         String zcrt = "";
-        ErrorEntry errorEntry;
-        Object obj;
         String msg;
 
         KeyPair userKey = decodeKeyStr(userKeyStr, zcf);
@@ -77,21 +75,16 @@ public class ZeusUtils {
         // Verify key matches cert if both are Present
         if (!zcf.containsErrorTypes(UNREADABLE_CERT, UNREADABLE_KEY)) {
             List<ErrorEntry> keyMatchErrors;
-            //List<ErrorEntry> crtSignErrors;
             keyMatchErrors = CertUtils.validateKeyMatchesCrt(userKey, userCrt);
-            //crtSignErrors = CertUtils.validateKeySignsCert(userKey, userCrt);
-            //crtSignErrors = ErrorEntry.filterErrorTypes(crtSignErrors, EXPIRED_CERT, PREMATURE_CERT);
             errors.addAll(keyMatchErrors);
-            //errors.addAll(crtSignErrors);
         }
 
         // If their is a chain veify that the top of the chain signs the users crt
-        if(!imdCrts.isEmpty() && userCrt != null){
+        if (!imdCrts.isEmpty() && userCrt != null) {
             X509CertificateObject subjectCrt = userCrt;
             X509CertificateObject issuerCrt = imdCrts.get(0);
-            List<ErrorEntry> crtSignErrors = CertUtils.verifyIssuerAndSubjectCert(issuerCrt, subjectCrt);
-            crtSignErrors = ErrorEntry.filterErrorTypes(crtSignErrors, EXPIRED_CERT, PREMATURE_CERT);
-            if (!crtSignErrors.isEmpty()) {
+            List<ErrorEntry> crtSignErrors = CertUtils.verifyIssuerAndSubjectCert(issuerCrt, subjectCrt, false);
+            if (ErrorEntry.hasFatal(crtSignErrors)) {
                 if (lineMap.containsKey(issuerCrt)) {
                     int issuerLineNum = lineMap.get(issuerCrt).intValue();
                     msg = String.format("Error the cert at line %d of the  Chain file does not sign the main cert", issuerLineNum);
@@ -101,16 +94,15 @@ public class ZeusUtils {
                     errors.add(new ErrorEntry(SIGNATURE_ERROR, msg, true, null));
                 }
             }
+            errors.addAll(crtSignErrors);
         }
 
-        // Verify each imd crt signes the next cert
         ArrayList<ErrorEntry> chainSignErrors = new ArrayList<ErrorEntry>();
         for (int i = 1; i < imdCrts.size(); i++) {
             X509CertificateObject subjectCrt = imdCrts.get(i - 1);
             X509CertificateObject issuerCrt = imdCrts.get(i);
-            List<ErrorEntry> crtSignErrors = CertUtils.verifyIssuerAndSubjectCert(issuerCrt, subjectCrt);
-            crtSignErrors = ErrorEntry.filterErrorTypes(crtSignErrors, EXPIRED_CERT, PREMATURE_CERT);
-            if (!crtSignErrors.isEmpty()) {
+            List<ErrorEntry> crtSignErrors = CertUtils.verifyIssuerAndSubjectCert(issuerCrt, subjectCrt, false);
+            if (ErrorEntry.hasFatal(crtSignErrors)) {
                 if (lineMap.containsKey(issuerCrt) && lineMap.containsKey(subjectCrt)) {
                     int issuerLineNum = lineMap.get(issuerCrt).intValue();
                     int subjectLineNum = lineMap.get(subjectCrt).intValue();
@@ -121,10 +113,12 @@ public class ZeusUtils {
                     errors.add(new ErrorEntry(SIGNATURE_ERROR, msg, true, null));
                 }
             }
+            errors.addAll(crtSignErrors);
         }
 
+
         // If there where no errors build the full ZCF object
-        if (errors.isEmpty()) {
+        if (!ErrorEntry.hasFatal(errors)) {
             StringBuilder sb = new StringBuilder(4096);
             try {
                 zkey = PemUtils.toPemString(userKey);
@@ -150,8 +144,20 @@ public class ZeusUtils {
                     }
                 }
             }
+
+            // Also append a NO_PATH_TO_ROOT error if the cert has no known root
+            if (!ErrorEntry.hasFatal(errors)) {
+                Set<X509CertificateObject> imdSet = new HashSet<X509CertificateObject>(imdCrts);
+                X509PathBuilder<X509CertificateObject> pathBuilder = new X509PathBuilder<X509CertificateObject>(roots, imdSet);
+                try {
+                    X509BuiltPath<X509CertificateObject> builtPath = pathBuilder.buildPath(userCrt);
+                } catch (X509PathBuildException ex) {
+                    errors.add(new ErrorEntry(NO_PATH_TO_ROOT, "Chain has not path to root", false, ex));
+                }
+            }
+
             // If there are still no errors we can set the key and crt
-            if (errors.isEmpty()) {
+            if (!ErrorEntry.hasFatal(errors)) {
                 zcrt = sb.toString();
                 zcf.setPrivate_key(zkey);
                 zcf.setPublic_cert(zcrt);

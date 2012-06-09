@@ -71,7 +71,7 @@ public class StringUtils {
         while (t != null) {
             if (t instanceof Exception) {
                 currEx = (Exception) t;
-                sb.append(String.format("\"%s\":\"%s\"\n",currEx.getClass().getName(), currEx.getMessage()));
+                sb.append(String.format("\"%s\":\"%s\"\n", currEx.getClass().getName(), currEx.getMessage()));
                 for (StackTraceElement se : currEx.getStackTrace()) {
                     sb.append(String.format("%s\n", se.toString()));
                 }

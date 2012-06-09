@@ -277,6 +277,10 @@ public class CertUtils {
     }
 
     public static List<ErrorEntry> verifyIssuerAndSubjectCert(X509Certificate issuerCert, X509Certificate subjectCert) {
+        return verifyIssuerAndSubjectCert(issuerCert, subjectCert, true);
+    }
+
+    public static List<ErrorEntry> verifyIssuerAndSubjectCert(X509Certificate issuerCert, X509Certificate subjectCert, boolean isDateFatal) {
         ErrorEntry errorEntry;
         List<ErrorEntry> errorList = new ArrayList<ErrorEntry>();
         PublicKey parentPub = null;
@@ -289,19 +293,19 @@ public class CertUtils {
         try {
             subjectCert.checkValidity();
         } catch (CertificateExpiredException ex) {
-            errorList.add(new ErrorEntry(ErrorType.EXPIRED_CERT, SUBJECT_NOT_AFTER_FAIL, true, ex));
+            errorList.add(new ErrorEntry(ErrorType.EXPIRED_CERT, SUBJECT_NOT_AFTER_FAIL, isDateFatal, ex));
         } catch (CertificateNotYetValidException ex) {
-            errorList.add(new ErrorEntry(ErrorType.PREMATURE_CERT, SUBJECT_NOT_BEFORE_FAIL, true, ex));
+            errorList.add(new ErrorEntry(ErrorType.PREMATURE_CERT, SUBJECT_NOT_BEFORE_FAIL, isDateFatal, ex));
         }
         try {
             issuerCert.checkValidity();
         } catch (CertificateExpiredException ex) {
-            errorList.add(new ErrorEntry(ErrorType.EXPIRED_CERT, ISSUER_NOT_AFTER_FAIL, true, ex));
+            errorList.add(new ErrorEntry(ErrorType.EXPIRED_CERT, ISSUER_NOT_AFTER_FAIL, isDateFatal, ex));
         } catch (CertificateNotYetValidException ex) {
-            errorList.add(new ErrorEntry(ErrorType.PREMATURE_CERT, ISSUER_NOT_BEFORE_FAIL, true, ex));
+            errorList.add(new ErrorEntry(ErrorType.PREMATURE_CERT, ISSUER_NOT_BEFORE_FAIL, isDateFatal, ex));
         }
 
-        if(parentPub == null){
+        if (parentPub == null) {
             return errorList; // Can't test anyfuther if we failed to extract the parent pubKey
         }
 
@@ -323,6 +327,10 @@ public class CertUtils {
     }
 
     public static List<ErrorEntry> verifyIssuerAndSubjectCert(byte[] issuerCertPem, byte[] subjectCertPem) {
+        return verifyIssuerAndSubjectCert(issuerCertPem, subjectCertPem, true);
+    }
+
+    public static List<ErrorEntry> verifyIssuerAndSubjectCert(byte[] issuerCertPem, byte[] subjectCertPem, boolean isDateFatal) {
         List<ErrorEntry> errorList = new ArrayList<ErrorEntry>();
         ErrorEntry errorEntry;
         X509Certificate issuerCert = null;
@@ -355,7 +363,7 @@ public class CertUtils {
         if (issuerCert == null || subjectCert == null) {
             return errorList;
         }
-        return verifyIssuerAndSubjectCert(issuerCert, subjectCert);
+        return verifyIssuerAndSubjectCert(issuerCert, subjectCert, isDateFatal);
     }
 
     @Deprecated

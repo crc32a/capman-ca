@@ -108,4 +108,14 @@ public class ErrorEntry {
         }
         return errorTypeSet;
     }
+
+    public static boolean hasFatal(List<ErrorEntry> errorEntries) {
+        for (ErrorEntry errorEntry : errorEntries) {
+            boolean isFatal = errorEntry.isFatal();
+            if (isFatal) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

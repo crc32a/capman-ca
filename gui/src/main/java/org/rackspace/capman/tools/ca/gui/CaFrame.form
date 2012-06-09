@@ -821,7 +821,7 @@
                       <Component id="keycertandchainPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="verifyKeyCrtPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="76" max="32767" attributes="0"/>
+                      <EmptySpace pref="79" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1038,11 +1038,13 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="verifyKeyCertChain" min="-2" pref="162" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jLabel21" min="-2" pref="423" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jLabel21" min="-2" pref="271" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="showZcfExceptionsCheckBox" min="-2" pref="151" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="1" max="-2" attributes="0">
                                       <Component id="lbaasValidationRadio" alignment="0" max="32767" attributes="1"/>
-                                      <Component id="PKIXValidationRadio" alignment="0" pref="253" max="32767" attributes="1"/>
+                                      <Component id="PKIXValidationRadio" alignment="0" min="-2" pref="253" max="-2" attributes="1"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -1069,17 +1071,20 @@
                                   <Component id="jScrollPane2" min="-2" pref="316" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="verifyKeyCertChain" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="showZcfExceptionsCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="PKIXValidationRadio" min="-2" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="PKIXValidationRadio" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="lbaasValidationRadio" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="lbaasValidationRadio" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="15" max="32767" attributes="0"/>
+                          <EmptySpace pref="12" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1212,6 +1217,11 @@
                 <Component class="javax.swing.JRadioButton" name="lbaasValidationRadio">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="USE Lbaas validation"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="showZcfExceptionsCheckBox">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Show Exceptions"/>
                   </Properties>
                 </Component>
               </SubComponents>

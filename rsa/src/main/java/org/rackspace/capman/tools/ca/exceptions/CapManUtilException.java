@@ -1,6 +1,6 @@
 package org.rackspace.capman.tools.ca.exceptions;
 
-public class CapManUtilException extends Exception{
+public class CapManUtilException extends Exception {
 
     public CapManUtilException(Throwable cause) {
         super(cause);
@@ -16,5 +16,4 @@ public class CapManUtilException extends Exception{
 
     public CapManUtilException() {
     }
-
 }
