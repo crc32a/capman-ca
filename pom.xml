@@ -7,13 +7,6 @@
     <name>Capman :: CA</name>
     <packaging>pom</packaging>
 
-   <scm>
-        <url>scm:git:ssh://git@github.rackspace.com/carlos-garza/capman-ca.git</url>
-        <connection>scm:git:ssh://git@github.rackspace.com/carlos-garza/capman-ca.git</connection>
-        <developerConnection>scm:git:ssh://git@github.rackspace.com/carlos-garza/capman-ca.git</developerConnection>
-    </scm>
-
-
     <modules>
         <module>bouncycastle</module>
         <module>rsa</module>

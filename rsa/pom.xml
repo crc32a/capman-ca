@@ -7,6 +7,12 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
+    <groupId>org.rackspace.capman.tools</groupId>
+    <artifactId>capman-ca-rsa</artifactId>
+    <packaging>jar</packaging>
+    <name>Capman :: CA :: RSA</name>
+    <url>http://maven.apache.org</url>
+
 <!-- include via
         <dependency>
             <groupId>org.rackspace.capman.tools</groupId>
@@ -14,12 +20,6 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 -->
-
-    <groupId>org.rackspace.capman.tools</groupId>
-    <artifactId>capman-ca-rsa</artifactId>
-    <packaging>jar</packaging>
-    <name>Capman :: CA :: RSA</name>
-    <url>http://maven.apache.org</url>
 
     <dependencies>
         <dependency>
@@ -32,6 +32,18 @@
             <artifactId>capman-ca-bc</artifactId>
             <version>${project.version}</version>
         </dependency>
+<!--
+            <dependency>
+                <groupId>bouncycastle</groupId>
+                <artifactId>bcprov-jdk15</artifactId>
+                <version>136</version>
+            </dependency>
+            <dependency>
+                <groupId>bouncycastle</groupId>
+                <artifactId>bcpg-jdk13</artifactId>
+                <version>133</version>
+            </dependency>
+-->
     </dependencies>
     <build>
         <defaultGoal>install</defaultGoal>
