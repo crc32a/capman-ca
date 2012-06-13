@@ -24,6 +24,7 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.Charset;
+import org.rackspace.capman.tools.ca.exceptions.NotAPemObject;
 import org.rackspace.capman.tools.ca.primitives.ByteLineReader;
 import static org.rackspace.capman.tools.ca.primitives.ByteLineReader.cmpBytes;
 import static org.rackspace.capman.tools.ca.primitives.ByteLineReader.appendLF;
@@ -90,6 +91,9 @@ public class PemUtils {
     }
 
     public static Object fromPemString(String pem) throws PemException {
+        if (pem == null) {
+            throw new NotAPemObject("String parameter in call to PemUtils.fromPemString(String pem) was null");
+        }
         try {
             byte[] pemBytes = pem.getBytes(RsaConst.USASCII);
             return fromPem(pemBytes);
@@ -104,6 +108,10 @@ public class PemUtils {
         InputStreamReader isr;
         PEMReader pr;
 
+        if (pem == null) {
+            throw new NotAPemObject("byte[] parameter pem in call to PemUtils.fromPem(byte[] pem) was null");
+        }
+
         bas = new ByteArrayInputStream(pem);
         isr = new InputStreamReader(bas);
         pr = new PEMReader(isr);
@@ -114,6 +122,9 @@ public class PemUtils {
             bas.close();
         } catch (IOException ex) {
             throw new PemException("Could not read PEM data", ex);
+        }
+        if (out == null) {
+            throw new NotAPemObject("Returned obj instance was null in call to Object obj = Object fromPem(bytes[] pem)");
         }
         return out;
     }
@@ -147,6 +158,36 @@ public class PemUtils {
         }
         out = bas.toByteArray();
         return out;
+    }
+
+    public static String toMultiPemString(List<? extends Object> objList) throws PemException {
+        byte[] bytes = toMultiPem(objList);
+        return StringUtils.asciiString(bytes);
+    }
+
+    public static byte[] toMultiPem(List<? extends Object>objList) throws PemException {
+        ByteArrayOutputStream bas = new ByteArrayOutputStream(PAGESIZE);
+        for (int i = 0; i < objList.size(); i++) {
+            Object obj = objList.get(i);
+            byte[] pemBytes;
+            if (obj instanceof PemBlock) {
+                obj = ((PemBlock) obj).getDecodedObject();
+            }
+            if (obj == null) {
+                continue;
+            }
+            try {
+                pemBytes = toPem(obj);
+            } catch (PemException ex) {
+                continue;
+            }
+            try {
+                bas.write(pemBytes);
+            } catch (IOException ex) {
+                throw new PemException("Error writing pemBytes to byte array",ex);
+            }
+        }
+        return bas.toByteArray();
     }
 
     public static List<PemBlock> parseMultiPem(String multiPemString) {

@@ -2013,7 +2013,12 @@ public class CaFrame extends javax.swing.JFrame {
                 lbaasValidate = false;
                 break;
         }
+        try{
         zcf = zu.buildZeusCrtFile(key, crt, chain, lbaasValidate);
+        }catch(Exception ex){
+            logException(ex);
+            return;
+        }
         List<ErrorEntry> errors = zcf.getErrors();
         if (!zcf.getErrors().isEmpty()) {
             int i;

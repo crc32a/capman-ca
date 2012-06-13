@@ -370,6 +370,7 @@ public class ZeusUtils {
             if (!(obj instanceof X509CertificateObject)) {
                 msg = String.format("Object at line %d decoded to class %s but was expecting X509CertificateObject", block.getLineNum(), obj.getClass().getName());
                 errorEntry = new ErrorEntry(UNREADABLE_CERT, msg, false, null);
+                errors.add(errorEntry);
                 continue;
             }
             x509obj = (X509CertificateObject) obj;

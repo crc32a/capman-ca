@@ -97,6 +97,9 @@ public class StringUtils {
     }
 
     public static String asciiString(byte[] asciiBytes) {
+        if(asciiBytes == null){
+            return "";
+        }
         try {
             return new String(asciiBytes, USASCII);
         } catch (UnsupportedEncodingException ex) {
@@ -106,6 +109,9 @@ public class StringUtils {
 
     public static byte[] asciiBytes(String asciiStr) {
         byte[] out = null;
+        if(asciiStr==null){
+            return new byte[0];
+        }
         try {
             out = asciiStr.getBytes(USASCII);
             return out;

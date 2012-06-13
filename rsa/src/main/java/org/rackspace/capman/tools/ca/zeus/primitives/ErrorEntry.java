@@ -62,11 +62,11 @@ public class ErrorEntry {
     public String toString(boolean showException) {
         StringBuilder sb = new StringBuilder(RsaConst.PAGESIZE);
         sb.append(String.format("{%s,%s,", errorType.toString(), errorDetail));
-        sb.append(fatal ? "Fatal" : "NotFatal}\n");
+        sb.append(fatal ? "Fatal}" : "NotFatal}");
         if (!showException) {
             return sb.toString();
         }
-        sb.append("Exceptions:\n");
+        sb.append(" Exceptions:\n");
         List<Throwable> exceptions = StaticHelpers.getExceptionCausesList(exception);
         for (Throwable ex : exceptions) {
             sb.append(StringUtils.getEST(ex));
