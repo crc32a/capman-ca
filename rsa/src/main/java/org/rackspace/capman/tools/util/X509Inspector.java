@@ -238,6 +238,22 @@ public class X509Inspector {
         return authKeyId;
     }
 
+    public Calendar getNotBefore(){
+        Date nb = x509obj.getNotBefore();
+        if(nb==null){
+            return null;
+        }
+        return StaticHelpers.dateToCalendar(nb);
+    }
+
+    public Calendar getNotAfter(){
+        Date na = x509obj.getNotAfter();
+        if(na == null){
+            return null;
+        }
+        return StaticHelpers.dateToCalendar(na);
+    }
+
     public boolean isExpired(Date date) {
         Date dateObj = (date == null) ? new Date(System.currentTimeMillis()) : date;
         return CertUtils.isCertExpired(x509obj, date);
