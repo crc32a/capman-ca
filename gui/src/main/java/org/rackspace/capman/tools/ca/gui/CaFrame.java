@@ -1,5 +1,9 @@
 package org.rackspace.capman.tools.ca.gui;
 
+import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
+import org.rackspace.capman.tools.util.StaticHelpers;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Date;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyPair;
@@ -12,7 +16,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
-import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.PemUtils;
@@ -29,7 +32,6 @@ import javax.swing.JFileChooser;
 import org.rackspace.capman.tools.ca.StringUtils;
 import org.rackspace.capman.tools.ca.gui.utils.ButtonGroupMapper;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
-import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.ConversionException;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
 
@@ -56,6 +58,8 @@ import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
 import static org.rackspace.capman.tools.ca.gui.utils.GuiConst.*;
 
 public class CaFrame extends javax.swing.JFrame {
+
+    public static final long oneDayInMillis = 24 * 60 * 60 * 1000;
 
     static {
         RsaConst.init();
@@ -1449,7 +1453,6 @@ public class CaFrame extends javax.swing.JFrame {
         String fmt;
         String msg;
         Object obj;
-        RsaPair rsaPair;
         byte[] pem;
         File file;
         long flen;
@@ -1482,7 +1485,6 @@ public class CaFrame extends javax.swing.JFrame {
     private void printKnownPemObject(Object obj) {
         String fmt;
         String msg;
-        RsaPair rsaPair;
 
         if (obj == null) {
             logError("Can't decode a null object");
@@ -1495,20 +1497,17 @@ public class CaFrame extends javax.swing.JFrame {
 
 
         if (obj instanceof KeyPair) {
-            try {
-                KeyPair kp = (KeyPair) obj;
-                PrivateKey priv = kp.getPrivate();
-                PublicKey pub = kp.getPublic();
-                String pubName = pub.getClass().getCanonicalName();
-                String privName = priv.getClass().getCanonicalName();
-                logDbg("Privkey type = %s\n", privName);
-                logDbg("Publickey type = %s\n", pubName);
-                logDbg("modSize = %d\n", RSAKeyUtils.modSize(kp));
-                rsaPair = new RsaPair(kp);
-                logDbg("%s", rsaPair.toString());
-            } catch (ConversionException ex) {
-                logError("Could not read key params\n%s", getEST(ex));
-            }
+
+            KeyPair kp = (KeyPair) obj;
+            PrivateKey priv = kp.getPrivate();
+            PublicKey pub = kp.getPublic();
+            String pubName = pub.getClass().getCanonicalName();
+            String privName = priv.getClass().getCanonicalName();
+            logDbg("Privkey type = %s\n", privName);
+            logDbg("Publickey type = %s\n", pubName);
+            logDbg("modSize = %d\n", RSAKeyUtils.modSize(kp));
+            logDbg("%s", RSAKeyUtils.objToString(kp));
+
         } else if (obj instanceof PKCS10CertificationRequest) {
             PKCS10CertificationRequest req = (PKCS10CertificationRequest) obj;
             msg = String.format(fmt, CsrUtils.csrToStr(req));
@@ -1573,6 +1572,9 @@ public class CaFrame extends javax.swing.JFrame {
                 } catch (IOException ex) {
                     logError("Error reading from %s\n%s\n", keyFile, getEST(ex));
                     return;
+                } catch (InvalidKeySpecException ex) {
+                    logError("Error got invalidKeyException from %s\n%s\n", keyFile, getEST(ex));
+                    return;
                 }
                 break;
             default:
@@ -1589,7 +1591,6 @@ public class CaFrame extends javax.swing.JFrame {
                 try {
                     kp = RSAKeyUtils.genKeyPair(keySize);
                 } catch (RsaException ex) {
-
                     fmt = "Error generating %d bit key\n%s\n";
                     msg = String.format(fmt, keySize, getEST(ex));
                     logError("%s\n", msg);
@@ -1739,8 +1740,8 @@ public class CaFrame extends javax.swing.JFrame {
         X509Certificate crt;
         X509Certificate caCrt;
         BigInteger serial;
-        RsaPair keys;
         PKCS10CertificationRequest req;
+        KeyPair kp;
         int days;
         byte[] caKeyBytes;
         byte[] caCrtBytes;
@@ -1773,14 +1774,17 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            KeyPair kp = getKeyPairFromBytes(caKeyBytes);
-            keys = new RsaPair(kp);
+            kp = getKeyPairFromBytes(caKeyBytes);
         } catch (RsaException ex) {
             fmt = "Error translating data in \"%s\" to rsa key pair\n%s";
             logError(fmt, caKeyFile, getEST(ex));
             return;
         } catch (RuntimeException ex) {
             fmt = "Object from \"%s\" does not appear to be a valid key\n%s\n";
+            logError(fmt, caKeyFile, getEST(ex));
+            return;
+        } catch (InvalidKeySpecException ex) {
+            fmt = "InvalidKeySpecException when trying to decode KeyPair\n";
             logError(fmt, caKeyFile, getEST(ex));
             return;
         }
@@ -1802,10 +1806,12 @@ public class CaFrame extends javax.swing.JFrame {
             logError(fmt, csrFile, getEST(ex));
             return;
         }
+        Date now;
         if (selfSignCA.isSelected()) {
             // Self Sign this CSR
             try {
-                crt = CertUtils.selfSignCsrCA(req, keys, days);
+                now = StaticHelpers.currDate();
+                crt = CertUtils.selfSignCsrCA(req, kp,now,dayDelta(now,days));
             } catch (RsaException ex) {
                 fmt = "Error generating Certificate\n%s\n";
                 logError(fmt, getEST(ex));
@@ -1847,7 +1853,7 @@ public class CaFrame extends javax.swing.JFrame {
                 return;
             }
             try {
-                crt = CertUtils.signCSR(req, keys, caCrt, days, serial);
+                crt = CertUtils.signCSR(req, kp, caCrt, days, serial);
             } catch (RsaException ex) {
                 logError("Error signing csr\n%s\n", getEST(ex));
                 return;
@@ -2013,9 +2019,9 @@ public class CaFrame extends javax.swing.JFrame {
                 lbaasValidate = false;
                 break;
         }
-        try{
-        zcf = zu.buildZeusCrtFile(key, crt, chain, lbaasValidate);
-        }catch(Exception ex){
+        try {
+            zcf = zu.buildZeusCrtFile(key, crt, chain, lbaasValidate);
+        } catch (Exception ex) {
             logException(ex);
             return;
         }
@@ -2558,7 +2564,7 @@ public class CaFrame extends javax.swing.JFrame {
         dbg.setGreen();
     }
 
-    private KeyPair getKeyPairFromBytes(byte[] pemBytes) throws PemException {
+    private KeyPair getKeyPairFromBytes(byte[] pemBytes) throws PemException, InvalidKeySpecException {
         Object pemObj = PemUtils.fromPem(pemBytes);
         // Incase the object is returned as a JCERSAPrivateCrtKey instead of KeyPair
         if (pemObj instanceof JCERSAPrivateCrtKey) {
@@ -2616,5 +2622,9 @@ public class CaFrame extends javax.swing.JFrame {
         int oldCount = nopCount;
         nopCount++;
         return oldCount;
+    }
+
+    private Date dayDelta(Date dateIn, int days) {
+        return new Date(dateIn.getTime() + ((long) days) * oneDayInMillis);
     }
 }

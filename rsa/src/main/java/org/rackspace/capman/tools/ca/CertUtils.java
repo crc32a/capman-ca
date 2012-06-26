@@ -24,7 +24,6 @@ import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
-import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.math.BigInteger;
@@ -66,12 +65,6 @@ public class CertUtils {
         RsaConst.init();
     }
 
-    @Deprecated
-    public static X509Certificate signCSR(PKCS10CertificationRequest req, RsaPair rp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
-        KeyPair kp = rp.toJavaSecurityKeyPair();
-        return signCSR(req, kp, caCrt, days, serial);
-    }
-
     public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
         long nowMillis = System.currentTimeMillis();
         Date notBefore = new Date(nowMillis);
@@ -79,8 +72,7 @@ public class CertUtils {
         return signCSR(req, kp, caCrt, notBefore, notAfter, serial);
     }
 
-    public static X509Certificate signCSR(PKCS10CertificationRequest req,
-            KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
+    public static X509Certificate signCSR(PKCS10CertificationRequest req,KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
             BigInteger serial) throws RsaException {
         long nowMillis;
         int i;
@@ -166,68 +158,6 @@ public class CertUtils {
             throw new RsaException("Unable to build Certificate", ex);
         }
         return crt;
-    }
-
-    @Deprecated
-    public static X509Certificate selfSignCsrCA(PKCS10CertificationRequest req, RsaPair keys, int days) throws RsaException {
-        long nowMillis = System.currentTimeMillis();
-        Date notBefore = new Date(nowMillis);
-        Date notAfter = new Date((long) days * 24 * 60 * 60 * 1000 + nowMillis);
-        PrivateKey priv;
-        PublicKey pub;
-        String msg;
-        X509Certificate cert = null;
-        SubjectKeyIdentifierStructure subjKeyId;
-        int i;
-
-        try {
-            if (!req.verify()) {
-                throw new RsaException("CSR was invalid");
-            }
-        } catch (GeneralSecurityException ex) {
-            throw new RsaException("Could not verify CSR", ex);
-        }
-        X500Name subj = X500Name.getInstance(req.getCertificationRequestInfo().getSubject());
-        X500Name issuer = X500Name.getInstance(req.getCertificationRequestInfo().getSubject());
-        KeyPair kp = keys.toJavaSecurityKeyPair();
-        priv = kp.getPrivate();
-        pub = kp.getPublic();
-        JcaContentSignerBuilder sigBuilder = new JcaContentSignerBuilder(RsaConst.DEFAULT_SIGNATURE_ALGO);
-        sigBuilder.setProvider("BC");
-        ContentSigner signer;
-        try {
-            signer = sigBuilder.build(priv);
-        } catch (OperatorCreationException ex) {
-            throw new RsaException("Error creating signature", ex);
-        }
-        BigInteger serial = BigInteger.ONE;
-        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(issuer, serial, notBefore, notAfter, subj, pub);
-        ASN1Set attrs = req.getCertificationRequestInfo().getAttributes();
-        if (attrs != null) {
-            for (i = 0; i < attrs.size(); i++) {
-                Attribute attr = Attribute.getInstance(attrs.getObjectAt(i));
-                if (attr.getAttrType().equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
-                    X509Extensions exts = X509Extensions.getInstance(attr.getAttrValues().getObjectAt(0));
-                    for (ASN1ObjectIdentifier oid : exts.getExtensionOIDs()) {
-                        X509Extension ext = exts.getExtension(oid);
-                        certBuilder.addExtension(oid, ext.isCritical(), ext.getParsedValue());
-                    }
-                }
-            }
-        }
-        try {
-            subjKeyId = new SubjectKeyIdentifierStructure(pub);
-        } catch (InvalidKeyException ex) {
-            throw new RsaException("Ivalid public key when attempting to encode Subjectkey identifier", ex);
-        }
-        certBuilder.addExtension(X509Extension.subjectKeyIdentifier, false, subjKeyId.getDERObject());
-        X509CertificateHolder certHolder = certBuilder.build(signer);
-        try {
-            cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
-        } catch (CertificateException ex) {
-            throw new RsaException("Error generating x509 certificate", ex);
-        }
-        return cert;
     }
 
     public static X509Certificate selfSignCsrCA(PKCS10CertificationRequest req, KeyPair kp, Date notBefore, Date notAfter) throws RsaException {

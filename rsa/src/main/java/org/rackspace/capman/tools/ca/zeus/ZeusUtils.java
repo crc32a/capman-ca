@@ -1,5 +1,7 @@
 package org.rackspace.capman.tools.ca.zeus;
 
+import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
 import java.security.KeyPair;
@@ -12,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.bouncycastle.jce.provider.JCERSAPublicKey;
 import org.bouncycastle.jce.provider.X509CertificateObject;
@@ -68,7 +69,7 @@ public class ZeusUtils {
         String zcrt = "";
         String msg;
 
-        KeyPair userKey = decodeKeyStr(userKeyStr, zcf);
+        KeyPair userKey = parseKey(userKeyStr, zcf.getErrors());
         X509CertificateObject userCrt = decodeCrt(userCrtStr, zcf);
         List<X509CertificateObject> imdCrts = decodeImd(lineMap, intermediates, zcf);
 
@@ -276,7 +277,11 @@ public class ZeusUtils {
             return kp;
         }
         if (obj instanceof JCERSAPrivateCrtKey) {
-            obj = HackedProviderAccessor.newKeyPair((JCERSAPrivateCrtKey) obj);
+            try {
+                obj = HackedProviderAccessor.newKeyPair((JCERSAPrivateCrtKey) obj);
+            } catch (InvalidKeySpecException ex) {
+                errors.add(new ErrorEntry(UNREADABLE_KEY,"Error when attempting to convert PKCS8 key to PKCS1",true,ex));
+            }
         }
         if (!(obj instanceof KeyPair)) {
             errors.add(new ErrorEntry(UNREADABLE_KEY, "Unable to parse pemblock to RSA object", true, null));
@@ -291,6 +296,7 @@ public class ZeusUtils {
         }
         return kp;
     }
+
 
     private static X509CertificateObject parseCert(String certIn, List<ErrorEntry> errors) {
         X509CertificateObject x509obj = null;
@@ -320,34 +326,6 @@ public class ZeusUtils {
         return msg;
     }
 
-    private static KeyPair decodeKeyStr(String keyStr, ZeusCrtFile zcf) {
-        KeyPair kp;
-        Object obj;
-        List<ErrorEntry> errors = zcf.getErrors();
-        ErrorEntry errorEntry;
-        if (keyStr == null || keyStr.length() == 0) {
-            errorEntry = new ErrorEntry(UNREADABLE_KEY, "Key required", true, null);
-            errors.add(errorEntry);
-            return null;
-        }
-        try {
-            obj = PemUtils.fromPemString(keyStr);
-            if (obj instanceof JCERSAPrivateCrtKey) {
-                obj = HackedProviderAccessor.newKeyPair((JCERSAPrivateCrtKey) obj);
-            }
-            if (!(obj instanceof KeyPair)) {
-                String msg = String.format("Key decoded to %s but was exoecting java.security.KeyPair", obj.getClass().getName());
-                errorEntry = new ErrorEntry(UNREADABLE_KEY, msg, true, null);
-                errors.add(errorEntry);
-                return null;
-            }
-            return (KeyPair) obj;
-        } catch (PemException pe) {
-            errorEntry = new ErrorEntry(UNREADABLE_KEY, "Could not decode key", true, pe);
-            errors.add(errorEntry);
-            return null;
-        }
-    }
 
     private static List<X509CertificateObject> decodeImd(Map<X509CertificateObject, Integer> lineMap, String imdStr, ZeusCrtFile zcf) {
         List<ErrorEntry> errors = zcf.getErrors();

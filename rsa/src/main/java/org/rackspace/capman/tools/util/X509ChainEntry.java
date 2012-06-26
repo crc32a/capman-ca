@@ -1,13 +1,9 @@
 package org.rackspace.capman.tools.util;
 
-import java.math.BigInteger;
+
 import java.security.KeyPair;
 import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
-import org.bouncycastle.jce.provider.HackedProviderAccessor;
-import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;

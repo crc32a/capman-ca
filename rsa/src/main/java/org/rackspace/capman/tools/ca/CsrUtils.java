@@ -19,19 +19,15 @@ import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
-import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
-import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.jce.provider.JCERSAPublicKey;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
-import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Vector;
 import javax.security.auth.x500.X500Principal;
-import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 
 public class CsrUtils {
@@ -64,14 +60,6 @@ public class CsrUtils {
         return ca;
     }
 
-    @Deprecated
-    public static PKCS10CertificationRequest newCsr(String subjStr, RsaPair rsaPair,
-            boolean isCa) throws RsaException {
-        KeyPair kp = rsaPair.toJavaSecurityKeyPair();
-        PKCS10CertificationRequest csr = newCsr(subjStr, kp, isCa);
-        return csr;
-    }
-
     public static PKCS10CertificationRequest newCsr(String subjStr,
             KeyPair kp, boolean isCa) throws RsaException {
         String fmt;
@@ -98,17 +86,12 @@ public class CsrUtils {
         CertificationRequestInfo reqInfo = req.getCertificationRequestInfo();
         String validStr;
         JCERSAPublicKey jPub;
-        RsaPair rsaPair;
         X509Name x509Name = reqInfo.getSubject();
         X500Name x500Name = X500Name.getInstance(x509Name);
         String version = reqInfo.getVersion().getValue().toString();
         try {
             jPub = (JCERSAPublicKey) req.getPublicKey();
-            RSAKeyParameters pub = HackedProviderAccessor.newRSAKeyParameters(
-                    jPub);
-            rsaPair = new RsaPair();
-            rsaPair.setPub(pub);
-            String pubStr = rsaPair.getPubAsString();
+            String pubStr = RSAKeyUtils.objToString(jPub);
             sb.append(String.format("%s", pubStr));
         } catch (GeneralSecurityException ex) {
             sb.append("Public Key: Could not parse public key");

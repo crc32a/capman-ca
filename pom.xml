@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>bouncycastle</module>
+        <!-- <module>bouncycastle</module> -->
         <module>rsa</module>
         <module>gui</module>
     </modules>

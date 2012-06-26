@@ -1,5 +1,7 @@
 package org.rackspace.capman.tools.ca;
 
+import java.io.UnsupportedEncodingException;
+import java.security.KeyPair;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,7 +15,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.rackspace.capman.tools.ca.StringUtils;
 import static org.junit.Assert.*;
-import org.rackspace.capman.tools.ca.primitives.RsaPair;
 import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
 import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
@@ -42,18 +43,12 @@ public class RSAKeyUtilsTest {
 
     @Ignore
     @Test
-    public void testRsaGenKey() throws RsaException {
+    public void testRsaGenKey() throws RsaException, UnsupportedEncodingException {
         String msg;
-        RsaPair keys = RSAKeyUtils.genRSAPair(1024,12);
-        String keyStr = keys.toString();
+        KeyPair keys = RSAKeyUtils.genKeyPair(1024);
         byte[] pem;
         String pemStr;
-        try {
-            pem = keys.getPrivAsPem();
-            pemStr = new String(pem);
-        } catch (RsaException ex) {
-            msg = StringUtils.getEST(ex);
-            throw ex;
-        }
+        pem = PemUtils.toPem(keys);
+        pemStr = new String(pem, "us-ascii");
     }
 }

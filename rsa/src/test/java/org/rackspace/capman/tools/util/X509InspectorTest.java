@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
@@ -171,7 +172,7 @@ public class X509InspectorTest {
     }
 
     @Test
-    public void shouldRecognizePrematureCert() throws CapManUtilException {
+    public void shouldRecognizePrematureCert() throws CapManUtilException, InvalidKeySpecException {
         Assert.assertTrue(qXR(bef(2040, 1, 1), aft(2048, 1, 1)).isPremature(null));
         Assert.assertFalse(qXR(bef(2012, 5, 21), aft(2048, 1, 1)).isPremature(null));
         Assert.assertFalse(qXR(bef(2005, 1, 1), aft(2006, 1, 1)).isPremature(null));
@@ -184,7 +185,7 @@ public class X509InspectorTest {
     }
 
     @Test
-    public void shouldRecognizeExpiredCert() throws CapManUtilException {
+    public void shouldRecognizeExpiredCert() throws CapManUtilException, InvalidKeySpecException {
         Assert.assertFalse(qXR(bef(2040, 1, 1), aft(2048, 1, 1)).isExpired(null));
         Assert.assertFalse(qXR(bef(2012, 5, 21), aft(2048, 1, 1)).isExpired(null));
         Assert.assertTrue(qXR(bef(2005, 1, 1), aft(2006, 1, 1)).isExpired(null));
@@ -197,7 +198,7 @@ public class X509InspectorTest {
     }
 
     @Test
-    public void shouldRecognizeInRangeCerts() throws CapManUtilException {
+    public void shouldRecognizeInRangeCerts() throws CapManUtilException, InvalidKeySpecException {
         Assert.assertFalse(qXR(bef(2040, 1, 1), aft(2048, 1, 1)).isDateValid(null));
         Assert.assertTrue(qXR(bef(2012, 5, 21), aft(2048, 1, 1)).isDateValid(null));
         Assert.assertFalse(qXR(bef(2005, 1, 1), aft(2006, 1, 1)).isDateValid(null));
@@ -225,7 +226,7 @@ public class X509InspectorTest {
         return StaticHelpers.dateFromTuple(tup);
     }
 
-    private X509Inspector qXR(Date notBefore, Date notAfter) throws CapManUtilException {
+    private X509Inspector qXR(Date notBefore, Date notAfter) throws CapManUtilException, InvalidKeySpecException {
         KeyPair kp = key2048bitReader.toKeyPair();
         X509Certificate x509 = CertUtils.quickSelfSign(kp, caSubj, notBefore, notAfter);
         X509Inspector xr;

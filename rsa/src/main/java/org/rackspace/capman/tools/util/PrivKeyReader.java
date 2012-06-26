@@ -4,16 +4,17 @@ import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bouncycastle.jce.provider.JCERSAPrivateCrtKey;
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
-import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
 import org.rackspace.capman.tools.ca.exceptions.PrivKeyDecodeException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
+import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
 
 public class PrivKeyReader {
 
@@ -81,7 +82,7 @@ public class PrivKeyReader {
         return new PrivKeyReader(privKey);
     }
 
-    public KeyPair toKeyPair() {
+    public KeyPair toKeyPair() throws InvalidKeySpecException {
         KeyPair kp = HackedProviderAccessor.newKeyPair(privKey);
         return kp;
     }
