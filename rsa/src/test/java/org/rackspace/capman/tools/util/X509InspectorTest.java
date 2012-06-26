@@ -210,6 +210,13 @@ public class X509InspectorTest {
         Assert.assertFalse(qXR(bef(2012, 1, 1), aft(2013, 1, 1)).isDateValid(now(2014, 6, 28)));
     }
 
+    public void testRootCa() {
+        System.out.printf("%s\n\n%s\n\n%s\n\n", caCrtPem, caCrtPem, caCrtPem);
+        System.out.printf("%s\n\n%s\n\n%s\n\n", caCrtPem, caCrtPem, caCrtPem);
+        System.out.printf("%s\n\n%s\n\n%s\n\n", caCrtPem, caCrtPem, caCrtPem);
+        System.out.printf("%s\n\n%s\n\n%s\n\n", caCrtPem, caCrtPem, caCrtPem);
+    }
+
     private static Date now(int... tup) {
         return StaticHelpers.dateFromTuple(tup);
     }
@@ -241,6 +248,5 @@ public class X509InspectorTest {
             throw new CapManUtilException(ex);
         }
         return xr;
-
     }
 }

@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class StaticHelpers {
@@ -17,13 +19,36 @@ public class StaticHelpers {
     private static final String[] int2hex;
 
     static {
+        int j;
         RsaConst.init();
-        int2hex = new String[]{
-                    "0", "1", "2", "3",
-                    "4", "5", "6", "7",
-                    "8", "9", "a", "b",
-                    "c", "d", "e", "f"};
+        byte[] oneByte = new byte[1];
+        int2hex = new String[16];
+        j = 48;
+        for (int i = 0; i < 10; i++, j++) {
+            oneByte[0] = (byte) j;
+            try {
+                int2hex[i] = new String(oneByte, "us-ascii");
+            } catch (UnsupportedEncodingException ex) {
+                int2hex[i] = "*";
+            }
+        }
+        j = 97;
+        for (int i = 10; i < 16; i++, j++) {
+            oneByte[0] = (byte) j;
+            try {
+                int2hex[i] = new String(oneByte, "us-ascii");
+            } catch (UnsupportedEncodingException ex) {
+                int2hex[i] = "*";
+            }
+        }
+    }
 
+    public static String[] getHexMap(){
+        String[] mapOut = new String[16];
+        for(int i = 0;i<16;i++){
+            mapOut[i]=int2hex[i];
+        }
+        return mapOut;
     }
 
     public static BigInteger string2BigInt(String in) throws UnsupportedEncodingException {
@@ -194,5 +219,19 @@ public class StaticHelpers {
         int ch;
         ch = ubyte2int(byteIn);
         return (ch >= 0x09 && ch <= 0x0d) || (ch >= 0x1c && ch <= 0x20);
+    }
+
+    public static List<Object> filterObjectList(List<Object> objsIn,Set<Class> clazz){
+        List<Object> objsOut = new ArrayList<Object>();
+        for(Object obj : objsIn){
+            if(obj == null){
+                continue;
+            }
+            if(clazz != null && !clazz.contains(obj.getClass())){
+                continue;
+            }
+            objsOut.add(obj);
+        }
+        return objsOut;
     }
 }

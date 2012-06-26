@@ -3,12 +3,16 @@ package org.rackspace.capman.tools.util.fileio;
 import org.rackspace.capman.tools.util.X509MapValue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,17 +38,57 @@ public class RsaFileUtils {
         RsaConst.init();
     }
 
+        public static byte[] readFileToByteArray(String fileName) throws FileNotFoundException, IOException {
+        byte[] data;
+        String fmt;
+        String msg;
+        FileInputStream fis;
+        InputStreamReader isr;
+        File file;
+        file = new File(fileName);
+        long flen = file.length();
+        if (flen > Integer.MAX_VALUE) {
+            fmt = "can not read more then %d bytes\n";
+            msg = String.format(fmt, Integer.MAX_VALUE);
+            throw new IOException(msg);
+        }
+        fis = new FileInputStream(file);
+        data = new byte[(int) flen];
+        fis.read(data, 0, (int) flen); // FAil
+        fis.close();
+        return data;
+    }
+
+    public static void writeFileFromByteArray(String fileName, byte[] data) throws IOException {
+        File file;
+        FileOutputStream fs;
+        DataOutputStream ds;
+        file = new File(fileName);
+        fs = new FileOutputStream(file);
+        ds = new DataOutputStream(fs);
+        ds.write(data);
+        ds.flush();
+        ds.close();
+        fs.close();
+    }
+
+
+
     public static byte[] readFile(String fileName) throws FileNotFoundException, IOException {
         File file = new File(fileName);
         byte[] bytes = readFile(file);
         return bytes;
     }
 
-    public static byte[] readFile(File file) throws FileNotFoundException, IOException {
+    public static byte[] readFileFromClassPath(String fileName) throws IOException{
+        InputStream is = RsaFileUtils.class.getResourceAsStream(fileName);
+        return readInputStream(is);
+    }
+
+    public static byte[] readInputStream(InputStream is) throws IOException {
         byte[] bytesOut;
         byte[] buff;
         int nbytes;
-        FileInputStream is = new FileInputStream(file);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         while (true) {
             buff = new byte[BUFFSIZE];
@@ -52,12 +96,17 @@ public class RsaFileUtils {
             if (nbytes < 0) {
                 break;
             }
-            os.write(buff,0,nbytes);
+            os.write(buff, 0, nbytes);
         }
         bytesOut = os.toByteArray();
         is.close();
         os.close();
         return bytesOut;
+    }
+
+    public static byte[] readFile(File file) throws FileNotFoundException, IOException {
+        FileInputStream is = new FileInputStream(file);
+        return readInputStream(is);
     }
 
     // for jython

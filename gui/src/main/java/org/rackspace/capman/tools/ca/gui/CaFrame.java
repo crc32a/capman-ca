@@ -1460,7 +1460,7 @@ public class CaFrame extends javax.swing.JFrame {
         String mysteryFileName;
         mysteryFileName = mysteryFN.getText();
         try {
-            pem = PemUtils.readFileToByteArray(mysteryFileName);
+            pem = RsaFileUtils.readFileToByteArray(mysteryFileName);
         } catch (IOException ex) {
             fmt = "Unable to read from \"%s\"\n%s\n";
             msg = String.format(fmt, mysteryFileName, getEST(ex));
@@ -1564,7 +1564,7 @@ public class CaFrame extends javax.swing.JFrame {
             case LOAD_RSA:
                 logDbg("Loading key from file \"%s\"\n", keyFile);
                 try {
-                    keyBytes = PemUtils.readFileToByteArray(keyFile);
+                    keyBytes = RsaFileUtils.readFileToByteArray(keyFile);
                     kp = getKeyPairFromBytes(keyBytes);
                 } catch (PemException ex) {
                     logError("Error decoding keypair\n%s\n", getEST(ex));
@@ -1600,7 +1600,7 @@ public class CaFrame extends javax.swing.JFrame {
                     logDbg("Writing key to pem format\n");
                     keyBytes = PemUtils.toPem(kp);
                     logDbg("Saving key pem file to \"%s\"\n", keyFile);
-                    PemUtils.writeFileFromByteArray(keyFile, keyBytes);
+                    RsaFileUtils.writeFileFromByteArray(keyFile, keyBytes);
                 } catch (IOException ex) {
                     fmt = "Error saving private key to file \"%s\"\n%s";
                     msg = String.format(fmt, keyFile, getEST(ex));
@@ -1659,7 +1659,7 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            PemUtils.writeFileFromByteArray(csrFile, csrBytes);
+            RsaFileUtils.writeFileFromByteArray(csrFile, csrBytes);
         } catch (IOException ex) {
             fmt = "Error writing to file \"%s\"\n%s";
             logError(fmt, csrFile, getEST(ex));
@@ -1712,7 +1712,7 @@ public class CaFrame extends javax.swing.JFrame {
         }
         logDbg("New Key generated\n%s\n", new String(pem));
         try {
-            PemUtils.writeFileFromByteArray(keyFN1.getText(), pem);
+            RsaFileUtils.writeFileFromByteArray(keyFN1.getText(), pem);
         } catch (IOException ex) {
             fmt = "Error writing to \"%s\"\n%s\n";
             msg = String.format(fmt, keyFN1.getText(), getEST(ex));
@@ -1767,7 +1767,7 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            caKeyBytes = PemUtils.readFileToByteArray(caKeyFile);
+            caKeyBytes = RsaFileUtils.readFileToByteArray(caKeyFile);
         } catch (IOException ex) {
             fmt = "Error reading caKey \"%s\"\n%s\n";
             logError(fmt, caKeyFile, getEST(ex));
@@ -1789,7 +1789,7 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            csrBytes = PemUtils.readFileToByteArray(csrFile);
+            csrBytes = RsaFileUtils.readFileToByteArray(csrFile);
         } catch (IOException ex) {
             fmt = "Error reading csr File \"%s\"\n%s\n";
             logError(fmt, csrFile, getEST(ex));
@@ -1825,7 +1825,7 @@ public class CaFrame extends javax.swing.JFrame {
                 return;
             }
             try {
-                PemUtils.writeFileFromByteArray(crtOutFile, crtBytes);
+                RsaFileUtils.writeFileFromByteArray(crtOutFile, crtBytes);
             } catch (IOException ex) {
                 fmt = "Error writing to \"%s\"\n%s\n";
                 logError(fmt, getEST(ex));
@@ -1835,7 +1835,7 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         } else {
             try {
-                caCrtBytes = PemUtils.readFileToByteArray(caCrtFile);
+                caCrtBytes = RsaFileUtils.readFileToByteArray(caCrtFile);
             } catch (IOException ex) {
                 fmt = "Error reading CA crt from \"%s\"\n%s\n";
                 logError(fmt, caCrtFile, getEST(ex));
@@ -1865,7 +1865,7 @@ public class CaFrame extends javax.swing.JFrame {
                 return;
             }
             try {
-                PemUtils.writeFileFromByteArray(crtOutFile, crtBytes);
+                RsaFileUtils.writeFileFromByteArray(crtOutFile, crtBytes);
             } catch (IOException ex) {
                 fmt = "Error saving certificate to file %s\n%s\n";
                 logError(fmt, crtOutFile, getEST(ex));
@@ -1886,7 +1886,7 @@ public class CaFrame extends javax.swing.JFrame {
         String msg;
         byte[] fileData;
         try {
-            fileData = PemUtils.readFileToByteArray(fileName);
+            fileData = RsaFileUtils.readFileToByteArray(fileName);
         } catch (IOException ex) {
             logError("Error reading file %s\n%s\n", fileName, getEST(ex));
             return;
@@ -1927,13 +1927,13 @@ public class CaFrame extends javax.swing.JFrame {
         keyFile = vkcKeyFN.getText();
         certFile = vkcCertFN.getText();
         try {
-            keyPem = PemUtils.readFileToByteArray(keyFile);
+            keyPem = RsaFileUtils.readFileToByteArray(keyFile);
         } catch (IOException ex) {
             logError("Error reading key from \"%s\"\n%s\n", keyFile, getEST(ex));
             return;
         }
         try {
-            certPem = PemUtils.readFileToByteArray(certFile);
+            certPem = RsaFileUtils.readFileToByteArray(certFile);
         } catch (IOException ex) {
             logError("Error reading cert from \"%s\"\n%s\n", certFile, getEST(ex));
             return;
@@ -1971,13 +1971,13 @@ public class CaFrame extends javax.swing.JFrame {
         issuerFile = issuerCertFN.getText();
         subjectFile = subjectCertFN.getText();
         try {
-            issuerCertPem = PemUtils.readFileToByteArray(issuerFile);
+            issuerCertPem = RsaFileUtils.readFileToByteArray(issuerFile);
         } catch (IOException ex) {
             logError("Error reading Issuer Cert from \"%s\"\n%s\n", issuerFile, getEST(ex));
             return;
         }
         try {
-            subjectCertPem = PemUtils.readFileToByteArray(subjectFile);
+            subjectCertPem = RsaFileUtils.readFileToByteArray(subjectFile);
         } catch (IOException ex) {
             logError("Error reading Subject Cert from \"%s\"\n%s\n", subjectFile, getEST(ex));
             return;

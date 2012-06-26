@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca;
 
+import java.util.Set;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
@@ -54,40 +55,6 @@ public class PemUtils {
         END_CRT = StringUtils.asciiBytes("-----END CERTIFICATE-----");
         BEG_RSA = StringUtils.asciiBytes("-----BEGIN PRIVATE KEY-----");
         END_RSA = StringUtils.asciiBytes("-----END PRIVATE KEY-----");
-    }
-
-    public static byte[] readFileToByteArray(String fileName) throws FileNotFoundException, IOException {
-        byte[] data;
-        String fmt;
-        String msg;
-        FileInputStream fis;
-        InputStreamReader isr;
-        File file;
-        file = new File(fileName);
-        long flen = file.length();
-        if (flen > Integer.MAX_VALUE) {
-            fmt = "can not read more then %d bytes\n";
-            msg = String.format(fmt, Integer.MAX_VALUE);
-            throw new IOException(msg);
-        }
-        fis = new FileInputStream(file);
-        data = new byte[(int) flen];
-        fis.read(data, 0, (int) flen); // FAil
-        fis.close();
-        return data;
-    }
-
-    public static void writeFileFromByteArray(String fileName, byte[] data) throws IOException {
-        File file;
-        FileOutputStream fs;
-        DataOutputStream ds;
-        file = new File(fileName);
-        fs = new FileOutputStream(file);
-        ds = new DataOutputStream(fs);
-        ds.write(data);
-        ds.flush();
-        ds.close();
-        fs.close();
     }
 
     public static Object fromPemString(String pem) throws PemException {
@@ -165,7 +132,7 @@ public class PemUtils {
         return StringUtils.asciiString(bytes);
     }
 
-    public static byte[] toMultiPem(List<? extends Object>objList) throws PemException {
+    public static byte[] toMultiPem(List<? extends Object> objList) throws PemException {
         ByteArrayOutputStream bas = new ByteArrayOutputStream(PAGESIZE);
         for (int i = 0; i < objList.size(); i++) {
             Object obj = objList.get(i);
@@ -184,7 +151,7 @@ public class PemUtils {
             try {
                 bas.write(pemBytes);
             } catch (IOException ex) {
-                throw new PemException("Error writing pemBytes to byte array",ex);
+                throw new PemException("Error writing pemBytes to byte array", ex);
             }
         }
         return bas.toByteArray();
@@ -253,6 +220,18 @@ public class PemUtils {
             }
         }
         return pemBlocks;
+    }
+
+    public static List<Object> getBlockObjects(List<PemBlock>blocks){
+        List<Object> out = new ArrayList<Object>();
+        for(PemBlock block : blocks){
+            Object obj = block.getDecodedObject();
+            if(obj == null) {
+                return null;
+            }
+            out.add(obj);
+        }
+        return out;
     }
 
     public static void writeLine(ByteArrayOutputStream bos, byte[] line) {
