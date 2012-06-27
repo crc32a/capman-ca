@@ -227,7 +227,7 @@ public class PemUtils {
         for(PemBlock block : blocks){
             Object obj = block.getDecodedObject();
             if(obj == null) {
-                return null;
+                continue;
             }
             out.add(obj);
         }
