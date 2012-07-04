@@ -36,12 +36,12 @@ public class StaticPems {
         imds = x509Objs;
     }
 
-    public Set<X509CertificateObject> getRootsSet() {
+    public static Set<X509CertificateObject> getRootsSet() {
         return new HashSet<X509CertificateObject>(roots);
     }
 
-    public Set<X509CertificateObject> getImdSet() {
-        return new HashSet<X509CertificateObject>(roots);
+    public static Set<X509CertificateObject> getImdSet() {
+        return new HashSet<X509CertificateObject>(imds);
     }
 
     public static Set<X509CertificateObject> getX509CertificateObjectSet(String fileName) throws IOException {

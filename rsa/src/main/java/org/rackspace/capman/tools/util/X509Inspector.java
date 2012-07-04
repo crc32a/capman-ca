@@ -254,6 +254,14 @@ public class X509Inspector {
         return StaticHelpers.dateToCalendar(na);
     }
 
+    public boolean isExpired(){
+        return isExpired(null);
+    }
+
+    public boolean isPremature(){
+        return isPremature(null);
+    }
+
     public boolean isExpired(Date date) {
         Date dateObj = (date == null) ? new Date(System.currentTimeMillis()) : date;
         return CertUtils.isCertExpired(x509obj, date);
@@ -262,6 +270,10 @@ public class X509Inspector {
     public boolean isPremature(Date date) {
         Date dateObj = (date == null) ? new Date(System.currentTimeMillis()) : date;
         return CertUtils.isCertPremature(x509obj, date);
+    }
+
+    public boolean isDateValid(){
+        return isDateValid(null);
     }
 
     public boolean isDateValid(Date date) {
