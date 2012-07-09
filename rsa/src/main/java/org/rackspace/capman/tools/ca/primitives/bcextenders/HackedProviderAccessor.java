@@ -1,6 +1,5 @@
 package org.rackspace.capman.tools.ca.primitives.bcextenders;
 
-
 import java.math.BigInteger;
 import java.security.spec.InvalidKeySpecException;
 import org.bouncycastle.crypto.params.RSAKeyParameters;

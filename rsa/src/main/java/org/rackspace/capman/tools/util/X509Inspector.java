@@ -128,6 +128,12 @@ public class X509Inspector {
         return pubMod;
     }
 
+    public int getPubModulusSize() {
+        JCERSAPublicKey pubKey = (JCERSAPublicKey) x509obj.getPublicKey();
+        BigInteger pubMod = pubKey.getModulus();
+        return pubMod.bitLength();
+    }
+
     public BigInteger getSerial() {
         BigInteger serial = x509obj.getSerialNumber();
         return serial;
@@ -238,27 +244,27 @@ public class X509Inspector {
         return authKeyId;
     }
 
-    public Calendar getNotBefore(){
+    public Calendar getNotBefore() {
         Date nb = x509obj.getNotBefore();
-        if(nb==null){
+        if (nb == null) {
             return null;
         }
         return StaticHelpers.dateToCalendar(nb);
     }
 
-    public Calendar getNotAfter(){
+    public Calendar getNotAfter() {
         Date na = x509obj.getNotAfter();
-        if(na == null){
+        if (na == null) {
             return null;
         }
         return StaticHelpers.dateToCalendar(na);
     }
 
-    public boolean isExpired(){
+    public boolean isExpired() {
         return isExpired(null);
     }
 
-    public boolean isPremature(){
+    public boolean isPremature() {
         return isPremature(null);
     }
 
@@ -272,7 +278,7 @@ public class X509Inspector {
         return CertUtils.isCertPremature(x509obj, date);
     }
 
-    public boolean isDateValid(){
+    public boolean isDateValid() {
         return isDateValid(null);
     }
 
