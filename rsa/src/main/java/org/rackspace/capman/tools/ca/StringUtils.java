@@ -8,7 +8,8 @@ import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class StringUtils {
 
-    private static String USASCII = "US-ASCII";
+    private static final String USASCII = "US-ASCII";
+    private static final int PAGESIZE = 4096;
 
     public static String displayParsedInt(String strIn) {
         try {
@@ -131,5 +132,23 @@ public class StringUtils {
         } else {
             return a.equals(b);
         }
+    }
+
+    // LineWrapper for jython encodeing of Strings
+    public static String lineWrap(String strIn,int cols){
+        StringBuilder sb = new StringBuilder(PAGESIZE);
+        char[] strArray = strIn.toCharArray();
+        int chrsLeftToWrite = strArray.length;
+        int offset = 0;
+        while(chrsLeftToWrite > 0){
+            int nChrs = (chrsLeftToWrite<cols)?chrsLeftToWrite:cols;
+            sb.append(strArray, offset, nChrs);
+            offset += nChrs;
+            chrsLeftToWrite -= nChrs;
+            if(chrsLeftToWrite>0){
+                sb.append('\n');
+            }
+        }
+        return sb.toString();
     }
 }

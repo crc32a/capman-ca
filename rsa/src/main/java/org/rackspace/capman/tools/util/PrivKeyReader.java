@@ -59,6 +59,12 @@ public class PrivKeyReader {
         return privKey.getCrtCoefficient();
     }
 
+    public BigInteger getT() {
+        return privKey.getPrimeP().subtract(BigInteger.ONE).
+                multiply(privKey.getPrimeQ().
+                subtract(BigInteger.ONE));
+    }
+
     public static PrivKeyReader newPrivKeyReader(String pemString) throws PrivKeyDecodeException {
         JCERSAPrivateCrtKey privKey;
         Object obj;
