@@ -66,7 +66,7 @@ public class PrivKeyReader {
         try {
             obj = PemUtils.fromPemString(pemString);
         } catch (PemException ex) {
-            throw new PrivKeyDecodeException("Error decoding Keyt", ex);
+            throw new PrivKeyDecodeException("Error decoding Key", ex);
         }
         if (obj instanceof KeyPair) {
             KeyPair kp = (KeyPair) obj;
