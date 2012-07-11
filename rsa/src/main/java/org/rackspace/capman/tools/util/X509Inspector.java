@@ -98,7 +98,7 @@ public class X509Inspector {
     }
 
     public String getSubjectName() {
-        String subject = x509obj.getSubjectX500Principal().getName();
+        String subject = x509obj.getSubjectX500Principal().getName(X500NameFormat);
         return subject;
     }
 
