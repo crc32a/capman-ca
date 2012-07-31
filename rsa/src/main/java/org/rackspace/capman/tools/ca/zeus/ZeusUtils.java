@@ -153,7 +153,7 @@ public class ZeusUtils {
                 try {
                     X509BuiltPath<X509CertificateObject> builtPath = pathBuilder.buildPath(userCrt);
                 } catch (X509PathBuildException ex) {
-                    errors.add(new ErrorEntry(NO_PATH_TO_ROOT, "Chain has not path to root", false, ex));
+                    errors.add(new ErrorEntry(NO_PATH_TO_ROOT, "Chain has not path to root", true, ex));
                 }
             }
 
@@ -182,7 +182,7 @@ public class ZeusUtils {
             if (CertUtils.isCertExpired(userCrt, date)) {
                 Date after = userCrt.getNotAfter();
                 String errorMsg = invalidDateMessage("User cert expired on", after);
-                errors.add(new ErrorEntry(EXPIRED_CERT, errorMsg, false, null));
+                errors.add(new ErrorEntry(EXPIRED_CERT, errorMsg, true, null));
             }
 
             if (CertUtils.isCertPremature(userCrt, date)) {

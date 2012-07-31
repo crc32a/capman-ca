@@ -278,9 +278,9 @@ public class ZeusUtilsTest {
         assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, workingUserChain, failOnFatal, expectSuccess);
         assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, workingUserChain, failOnAnyError, expectSuccess);
         assertZCFLbaasErrors(blanks, workingUserKey, workingUserCrt, workingUserChain, failOnAnyError, expectErrors);
-        assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, workingUserKey, failOnFatal, expectSuccess);
-        assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, "", failOnFatal, expectSuccess);
-        assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, null, failOnFatal, expectSuccess);
+        assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, workingUserChain, failOnFatal, expectSuccess);
+        assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, "", failOnFatal, expectErrors);
+        assertZCFLbaasErrors(roots, workingUserKey, workingUserCrt, null, failOnFatal, expectErrors);
         assertZCFLbaasErrors(roots, workingUserKey, "", "", failOnFatal, expectErrors);
         assertZCFLbaasErrors(roots, workingUserKey, "", null, failOnFatal, expectErrors);
         assertZCFLbaasErrors(roots, workingUserKey, null, null, failOnFatal, expectErrors);
