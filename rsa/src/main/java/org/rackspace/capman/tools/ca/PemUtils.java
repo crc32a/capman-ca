@@ -40,6 +40,8 @@ public class PemUtils {
     public static final byte[] END_CRT;
     public static final byte[] BEG_RSA;
     public static final byte[] END_RSA;
+    public static final byte[][] BEG_LINES;
+    public static final byte[][] END_LINES;
     private static final int CR = 13;
     private static final int LF = 10;
     private static final int PAGESIZE = 4096;
@@ -55,6 +57,9 @@ public class PemUtils {
         END_CRT = StringUtils.asciiBytes("-----END CERTIFICATE-----");
         BEG_RSA = StringUtils.asciiBytes("-----BEGIN PRIVATE KEY-----");
         END_RSA = StringUtils.asciiBytes("-----END PRIVATE KEY-----");
+
+        BEG_LINES = new byte[][]{BEG_PRV, BEG_CSR,BEG_CRT, BEG_RSA};
+        END_LINES = new byte[][]{END_PRV, END_CSR,END_CRT, END_RSA};
     }
 
     public static Object fromPemString(String pem) throws PemException {
@@ -222,11 +227,11 @@ public class PemUtils {
         return pemBlocks;
     }
 
-    public static List<Object> getBlockObjects(List<PemBlock>blocks){
+    public static List<Object> getBlockObjects(List<PemBlock> blocks) {
         List<Object> out = new ArrayList<Object>();
-        for(PemBlock block : blocks){
+        for (PemBlock block : blocks) {
             Object obj = block.getDecodedObject();
-            if(obj == null) {
+            if (obj == null) {
                 continue;
             }
             out.add(obj);
@@ -245,33 +250,19 @@ public class PemUtils {
     }
 
     public static boolean isBegPemBlock(byte[] line) {
-        if (cmpBytes(line, BEG_PRV)) {
-            return true;
-        }
-        if (cmpBytes(line, BEG_CSR)) {
-            return true;
-        }
-        if (cmpBytes(line, BEG_CRT)) {
-            return true;
-        }
-        if (cmpBytes(line, BEG_RSA)) {
-            return true;
+        for(int i=0;i<BEG_LINES.length;i++){
+            if(cmpBytes(line,BEG_LINES[i])){
+                return true;
+            }
         }
         return false;
     }
 
     public static boolean isEndPemBlock(byte[] line) {
-        if (cmpBytes(line, END_PRV)) {
-            return true;
-        }
-        if (cmpBytes(line, END_CSR)) {
-            return true;
-        }
-        if (cmpBytes(line, END_CRT)) {
-            return true;
-        }
-        if (cmpBytes(line, END_RSA)) {
-            return true;
+        for(int i=0;i<END_LINES.length;i++){
+            if(cmpBytes(line,END_LINES[i])){
+                return true;
+            }
         }
         return false;
     }
