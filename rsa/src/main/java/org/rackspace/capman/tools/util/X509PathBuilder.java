@@ -21,16 +21,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
-import org.bouncycastle.jce.provider.AnnotatedException;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.rackspace.capman.tools.ca.CsrUtils;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
-import org.rackspace.capman.tools.ca.exceptions.RsaCsrException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
@@ -77,7 +73,7 @@ public class X509PathBuilder<E extends X509Certificate> {
         CollectionCertStoreParameters ccsp = new CollectionCertStoreParameters(colStoreCrts);
         CertStore crtStore;
         try {
-            crtStore = CertStore.getInstance("Collection", ccsp, "BC");
+            crtStore = CertStore.getInstance("Collection", ccsp, "SUN");
         } catch (InvalidAlgorithmParameterException ex) {
             throw new X509PathBuildException("InvalidAlgorithmParemeter when initializing CollectionStore", ex);
         } catch (NoSuchAlgorithmException ex) {
@@ -109,7 +105,7 @@ public class X509PathBuilder<E extends X509Certificate> {
 
         CertPathBuilder pathBuilder;
         try {
-            pathBuilder = CertPathBuilder.getInstance("PKIX", "BC");
+            pathBuilder = CertPathBuilder.getInstance("PKIX", "SUN");
         } catch (NoSuchAlgorithmException ex) {
             throw new X509PathBuildException("NoSuchAlgorithmException when initializing pathBuilder", ex);
         } catch (NoSuchProviderException ex) {
