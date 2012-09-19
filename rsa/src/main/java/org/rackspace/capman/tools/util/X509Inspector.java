@@ -2,8 +2,10 @@ package org.rackspace.capman.tools.util;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URI;
 import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
@@ -19,6 +21,8 @@ import org.bouncycastle.jce.provider.JCERSAPublicKey;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
+import sun.security.util.ObjectIdentifier;
+import sun.security.x509.AuthorityInfoAccessExtension;
 import sun.security.x509.X500Name;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
@@ -27,6 +31,11 @@ import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderNoSuchExtensionException;
+import sun.security.provider.certpath.OCSP;
+import sun.security.x509.AccessDescription;
+import sun.security.x509.GeneralNameInterface;
+import sun.security.x509.URIName;
+import sun.security.x509.X509CertImpl;
 
 public class X509Inspector {
 
@@ -90,6 +99,38 @@ public class X509Inspector {
             return null;
         }
         return cn;
+    }
+
+    public String getOCSPUri() {
+        URI uri = OCSP.getResponderURI((X509Certificate) x509obj);
+        if (uri == null) {
+            return null;
+        }
+        return uri.toASCIIString();
+    }
+
+    public String getOCSPCaUri() {
+        X509CertImpl x509i;
+        ObjectIdentifier caOid = AccessDescription.Ad_CAISSUERS_Id;
+        try {
+            x509i = X509CertImpl.toImpl((X509Certificate) x509obj);
+        } catch (CertificateException ex) {
+            return null;
+        }
+        AuthorityInfoAccessExtension aiae = x509i.getAuthorityInfoAccessExtension();
+        if (aiae == null) {
+            return null;
+        }
+        for (AccessDescription des : aiae.getAccessDescriptions()) {
+            if (des.getAccessMethod().equals(caOid)) {
+                sun.security.x509.GeneralName generalName = des.getAccessLocation();
+                if (generalName.getType() == GeneralNameInterface.NAME_URI) {
+                    URIName uriName = (URIName) generalName.getName();
+                    return uriName.getName();
+                }
+            }
+        }
+        return null;
     }
 
     public String getIssuerName() {

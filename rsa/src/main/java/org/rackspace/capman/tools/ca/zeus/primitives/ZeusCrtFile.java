@@ -12,6 +12,10 @@ public class ZeusCrtFile {
     private String public_cert;
     private String private_key;
 
+    static{
+        RsaConst.init();
+    }
+
     public ZeusCrtFile() {
         errors = new ArrayList<ErrorEntry>();
         public_cert = "";

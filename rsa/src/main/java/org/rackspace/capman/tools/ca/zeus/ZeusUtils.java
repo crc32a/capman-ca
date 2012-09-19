@@ -42,6 +42,9 @@ import static org.rackspace.capman.tools.ca.zeus.primitives.ErrorType.SIGNATURE_
 
 public class ZeusUtils {
 
+    static {
+        RsaConst.init();
+    }
     private Set<X509CertificateObject> roots;
 
     public ZeusUtils() {
@@ -280,7 +283,7 @@ public class ZeusUtils {
             try {
                 obj = HackedProviderAccessor.newKeyPair((JCERSAPrivateCrtKey) obj);
             } catch (InvalidKeySpecException ex) {
-                errors.add(new ErrorEntry(UNREADABLE_KEY,"Error when attempting to convert PKCS8 key to PKCS1",true,ex));
+                errors.add(new ErrorEntry(UNREADABLE_KEY, "Error when attempting to convert PKCS8 key to PKCS1", true, ex));
             }
         }
         if (!(obj instanceof KeyPair)) {
@@ -296,7 +299,6 @@ public class ZeusUtils {
         }
         return kp;
     }
-
 
     private static X509CertificateObject parseCert(String certIn, List<ErrorEntry> errors) {
         X509CertificateObject x509obj = null;
@@ -325,7 +327,6 @@ public class ZeusUtils {
         String msg = String.format("%s %s", premsg, edge);
         return msg;
     }
-
 
     private static List<X509CertificateObject> decodeImd(Map<X509CertificateObject, Integer> lineMap, String imdStr, ZeusCrtFile zcf) {
         List<ErrorEntry> errors = zcf.getErrors();

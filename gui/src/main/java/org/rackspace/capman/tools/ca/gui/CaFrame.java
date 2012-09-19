@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca.gui;
 
+import java.net.MalformedURLException;
 import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
 import org.rackspace.capman.tools.util.StaticHelpers;
 import java.security.spec.InvalidKeySpecException;
@@ -54,6 +55,7 @@ import org.rackspace.capman.tools.util.X509PathBuilder;
 import org.rackspace.capman.tools.util.X509Inspector;
 import org.rackspace.capman.tools.ca.exceptions.X509PathBuildException;
 import org.rackspace.capman.tools.ca.zeus.ZeusUtils;
+import org.rackspace.capman.tools.util.X509ReaderWriter;
 import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
 import static org.rackspace.capman.tools.ca.gui.utils.GuiConst.*;
 
@@ -202,6 +204,11 @@ public class CaFrame extends javax.swing.JFrame {
         jScrollPane5 = new javax.swing.JScrollPane();
         crtPathMessagesPane = new javax.swing.JTextPane();
         clearCrtPathMessagesButton = new javax.swing.JButton();
+        urlTab = new javax.swing.JPanel();
+        urlPanel = new javax.swing.JPanel();
+        jLabel22 = new javax.swing.JLabel();
+        urlBarTextField = new javax.swing.JTextField();
+        fetchServerCrtsButton = new javax.swing.JButton();
         debugTab = new javax.swing.JPanel();
         debugPanel = new javax.swing.JPanel();
         clearDebugButton = new javax.swing.JButton();
@@ -1287,6 +1294,62 @@ public class CaFrame extends javax.swing.JFrame {
 
         appTabs.addTab("Crt Path", crtPathTab);
 
+        urlPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Url Options"));
+
+        jLabel22.setText("URL");
+
+        fetchServerCrtsButton.setText("Fetch X509Certs");
+        fetchServerCrtsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fetchServerCrtsButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout urlPanelLayout = new javax.swing.GroupLayout(urlPanel);
+        urlPanel.setLayout(urlPanelLayout);
+        urlPanelLayout.setHorizontalGroup(
+            urlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(urlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(urlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(fetchServerCrtsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(urlPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(urlBarTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        urlPanelLayout.setVerticalGroup(
+            urlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(urlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(urlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel22)
+                    .addComponent(urlBarTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fetchServerCrtsButton)
+                .addContainerGap(215, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout urlTabLayout = new javax.swing.GroupLayout(urlTab);
+        urlTab.setLayout(urlTabLayout);
+        urlTabLayout.setHorizontalGroup(
+            urlTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(urlTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(urlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(649, Short.MAX_VALUE))
+        );
+        urlTabLayout.setVerticalGroup(
+            urlTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(urlTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(urlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(533, Short.MAX_VALUE))
+        );
+
+        appTabs.addTab("URLs", urlTab);
+
         debugPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Debug Messages"));
 
         clearDebugButton.setText("Clear Messages");
@@ -1811,7 +1874,7 @@ public class CaFrame extends javax.swing.JFrame {
             // Self Sign this CSR
             try {
                 now = StaticHelpers.currDate();
-                crt = CertUtils.selfSignCsrCA(req, kp,now,dayDelta(now,days));
+                crt = CertUtils.selfSignCsrCA(req, kp, now, dayDelta(now, days));
             } catch (RsaException ex) {
                 fmt = "Error generating Certificate\n%s\n";
                 logError(fmt, getEST(ex));
@@ -2341,6 +2404,51 @@ public class CaFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_displayCrtHashCodeButtonActionPerformed
 
+    private void fetchServerCrtsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fetchServerCrtsButtonActionPerformed
+        String url = urlBarTextField.getText();
+        List<X509CertificateObject> serverCrts;
+        try {
+            serverCrts = X509ReaderWriter.getX509CertificateObjectsFromUrl(url);
+        } catch (MalformedURLException ex) {
+            dbg.writeException(ex);
+            return;
+        } catch (IOException ex) {
+            dbg.writeException(ex);
+            return;
+        } catch (Exception ex) {
+            dbg.writeException(ex);
+            return;
+        }
+
+        for(X509CertificateObject x509obj : serverCrts){
+            displayX509CertificateObject(x509obj);
+        }
+
+    }//GEN-LAST:event_fetchServerCrtsButtonActionPerformed
+
+    private void displayX509CertificateObject(X509CertificateObject x509obj){
+        try {
+            X509Inspector xi = new X509Inspector(x509obj);
+            String pem = PemUtils.toPemString(x509obj);
+            BigInteger authIdSerial = xi.getAuthKeyIdSerial();
+            String authIdSerialStr = (authIdSerial==null)?null:authIdSerial.toString(16);
+
+            dbg.greenWrite("\n");
+            dbg.greenWrite("Subject: %s\n", xi.getSubjectName());
+            dbg.greenWrite("Issuer: %s\n", xi.getIssuerName());
+            dbg.greenWrite("Serial: %s\n", xi.getSerial().toString(16));
+            dbg.greenWrite("authKeyId = %s\n", xi.getAuthKeyId());
+            dbg.greenWrite("authDirName = %s\n",xi.getAuthKeyIdDirname());
+            dbg.greenWrite("authIdSerial: %s\n", authIdSerialStr);
+            dbg.greenWrite("subjKeyId: %s\n",xi.getSubjKeyId());
+            dbg.greenWrite("%s\n",pem);
+        } catch (PemException ex) {
+            dbg.writeException(ex);
+        } catch (NotAnX509CertificateException ex) {
+            dbg.writeException(ex);
+        }
+    }
+
     private void userInit() {
         rsaMapper = new ButtonGroupMapper();
         rsaMapper.add(loadRsaRadio, LOAD_RSA);
@@ -2458,6 +2566,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton displayMemory;
     private javax.swing.JButton displayRootImdHashCodes;
     private javax.swing.JTextField emailTextField;
+    private javax.swing.JButton fetchServerCrtsButton;
     private javax.swing.JButton genKeyButton;
     private javax.swing.JButton identifyFileButton;
     private javax.swing.JButton invokeGC;
@@ -2478,6 +2587,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2525,6 +2635,9 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton signCSRButton;
     private javax.swing.JTextField stTextField;
     private javax.swing.JTextField subjectCertFN;
+    private javax.swing.JTextField urlBarTextField;
+    private javax.swing.JPanel urlPanel;
+    private javax.swing.JPanel urlTab;
     private javax.swing.JButton verifyIssuerAndSubjectCertButton;
     private javax.swing.JButton verifyKeyAndCertButton;
     private javax.swing.JButton verifyKeyCertChain;
