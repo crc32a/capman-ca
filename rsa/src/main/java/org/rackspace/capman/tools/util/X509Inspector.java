@@ -101,15 +101,15 @@ public class X509Inspector {
         return cn;
     }
 
-    public String getOCSPUri() {
+    public URI getOCSPUri() {
         URI uri = OCSP.getResponderURI((X509Certificate) x509obj);
         if (uri == null) {
             return null;
         }
-        return uri.toASCIIString();
+        return uri;
     }
 
-    public String getOCSPCaUri() {
+    public URI getOCSPCaUri() {
         X509CertImpl x509i;
         ObjectIdentifier caOid = AccessDescription.Ad_CAISSUERS_Id;
         try {
@@ -126,7 +126,7 @@ public class X509Inspector {
                 sun.security.x509.GeneralName generalName = des.getAccessLocation();
                 if (generalName.getType() == GeneralNameInterface.NAME_URI) {
                     URIName uriName = (URIName) generalName.getName();
-                    return uriName.getName();
+                    return uriName.getURI();
                 }
             }
         }

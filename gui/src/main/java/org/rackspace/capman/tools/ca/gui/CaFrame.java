@@ -2420,28 +2420,30 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
 
-        for(X509CertificateObject x509obj : serverCrts){
+        for (X509CertificateObject x509obj : serverCrts) {
             displayX509CertificateObject(x509obj);
         }
 
     }//GEN-LAST:event_fetchServerCrtsButtonActionPerformed
 
-    private void displayX509CertificateObject(X509CertificateObject x509obj){
+    private void displayX509CertificateObject(X509CertificateObject x509obj) {
         try {
             X509Inspector xi = new X509Inspector(x509obj);
             String pem = PemUtils.toPemString(x509obj);
             BigInteger authIdSerial = xi.getAuthKeyIdSerial();
-            String authIdSerialStr = (authIdSerial==null)?null:authIdSerial.toString(16);
+            String authIdSerialStr = (authIdSerial == null) ? null : authIdSerial.toString(16);
 
             dbg.greenWrite("\n");
             dbg.greenWrite("Subject: %s\n", xi.getSubjectName());
             dbg.greenWrite("Issuer: %s\n", xi.getIssuerName());
             dbg.greenWrite("Serial: %s\n", xi.getSerial().toString(16));
             dbg.greenWrite("authKeyId = %s\n", xi.getAuthKeyId());
-            dbg.greenWrite("authDirName = %s\n",xi.getAuthKeyIdDirname());
+            dbg.greenWrite("authDirName = %s\n", xi.getAuthKeyIdDirname());
             dbg.greenWrite("authIdSerial: %s\n", authIdSerialStr);
-            dbg.greenWrite("subjKeyId: %s\n",xi.getSubjKeyId());
-            dbg.greenWrite("%s\n",pem);
+            dbg.greenWrite("subjKeyId: %s\n", xi.getSubjKeyId());
+            dbg.greenWrite("ocspURI: %s\n", xi.getOCSPUri());
+            dbg.greenWrite("ocspCaUri: %s\n", xi.getOCSPCaUri());
+            dbg.greenWrite("%s\n", pem);
         } catch (PemException ex) {
             dbg.writeException(ex);
         } catch (NotAnX509CertificateException ex) {
