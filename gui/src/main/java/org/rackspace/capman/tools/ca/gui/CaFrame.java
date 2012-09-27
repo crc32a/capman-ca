@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca.gui;
 
+import org.rackspace.capman.tools.ca.gui.utils.BytesList;
 import java.net.MalformedURLException;
 import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
 import org.rackspace.capman.tools.util.StaticHelpers;
@@ -222,6 +223,10 @@ public class CaFrame extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         invokeGC = new javax.swing.JButton();
         displayMemory = new javax.swing.JButton();
+        wastBytesButton = new javax.swing.JButton();
+        wasteBytesTextField = new javax.swing.JTextField();
+        freeWatedBytesButton = new javax.swing.JButton();
+        jLabel23 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Silly Certificate Authority Toy");
@@ -1409,6 +1414,22 @@ public class CaFrame extends javax.swing.JFrame {
             }
         });
 
+        wastBytesButton.setText("Waste Bytes");
+        wastBytesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                wastBytesButtonActionPerformed(evt);
+            }
+        });
+
+        freeWatedBytesButton.setText("Free Wasted Bytes");
+        freeWatedBytesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                freeWatedBytesButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel23.setText("Bytes to wast");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1417,14 +1438,28 @@ public class CaFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(displayMemory, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(invokeGC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(1001, Short.MAX_VALUE))
+                .addGap(53, 53, 53)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(freeWatedBytesButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(wastBytesButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(11, 11, 11)
+                .addComponent(wasteBytesTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 234, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel23)
+                .addContainerGap(424, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(invokeGC)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(invokeGC)
+                    .addComponent(wastBytesButton)
+                    .addComponent(wasteBytesTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel23))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(displayMemory))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(displayMemory)
+                    .addComponent(freeWatedBytesButton)))
         );
 
         javax.swing.GroupLayout debugPanelLayout = new javax.swing.GroupLayout(debugPanel);
@@ -1471,7 +1506,7 @@ public class CaFrame extends javax.swing.JFrame {
                     .addComponent(MultiParseFileButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(24, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout debugTabLayout = new javax.swing.GroupLayout(debugTab);
@@ -1488,7 +1523,7 @@ public class CaFrame extends javax.swing.JFrame {
             .addGroup(debugTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(debugPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(152, Short.MAX_VALUE))
+                .addContainerGap(140, Short.MAX_VALUE))
         );
 
         appTabs.addTab("Debug", debugTab);
@@ -2426,6 +2461,32 @@ public class CaFrame extends javax.swing.JFrame {
 
     }//GEN-LAST:event_fetchServerCrtsButtonActionPerformed
 
+    private void freeWatedBytesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_freeWatedBytesButtonActionPerformed
+        byteList.clear();
+    }//GEN-LAST:event_freeWatedBytesButtonActionPerformed
+
+    private void wastBytesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wastBytesButtonActionPerformed
+        int nBytes;
+        nop();
+        try {
+            nBytes = Integer.parseInt(wasteBytesTextField.getText());
+        } catch (Exception ex) {
+            dbg.redWrite("You didn't enter a number in the bytes to waste field\n");
+            return;
+        }
+        if (nBytes <= 0) {
+            dbg.redWrite("Can't allocate negative bytes. Just use the Free Wasted bytes button\n");
+            return;
+        }
+        try {
+            byteList.addFilledBytes(nBytes);
+        } catch (Exception ex) {
+            dbg.redWrite("Cause exception while trying to add wast %d bytes\n", nBytes);
+            dbg.writeException(ex);
+            return;
+        } 
+    }//GEN-LAST:event_wastBytesButtonActionPerformed
+
     private void displayX509CertificateObject(X509CertificateObject x509obj) {
         try {
             X509Inspector xi = new X509Inspector(x509obj);
@@ -2465,6 +2526,7 @@ public class CaFrame extends javax.swing.JFrame {
         pth = new CaTextPane(crtPathMessagesPane);
         rootCAs = new HashSet<X509Certificate>();
         imds = new HashSet<X509Certificate>();
+        byteList = new BytesList();
     }
 
     private File chooseFilePopUp() {
@@ -2569,6 +2631,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton displayRootImdHashCodes;
     private javax.swing.JTextField emailTextField;
     private javax.swing.JButton fetchServerCrtsButton;
+    private javax.swing.JButton freeWatedBytesButton;
     private javax.swing.JButton genKeyButton;
     private javax.swing.JButton identifyFileButton;
     private javax.swing.JButton invokeGC;
@@ -2590,6 +2653,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2650,6 +2714,8 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JTextField vkcCertFN;
     private javax.swing.JButton vkcKeyButton;
     private javax.swing.JTextField vkcKeyFN;
+    private javax.swing.JButton wastBytesButton;
+    private javax.swing.JTextField wasteBytesTextField;
     private javax.swing.JPanel x509OptionsPanel;
     // End of variables declaration//GEN-END:variables
     private static final int SB_INIT_CAPACITY = 4096;
@@ -2664,6 +2730,7 @@ public class CaFrame extends javax.swing.JFrame {
     private Set<X509Certificate> rootCAs;
     private Set<X509Certificate> imds;
     private int nopCount = 0;
+    private BytesList byteList;
 
     private void logError(String format, Object... args) {
         dbg.setRed();
@@ -2709,6 +2776,7 @@ public class CaFrame extends javax.swing.JFrame {
         sb.append(String.format("\n"));
         sb.append(String.format("\tkeyFile=\"%s\"\n", keyFN2.getText()));
         sb.append(String.format("\tCsrFile=\"%s\"\n", csrFN1.getText()));
+        sb.append(String.format("Bytes in the wast buffer is %d\n", byteList.length()));
 
         fmt = "\tcsrKeySize = %s\n";
         val = StringUtils.displayParsedInt(this.newCsrKeySizeTextField.getText());
