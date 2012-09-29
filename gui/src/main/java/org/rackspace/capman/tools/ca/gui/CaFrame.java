@@ -55,6 +55,7 @@ import org.rackspace.capman.tools.util.X509MapValue;
 import org.rackspace.capman.tools.util.X509PathBuilder;
 import org.rackspace.capman.tools.util.X509Inspector;
 import org.rackspace.capman.tools.ca.exceptions.X509PathBuildException;
+import org.rackspace.capman.tools.ca.exceptions.X509ReaderException;
 import org.rackspace.capman.tools.ca.zeus.ZeusUtils;
 import org.rackspace.capman.tools.util.X509ReaderWriter;
 import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
@@ -2443,14 +2444,8 @@ public class CaFrame extends javax.swing.JFrame {
         String url = urlBarTextField.getText();
         List<X509CertificateObject> serverCrts;
         try {
-            serverCrts = X509ReaderWriter.getX509CertificateObjectsFromUrl(url);
-        } catch (MalformedURLException ex) {
-            dbg.writeException(ex);
-            return;
-        } catch (IOException ex) {
-            dbg.writeException(ex);
-            return;
-        } catch (Exception ex) {
+            serverCrts = X509ReaderWriter.getX509CertificateObjectsFromSSLServer(url);
+        } catch (X509ReaderException ex) {
             dbg.writeException(ex);
             return;
         }
@@ -2484,7 +2479,7 @@ public class CaFrame extends javax.swing.JFrame {
             dbg.redWrite("Cause exception while trying to add wast %d bytes\n", nBytes);
             dbg.writeException(ex);
             return;
-        } 
+        }
     }//GEN-LAST:event_wastBytesButtonActionPerformed
 
     private void displayX509CertificateObject(X509CertificateObject x509obj) {
