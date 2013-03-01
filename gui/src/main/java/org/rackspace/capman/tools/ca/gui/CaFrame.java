@@ -1557,7 +1557,7 @@ public class CaFrame extends javax.swing.JFrame {
         long flen;
         int i;
         String mysteryFileName;
-        mysteryFileName = mysteryFN.getText();
+        mysteryFileName = RsaFileUtils.expandUser(mysteryFN.getText());
         try {
             pem = RsaFileUtils.readFileToByteArray(mysteryFileName);
         } catch (IOException ex) {
@@ -1650,8 +1650,8 @@ public class CaFrame extends javax.swing.JFrame {
         String tmpStr;
         String fmt;
         String msg;
-        String keyFile = keyFN2.getText();
-        String csrFile = csrFN1.getText();
+        String keyFile = RsaFileUtils.expandUser(keyFN2.getText());
+        String csrFile = RsaFileUtils.expandUser(csrFN1.getText());
         String subjStr;
         KeyPair kp;
         int keySize;
@@ -1784,7 +1784,7 @@ public class CaFrame extends javax.swing.JFrame {
         String msg;
         String fmt;
         int keySize;
-        String fileName;
+        String keyFileName = RsaFileUtils.expandUser(keyFN1.getText());
         KeyPair kp;
         FileWriter fw;
         try {
@@ -1811,13 +1811,13 @@ public class CaFrame extends javax.swing.JFrame {
         }
         logDbg("New Key generated\n%s\n", new String(pem));
         try {
-            RsaFileUtils.writeFileFromByteArray(keyFN1.getText(), pem);
+            RsaFileUtils.writeFileFromByteArray(keyFileName, pem);
         } catch (IOException ex) {
             fmt = "Error writing to \"%s\"\n%s\n";
-            msg = String.format(fmt, keyFN1.getText(), getEST(ex));
+            msg = String.format(fmt, keyFileName, getEST(ex));
             logError(msg);
         }
-        logDbg("Key saved to file \"%s\"\n", keyFN1.getText());
+        logDbg("Key saved to file \"%s\"\n", keyFileName);
 }//GEN-LAST:event_genKeyButtonActionPerformed
 
     private void logException(Throwable ex) {
@@ -1832,10 +1832,10 @@ public class CaFrame extends javax.swing.JFrame {
     private void signCSRButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signCSRButtonActionPerformed
         String fmt;
         String msg;
-        String caKeyFile = caKeyFN.getText();
-        String caCrtFile = caCertFN.getText();
-        String csrFile = csrFN2.getText();
-        String crtOutFile = certOutFN.getText();
+        String caKeyFile = RsaFileUtils.expandUser(caKeyFN.getText());
+        String caCrtFile = RsaFileUtils.expandUser(caCertFN.getText());
+        String csrFile = RsaFileUtils.expandUser(csrFN2.getText());
+        String crtOutFile = RsaFileUtils.expandUser(certOutFN.getText());
         X509Certificate crt;
         X509Certificate caCrt;
         BigInteger serial;
@@ -1980,9 +1980,7 @@ public class CaFrame extends javax.swing.JFrame {
 
     private void MultiParseFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MultiParseFileButtonActionPerformed
         List<PemBlock> pemBlocks;
-        String fileName = mysteryFN.getText();
-        String fmt;
-        String msg;
+        String fileName = RsaFileUtils.expandUser(mysteryFN.getText());
         byte[] fileData;
         try {
             fileData = RsaFileUtils.readFileToByteArray(fileName);
@@ -2023,8 +2021,8 @@ public class CaFrame extends javax.swing.JFrame {
         byte[] keyPem;
         byte[] certPem;
         List<String> errors;
-        keyFile = vkcKeyFN.getText();
-        certFile = vkcCertFN.getText();
+        keyFile = RsaFileUtils.expandUser(vkcKeyFN.getText());
+        certFile = RsaFileUtils.expandUser(vkcCertFN.getText());
         try {
             keyPem = RsaFileUtils.readFileToByteArray(keyFile);
         } catch (IOException ex) {
@@ -2067,8 +2065,8 @@ public class CaFrame extends javax.swing.JFrame {
         byte[] issuerCertPem;
         byte[] subjectCertPem;
 
-        issuerFile = issuerCertFN.getText();
-        subjectFile = subjectCertFN.getText();
+        issuerFile = RsaFileUtils.expandUser(issuerCertFN.getText());
+        subjectFile = RsaFileUtils.expandUser(subjectCertFN.getText());
         try {
             issuerCertPem = RsaFileUtils.readFileToByteArray(issuerFile);
         } catch (IOException ex) {
@@ -2178,8 +2176,8 @@ public class CaFrame extends javax.swing.JFrame {
     }
 
     private void loadCrtPathCrtsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadCrtPathCrtsButtonActionPerformed
-        File dirWalkFiles = new File(crtLoadBaseDir.getText());
-        File singleCrtFile = new File(crtPathFN.getText());
+        File dirWalkFiles = new File(RsaFileUtils.expandUser(crtLoadBaseDir.getText()));
+        File singleCrtFile = new File(RsaFileUtils.expandUser(crtPathFN.getText()));
         try {
             List<File> files = RsaFileUtils.dirWalk(dirWalkFiles, null);
             files.add(singleCrtFile);
@@ -2290,9 +2288,7 @@ public class CaFrame extends javax.swing.JFrame {
     }
 
     private void buildNieveChainButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buildNieveChainButtonActionPerformed
-        File file = new File(crtPathFN.getText());
         X509Certificate x509obj = readCrtPathFN();
-        String pemString;
         if (x509obj == null) {
             return; // The exception was already reported
         }
@@ -2380,7 +2376,6 @@ public class CaFrame extends javax.swing.JFrame {
         pathBuilder.getRootCAs().addAll(rootCAs);
         pathBuilder.getIntermediates().addAll(imds);
         X509Certificate userCrt = readCrtPathFN();
-        X509Inspector x509reader;
         List<X509Certificate> x509objs;
         if (userCrt == null) {
             return;

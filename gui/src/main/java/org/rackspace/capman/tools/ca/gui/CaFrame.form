@@ -39,7 +39,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
-              <Component id="appTabs" pref="876" max="32767" attributes="0"/>
+              <Component id="appTabs" pref="873" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -72,7 +72,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="rsaGenPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="593" max="32767" attributes="0"/>
+                      <EmptySpace pref="592" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -81,7 +81,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="rsaGenPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="729" max="32767" attributes="0"/>
+                      <EmptySpace pref="714" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -188,7 +188,7 @@
                           <Component id="csrOptionsPanel" alignment="0" min="0" max="32767" attributes="1"/>
                           <Component id="csrSubjectPanel" alignment="0" min="-2" pref="734" max="-2" attributes="1"/>
                       </Group>
-                      <EmptySpace pref="512" max="32767" attributes="0"/>
+                      <EmptySpace pref="511" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -199,7 +199,7 @@
                       <Component id="csrSubjectPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="csrOptionsPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="259" max="32767" attributes="0"/>
+                      <EmptySpace pref="195" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -464,7 +464,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace pref="182" max="32767" attributes="0"/>
+                              <EmptySpace pref="269" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -534,7 +534,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CSRSigningPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="531" max="32767" attributes="0"/>
+                      <EmptySpace pref="528" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -543,7 +543,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CSRSigningPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="379" max="32767" attributes="0"/>
+                      <EmptySpace pref="352" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -826,7 +826,7 @@
                       <Component id="keycertandchainPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="verifyKeyCrtPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="107" max="32767" attributes="0"/>
+                      <EmptySpace pref="80" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -940,7 +940,7 @@
                               </Group>
                               <Component id="verifyIssuerAndSubjectCertButton" alignment="0" min="-2" pref="368" max="-2" attributes="1"/>
                           </Group>
-                          <EmptySpace pref="116" max="32767" attributes="0"/>
+                          <EmptySpace pref="115" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1027,7 +1027,7 @@
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="jLabel14" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="clearCertButton" pref="312" max="32767" attributes="0"/>
+                                          <Component id="clearCertButton" pref="318" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -1036,7 +1036,7 @@
                                       <Group type="102" attributes="0">
                                           <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                                          <Component id="clearChainButton" pref="292" max="32767" attributes="0"/>
+                                          <Component id="clearChainButton" pref="300" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -1262,7 +1262,7 @@
                       <Component id="loadX509MapsBorder" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CrtPathMessageBorder" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="162" max="32767" attributes="0"/>
+                      <EmptySpace pref="145" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1291,9 +1291,9 @@
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="buildPXIXPathButton" pref="224" max="32767" attributes="0"/>
-                                      <Component id="clearLoadBaseDirNameButton" pref="224" max="32767" attributes="0"/>
-                                      <Component id="clearCrtPathFNButton" alignment="0" pref="224" max="32767" attributes="0"/>
+                                      <Component id="buildPXIXPathButton" pref="223" max="32767" attributes="0"/>
+                                      <Component id="clearLoadBaseDirNameButton" pref="223" max="32767" attributes="0"/>
+                                      <Component id="clearCrtPathFNButton" alignment="0" pref="223" max="32767" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="1" max="-2" attributes="0">
@@ -1323,8 +1323,8 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="loadCrtPathCrtsButton" pref="179" max="32767" attributes="1"/>
-                                              <Component id="loadCrtPathMapButton" alignment="0" pref="179" max="32767" attributes="1"/>
+                                              <Component id="loadCrtPathCrtsButton" pref="184" max="32767" attributes="1"/>
+                                              <Component id="loadCrtPathMapButton" alignment="0" pref="184" max="32767" attributes="1"/>
                                           </Group>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="1" max="-2" attributes="0">
@@ -1332,7 +1332,7 @@
                                               <Component id="clearCrtPathMapButton" alignment="0" pref="89" max="32767" attributes="1"/>
                                           </Group>
                                       </Group>
-                                      <Component id="displayCrtHashCodeButton" pref="274" max="32767" attributes="0"/>
+                                      <Component id="displayCrtHashCodeButton" pref="279" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" attributes="0">
@@ -1341,20 +1341,20 @@
                                               <Group type="102" attributes="0">
                                                   <Component id="jLabel18" min="-2" pref="168" max="-2" attributes="1"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="crtChainerCountTextField" pref="165" max="32767" attributes="1"/>
+                                                  <Component id="crtChainerCountTextField" pref="167" max="32767" attributes="1"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="loadChainerButton" pref="194" max="32767" attributes="1"/>
+                                                  <Component id="loadChainerButton" pref="195" max="32767" attributes="1"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="clearChainerButton" pref="196" max="32767" attributes="1"/>
+                                                  <Component id="clearChainerButton" pref="197" max="32767" attributes="1"/>
                                               </Group>
                                               <Group type="102" attributes="0">
                                                   <Component id="jLabel19" min="-2" pref="168" max="-2" attributes="1"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="crtsInRootCAs" pref="165" max="32767" attributes="1"/>
+                                                  <Component id="crtsInRootCAs" pref="167" max="32767" attributes="1"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="loadRootCAsButton" pref="194" max="32767" attributes="1"/>
+                                                  <Component id="loadRootCAsButton" pref="195" max="32767" attributes="1"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="clearRootCAsButton" pref="196" max="32767" attributes="1"/>
+                                                  <Component id="clearRootCAsButton" pref="197" max="32767" attributes="1"/>
                                               </Group>
                                           </Group>
                                       </Group>
@@ -1366,7 +1366,7 @@
                                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                           <Component id="loadImdsButton" min="-2" pref="194" max="-2" attributes="1"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="clearImdsButton" pref="192" max="32767" attributes="1"/>
+                                          <Component id="clearImdsButton" pref="196" max="32767" attributes="1"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -1664,7 +1664,7 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane5" alignment="0" pref="1241" max="32767" attributes="0"/>
+                              <Component id="jScrollPane5" alignment="0" pref="1240" max="32767" attributes="0"/>
                               <Component id="clearCrtPathMessagesButton" alignment="0" min="-2" pref="182" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -1733,7 +1733,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="urlPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="649" max="32767" attributes="0"/>
+                      <EmptySpace pref="648" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1742,7 +1742,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="urlPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="533" max="32767" attributes="0"/>
+                      <EmptySpace pref="519" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1833,7 +1833,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="debugPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="140" max="32767" attributes="0"/>
+                      <EmptySpace pref="126" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1860,17 +1860,17 @@
                               </Group>
                               <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jScrollPane1" alignment="0" pref="1241" max="32767" attributes="0"/>
+                                      <Component id="jScrollPane1" alignment="0" pref="1240" max="32767" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="setMysteryFileButton" min="-2" pref="197" max="-2" attributes="1"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="mysteryFN" pref="1038" max="32767" attributes="0"/>
+                                          <Component id="mysteryFN" pref="1037" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="clearDebugButton" pref="292" max="32767" attributes="1"/>
+                                  <Component id="clearDebugButton" pref="291" max="32767" attributes="1"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="debugStateButton" min="-2" pref="274" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -1998,7 +1998,7 @@
                               <Component id="wasteBytesTextField" min="-2" pref="234" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabel23" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="424" max="32767" attributes="0"/>
+                              <EmptySpace pref="554" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>

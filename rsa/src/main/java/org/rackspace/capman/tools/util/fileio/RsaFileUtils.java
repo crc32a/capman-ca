@@ -17,6 +17,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,7 @@ import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.exceptions.CapManUtilException;
+import org.rackspace.capman.tools.ca.exceptions.FileUtilsException;
 
 public class RsaFileUtils {
 
@@ -38,7 +40,7 @@ public class RsaFileUtils {
         RsaConst.init();
     }
 
-        public static byte[] readFileToByteArray(String fileName) throws FileNotFoundException, IOException {
+    public static byte[] readFileToByteArray(String fileName) throws FileNotFoundException, IOException {
         byte[] data;
         String fmt;
         String msg;
@@ -72,15 +74,13 @@ public class RsaFileUtils {
         fs.close();
     }
 
-
-
     public static byte[] readFile(String fileName) throws FileNotFoundException, IOException {
         File file = new File(fileName);
         byte[] bytes = readFile(file);
         return bytes;
     }
 
-    public static byte[] readFileFromClassPath(String fileName) throws IOException{
+    public static byte[] readFileFromClassPath(String fileName) throws IOException {
         InputStream is = RsaFileUtils.class.getResourceAsStream(fileName);
         return readInputStream(is);
     }
@@ -189,5 +189,115 @@ public class RsaFileUtils {
             mapVals.addAll(fileMapVals);
         }
         return mapVals;
+    }
+
+    public static String expandUser(String pathIn) {
+        if (pathIn == null) {
+            return pathIn;
+        }
+        return pathIn.replace("~", System.getProperty("user.home"));
+    }
+
+    public static String[] splitPath(String pathName) {
+        List<String> pathList = new ArrayList<String>();
+        File file = new File(pathName);
+        while (true) {
+            if (file == null) {
+                break;
+            }
+            String name = file.getName();
+            pathList.add(name);
+            file = file.getParentFile();
+        }
+        Collections.reverse(pathList);
+        return pathList.toArray(new String[pathList.size()]);
+    }
+
+    public static String joinPath(String firstPart, String secondPart) {
+        return splitPathToString(joinPath(splitPath(firstPart), splitPath(secondPart)));
+    }
+
+    public static String[] joinPath(String[] firstPart, String[] secondPart) {
+        int firstLen = firstPart.length;
+        int secondLen = secondPart.length;
+        int i;
+        String[] newPath = new String[firstLen + secondLen];
+        for (i = 0; i < firstLen; i++) {
+            newPath[i] = firstPart[i];
+        }
+        for (i = 0; i < secondLen; i++) {
+            newPath[i + firstLen] = secondPart[i];
+        }
+        return newPath;
+    }
+
+    public static String splitPathToString(String[] splitPath) {
+        StringBuilder sb = new StringBuilder();
+        if (splitPath.length == 0) {
+            return null;
+        }
+        if (splitPath.length == 1) {
+            return splitPath[0];
+        }
+
+        for (int i = 0; i < splitPath.length - 1; i++) {
+            sb.append(splitPath[i]).append(File.separator);
+        }
+        sb.append(splitPath[splitPath.length - 1]);
+        return sb.toString();
+    }
+
+    public static String rebaseSplitPath(String srcBase, String srcPath, String dstBase) throws FileUtilsException {
+        String[] srcBaseArr = splitPath(srcBase);
+        String[] srcPathArr = splitPath(srcPath);
+        String[] dstBaseArr = splitPath(dstBase);
+        String[] rebasedPath = rebaseSplitPath(srcBaseArr, srcPathArr, dstBaseArr);
+        String rebasePathString = splitPathToString(rebasedPath);
+        return rebasePathString;
+    }
+
+    public static String[] rebaseSplitPath(String[] srcBase, String[] srcPath, String[] dstBase) throws FileUtilsException {
+        int srcBaseLen = srcBase.length;
+        int srcPathLen = srcPath.length;
+        int dstBaseLen = dstBase.length;
+        int i;
+        int j;
+        if (srcPathLen < srcBaseLen) {
+            throw new FileUtilsException("srcPath is smaller then srcBase");
+        }
+        for (i = 0; i < srcBaseLen; i++) {
+            if (!srcBase[i].equals(srcPath[i])) {
+                throw new FileUtilsException("srcPath does not include srcBase");
+            }
+        }
+        int deltaLen = srcPathLen - srcBaseLen;
+        int rebasedLength = dstBaseLen + deltaLen;
+        String[] rebasedPath = new String[rebasedLength];
+        System.arraycopy(dstBase, 0, rebasedPath, 0, dstBaseLen);
+        System.arraycopy(srcPath, srcBaseLen, rebasedPath, dstBaseLen, srcPathLen - srcBaseLen);
+        return rebasedPath;
+    }
+
+    public static String[] stripBeginingPath(String[] splitPath, int nTimes) {
+        if (splitPath.length <= nTimes) {
+            return new String[0];
+        }
+
+        int newLength = splitPath.length - nTimes;
+        String[] newPath = new String[newLength];
+        for (int i = 0; i < newLength; i++) {
+            newPath[i] = splitPath[nTimes + i];
+        }
+        return newPath;
+    }
+
+    public static String[] stripEndPath(String[] splitPath, int nTimes) {
+        if (splitPath.length <= nTimes) {
+            return new String[0];
+        }
+        int newLen = splitPath.length - nTimes;
+        String[] newPath = new String[newLen];
+        System.arraycopy(splitPath, 0, newPath, 0, newLen);
+        return newPath;
     }
 }
