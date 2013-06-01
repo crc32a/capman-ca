@@ -16,6 +16,7 @@ import org.rackspace.capman.tools.ca.primitives.RsaConst;
 
 public class StaticHelpers {
 
+    public static final long DAY_IN_MILLIS_LONG = (long) 24 * 60 * 60 * 1000;
     private static final String[] int2hex;
 
     static {
@@ -43,10 +44,10 @@ public class StaticHelpers {
         }
     }
 
-    public static String[] getHexMap(){
+    public static String[] getHexMap() {
         String[] mapOut = new String[16];
-        for(int i = 0;i<16;i++){
-            mapOut[i]=int2hex[i];
+        for (int i = 0; i < 16; i++) {
+            mapOut[i] = int2hex[i];
         }
         return mapOut;
     }
@@ -221,17 +222,29 @@ public class StaticHelpers {
         return (ch >= 0x09 && ch <= 0x0d) || (ch >= 0x1c && ch <= 0x20);
     }
 
-    public static List<Object> filterObjectList(List<Object> objsIn,Set<Class> clazz){
+    public static List<Object> filterObjectList(List<Object> objsIn, Set<Class> clazz) {
         List<Object> objsOut = new ArrayList<Object>();
-        for(Object obj : objsIn){
-            if(obj == null){
+        for (Object obj : objsIn) {
+            if (obj == null) {
                 continue;
             }
-            if(clazz != null && !clazz.contains(obj.getClass())){
+            if (clazz != null && !clazz.contains(obj.getClass())) {
                 continue;
             }
             objsOut.add(obj);
         }
         return objsOut;
+    }
+
+    public static Date daysDelta(Date date, int days) {
+        return new Date(date.getTime() + (long) days * DAY_IN_MILLIS_LONG);
+    }
+
+    public static Date daysDelta(Date date, double days) {
+        return new Date((long) ((double) date.getTime() + days * DAY_IN_MILLIS_LONG));
+    }
+
+    public static Date now() {
+        return new Date(System.currentTimeMillis());
     }
 }

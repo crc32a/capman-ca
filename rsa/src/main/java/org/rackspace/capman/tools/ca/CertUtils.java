@@ -60,6 +60,7 @@ public class CertUtils {
     public static final String SUBJECT_NOT_AFTER_FAIL = "subject Cert Not After Fail";
     public static final String SUBJECT_NOT_BEFORE_FAIL = "subject Cert Not Before Fail";
     public static final int DEFAULT_NOT_AFTER_YEARS = 2;
+    public static final long DAY_IN_MILLIS = (long) 24 * 60 * 60 * 1000;
 
     static {
         RsaConst.init();
@@ -68,13 +69,12 @@ public class CertUtils {
     public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
         long nowMillis = System.currentTimeMillis();
         Date notBefore = new Date(nowMillis);
-        Date notAfter = new Date((long) days * 24 * 60 * 60 * 1000 + nowMillis);
+        Date notAfter = new Date((long) days * DAY_IN_MILLIS + nowMillis);
         return signCSR(req, kp, caCrt, notBefore, notAfter, serial);
     }
 
-    public static X509Certificate signCSR(PKCS10CertificationRequest req,KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
+    public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
             BigInteger serial) throws RsaException {
-        long nowMillis;
         int i;
         Date notBefore;
         Date notAfter;

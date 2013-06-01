@@ -81,7 +81,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="rsaGenPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="714" max="32767" attributes="0"/>
+                      <EmptySpace pref="698" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -188,7 +188,7 @@
                           <Component id="csrOptionsPanel" alignment="0" min="0" max="32767" attributes="1"/>
                           <Component id="csrSubjectPanel" alignment="0" min="-2" pref="734" max="-2" attributes="1"/>
                       </Group>
-                      <EmptySpace pref="511" max="32767" attributes="0"/>
+                      <EmptySpace pref="487" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -199,7 +199,7 @@
                       <Component id="csrSubjectPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="csrOptionsPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="195" max="32767" attributes="0"/>
+                      <EmptySpace pref="154" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -368,8 +368,8 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="csrFnButton1" pref="288" max="32767" attributes="1"/>
-                                      <Component id="keyFnButton1" alignment="0" pref="288" max="32767" attributes="1"/>
+                                      <Component id="csrFnButton1" pref="312" max="32767" attributes="1"/>
+                                      <Component id="keyFnButton1" alignment="0" pref="312" max="32767" attributes="1"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -464,7 +464,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace pref="269" max="32767" attributes="0"/>
+                              <EmptySpace pref="246" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -543,7 +543,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CSRSigningPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="352" max="32767" attributes="0"/>
+                      <EmptySpace pref="321" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -685,10 +685,16 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="103" alignment="1" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="daysTextField" alignment="0" max="32767" attributes="1"/>
+                                  <Group type="103" alignment="1" groupAlignment="0" attributes="0">
                                       <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="serialTextField" alignment="1" min="-2" pref="500" max="-2" attributes="1"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="notBeforeDaysTextField" min="-2" pref="151" max="-2" attributes="1"/>
+                                          <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
+                                          <Component id="jLabel24" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="notAfterDaysTextField" min="-2" pref="102" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                                   <Component id="csrFN2" alignment="1" pref="506" max="32767" attributes="1"/>
                                   <Component id="certOutFN" alignment="0" pref="506" max="32767" attributes="0"/>
@@ -702,8 +708,10 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="daysTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="notBeforeDaysTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel24" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="notAfterDaysTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -728,11 +736,14 @@
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JTextField" name="daysTextField">
+                    <Component class="javax.swing.JTextField" name="notBeforeDaysTextField">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="0"/>
+                      </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel11">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="Days Valid"/>
+                        <Property name="text" type="java.lang.String" value="NotBefore Days Offset"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JCheckBox" name="isSerialNumberSpecified">
@@ -766,6 +777,16 @@
                       </Events>
                     </Component>
                     <Component class="javax.swing.JTextField" name="certOutFN">
+                    </Component>
+                    <Component class="javax.swing.JLabel" name="jLabel24">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="NotAfter Days Offset"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JTextField" name="notAfterDaysTextField">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="365"/>
+                      </Properties>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -826,7 +847,7 @@
                       <Component id="keycertandchainPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="verifyKeyCrtPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="80" max="32767" attributes="0"/>
+                      <EmptySpace pref="48" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1022,7 +1043,7 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" attributes="0">
                                           <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
-                                          <Component id="jScrollPane4" pref="349" max="32767" attributes="1"/>
+                                          <Component id="jScrollPane4" pref="356" max="32767" attributes="1"/>
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="jLabel14" min="-2" max="-2" attributes="0"/>
@@ -1032,7 +1053,7 @@
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jScrollPane3" pref="350" max="32767" attributes="1"/>
+                                      <Component id="jScrollPane3" pref="357" max="32767" attributes="1"/>
                                       <Group type="102" attributes="0">
                                           <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -1262,7 +1283,7 @@
                       <Component id="loadX509MapsBorder" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CrtPathMessageBorder" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="145" max="32767" attributes="0"/>
+                      <EmptySpace pref="113" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1742,7 +1763,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="urlPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="519" max="32767" attributes="0"/>
+                      <EmptySpace pref="507" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1833,7 +1854,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="debugPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="126" max="32767" attributes="0"/>
+                      <EmptySpace pref="106" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1998,7 +2019,7 @@
                               <Component id="wasteBytesTextField" min="-2" pref="234" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabel23" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="554" max="32767" attributes="0"/>
+                              <EmptySpace pref="477" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
