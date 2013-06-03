@@ -7,15 +7,6 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-<!-- include via 
-        <dependency>
-            <groupId>org.rackspace.capman.tools</groupId>
-            <artifactId>capman-ca-bc</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
--->
-
-
     <groupId>org.rackspace.capman.tools</groupId>
     <artifactId>capman-ca-bc</artifactId>
     <packaging>jar</packaging>
