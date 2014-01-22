@@ -2530,6 +2530,8 @@ public class CaFrame extends javax.swing.JFrame {
             dbg.greenWrite("authDirName = %s\n", xi.getAuthKeyIdDirname());
             dbg.greenWrite("authIdSerial: %s\n", authIdSerialStr);
             dbg.greenWrite("subjKeyId: %s\n", xi.getSubjKeyId());
+            dbg.greenWrite("notAfter: %s\n", StaticHelpers.getCalendarString(xi.getNotAfter()));
+            dbg.greenWrite("notBefore: %s\n", StaticHelpers.getCalendarString(xi.getNotBefore()));
             dbg.greenWrite("ocspURI: %s\n", xi.getOCSPUri());
             dbg.greenWrite("ocspCaUri: %s\n", xi.getOCSPCaUri());
             dbg.greenWrite("%s\n", pem);

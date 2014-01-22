@@ -18,10 +18,14 @@ public class StaticHelpers {
 
     public static final long DAY_IN_MILLIS_LONG = (long) 24 * 60 * 60 * 1000;
     private static final String[] int2hex;
+    private static final SimpleDateFormat dateFormat;
+    private static final SimpleDateFormat timeFormat;
 
     static {
-        int j;
         RsaConst.init();
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSS");
+        timeFormat = new SimpleDateFormat("z");
+        int j;
         byte[] oneByte = new byte[1];
         int2hex = new String[16];
         j = 48;
@@ -179,9 +183,9 @@ public class StaticHelpers {
     }
 
     public static String getCalendarString(Calendar cal) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSS");
-        SimpleDateFormat timeFormat = new SimpleDateFormat("z");
-
+        if (cal == null) {
+            return "null";
+        }
         String dateStr = dateFormat.format(cal.getTime());
         String zoneStr = timeFormat.format(cal.getTime());
         String readableString = String.format("%s %s", dateStr, zoneStr);
