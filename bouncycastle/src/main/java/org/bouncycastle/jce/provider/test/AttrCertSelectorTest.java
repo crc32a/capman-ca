@@ -16,8 +16,8 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.Target;
 import org.bouncycastle.asn1.x509.TargetInformation;
 import org.bouncycastle.asn1.x509.X509Extensions;
-import org.bouncycastle.jce.PrincipalUtil;
 import org.bouncycastle.jce.X509Principal;
+import org.bouncycastle.jce.PrincipalUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.test.SimpleTest;
@@ -137,7 +137,7 @@ public class AttrCertSelectorTest
             "cn=test")));
         gen.setNotBefore(new Date(System.currentTimeMillis() - 50000));
         gen.setNotAfter(new Date(System.currentTimeMillis() + 50000));
-        gen.setSerialNumber(BigInteger.ONE);
+        gen.setSerialNumber(BigInteger.valueOf(1));
         gen.setSignatureAlgorithm("SHA1WithRSAEncryption");
 
         Target targetName = new Target(Target.targetName, new GeneralName(GeneralName.dNSName,

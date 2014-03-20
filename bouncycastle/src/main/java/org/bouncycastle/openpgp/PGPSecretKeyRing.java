@@ -19,6 +19,10 @@ import org.bouncycastle.bcpg.PublicSubkeyPacket;
 import org.bouncycastle.bcpg.SecretKeyPacket;
 import org.bouncycastle.bcpg.SecretSubkeyPacket;
 import org.bouncycastle.bcpg.TrustPacket;
+import org.bouncycastle.openpgp.operator.KeyFingerPrintCalculator;
+import org.bouncycastle.openpgp.operator.PBESecretKeyDecryptor;
+import org.bouncycastle.openpgp.operator.PBESecretKeyEncryptor;
+import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 
 /**
  * Class to hold a single master secret key and its subkeys.
@@ -43,15 +47,37 @@ public class PGPSecretKeyRing
         this.extraPubKeys = extraPubKeys;
     }
 
+    /**
+     * @deprecated use version that takes KeyFingerprintCalculator
+     */
     public PGPSecretKeyRing(
         byte[]    encoding)
         throws IOException, PGPException
     {
         this(new ByteArrayInputStream(encoding));
     }
-    
+
+    public PGPSecretKeyRing(
+        byte[]    encoding,
+        KeyFingerPrintCalculator fingerPrintCalculator)
+        throws IOException, PGPException
+    {
+        this(new ByteArrayInputStream(encoding), fingerPrintCalculator);
+    }
+
+    /**
+     * @deprecated use version that takes KeyFingerprintCalculator
+     */
     public PGPSecretKeyRing(
         InputStream    in)
+        throws IOException, PGPException
+    {
+        this(in, new JcaKeyFingerprintCalculator());
+    }
+
+    public PGPSecretKeyRing(
+        InputStream              in,
+        KeyFingerPrintCalculator fingerPrintCalculator)
         throws IOException, PGPException
     {
         this.keys = new ArrayList();
@@ -87,7 +113,7 @@ public class PGPSecretKeyRing
         List idSigs = new ArrayList();
         readUserIDs(pIn, ids, idTrusts, idSigs);
 
-        keys.add(new PGPSecretKey(secret, new PGPPublicKey(secret.getPublicKeyPacket(), trust, keySigs, ids, idTrusts, idSigs)));
+        keys.add(new PGPSecretKey(secret, new PGPPublicKey(secret.getPublicKeyPacket(), trust, keySigs, ids, idTrusts, idSigs, fingerPrintCalculator)));
 
 
         // Read subkeys
@@ -109,7 +135,7 @@ public class PGPSecretKeyRing
                 TrustPacket subTrust = readOptionalTrustPacket(pIn);
                 List        sigList = readSignaturesAndTrust(pIn);
 
-                keys.add(new PGPSecretKey(sub, new PGPPublicKey(sub.getPublicKeyPacket(), subTrust, sigList)));
+                keys.add(new PGPSecretKey(sub, new PGPPublicKey(sub.getPublicKeyPacket(), subTrust, sigList, fingerPrintCalculator)));
             }
             else
             {
@@ -118,7 +144,7 @@ public class PGPSecretKeyRing
                 TrustPacket subTrust = readOptionalTrustPacket(pIn);
                 List        sigList = readSignaturesAndTrust(pIn);
 
-                extraPubKeys.add(new PGPPublicKey(sub, subTrust, sigList));
+                extraPubKeys.add(new PGPPublicKey(sub, subTrust, sigList, fingerPrintCalculator));
             }
         }
     }
@@ -131,6 +157,54 @@ public class PGPSecretKeyRing
     public PGPPublicKey getPublicKey()
     {
         return ((PGPSecretKey)keys.get(0)).getPublicKey();
+    }
+
+  /**
+     * Return the public key referred to by the passed in keyID if it
+     * is present.
+     *
+     * @param keyID
+     * @return PGPPublicKey
+     */
+    public PGPPublicKey getPublicKey(
+        long        keyID)
+    {
+        PGPSecretKey key = getSecretKey(keyID);
+        if (key != null)
+        {
+            return key.getPublicKey();
+        }
+
+        for (int i = 0; i != extraPubKeys.size(); i++)
+        {
+            PGPPublicKey    k = (PGPPublicKey)keys.get(i);
+
+            if (keyID == k.getKeyID())
+            {
+                return k;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Return an iterator containing all the public keys.
+     *
+     * @return Iterator
+     */
+    public Iterator getPublicKeys()
+    {
+        List pubKeys = new ArrayList();
+
+        for (Iterator it = getSecretKeys(); it.hasNext();)
+        {
+            pubKeys.add(((PGPSecretKey)it.next()).getPublicKey());
+        }
+
+        pubKeys.addAll(extraPubKeys);
+
+        return Collections.unmodifiableList(pubKeys).iterator();
     }
 
     /**
@@ -240,6 +314,7 @@ public class PGPSecretKeyRing
      * @param newEncAlgorithm the algorithm to be used for the encryption.
      * @param rand source of randomness.
      * @param provider name of the provider to use
+     * @deprecated  use version taking PBESecretKeyEncryptor/PBESecretKeyDecryptor
      */
     public static PGPSecretKeyRing copyWithNewPassword(
         PGPSecretKeyRing ring,
@@ -263,6 +338,7 @@ public class PGPSecretKeyRing
      * @param newEncAlgorithm the algorithm to be used for the encryption.
      * @param rand source of randomness.
      * @param provider provider to use
+     * @deprecated  use version taking PBESecretKeyEncryptor/PBESecretKeyDecryptor
      */
     public static PGPSecretKeyRing copyWithNewPassword(
         PGPSecretKeyRing ring,
@@ -278,6 +354,40 @@ public class PGPSecretKeyRing
         for (Iterator keys = ring.getSecretKeys(); keys.hasNext();)
         {
             newKeys.add(PGPSecretKey.copyWithNewPassword((PGPSecretKey)keys.next(), oldPassPhrase, newPassPhrase, newEncAlgorithm, rand, provider));
+        }
+
+        return new PGPSecretKeyRing(newKeys, ring.extraPubKeys);
+    }
+
+    /**
+     * Return a copy of the passed in secret key ring, with the private keys (where present) associated with the master key and sub keys
+     * are encrypted using a new password and the passed in algorithm.
+     *
+     * @param ring the PGPSecretKeyRing to be copied.
+     * @param oldKeyDecryptor the current decryptor based on the current password for key.
+     * @param newKeyEncryptor a new encryptor based on a new password for encrypting the secret key material.
+     * @return the updated key ring.
+     */
+    public static PGPSecretKeyRing copyWithNewPassword(
+        PGPSecretKeyRing       ring,
+        PBESecretKeyDecryptor  oldKeyDecryptor,
+        PBESecretKeyEncryptor  newKeyEncryptor)
+        throws PGPException
+    {
+        List newKeys = new ArrayList(ring.keys.size());
+
+        for (Iterator keys = ring.getSecretKeys(); keys.hasNext();)
+        {
+            PGPSecretKey key = (PGPSecretKey)keys.next();
+
+            if (key.isPrivateKeyEmpty())
+            {
+                newKeys.add(key);
+            }
+            else
+            {
+                newKeys.add(PGPSecretKey.copyWithNewPassword(key, oldKeyDecryptor, newKeyEncryptor));
+            }
         }
 
         return new PGPSecretKeyRing(newKeys, ring.extraPubKeys);

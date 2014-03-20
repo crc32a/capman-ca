@@ -1,14 +1,6 @@
 package org.bouncycastle.crypto.tls;
 
-import java.security.SecureRandom;
-
 public interface TlsClientContext
+    extends TlsContext
 {
-    SecureRandom getSecureRandom();
-
-    SecurityParameters getSecurityParameters();
-
-    Object getUserObject();
-
-    void setUserObject(Object userObject);
 }

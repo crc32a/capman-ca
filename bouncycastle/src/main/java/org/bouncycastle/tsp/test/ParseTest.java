@@ -4,16 +4,18 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.cert.CertStore;
 
 import junit.framework.TestCase;
-
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.cmp.PKIFailureInfo;
 import org.bouncycastle.asn1.cmp.PKIStatus;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.tsp.TSPAlgorithms;
 import org.bouncycastle.tsp.TimeStampRequest;
 import org.bouncycastle.tsp.TimeStampResponse;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Store;
 import org.bouncycastle.util.encoders.Base64;
 
 /**
@@ -247,7 +249,7 @@ public class ParseTest
 
     private void requestParse(
         byte[]  request,
-        String  algorithm) 
+        ASN1ObjectIdentifier algorithm)
         throws IOException
     {
         TimeStampRequest    req = new TimeStampRequest(request);
@@ -260,7 +262,7 @@ public class ParseTest
         
         if (request != sha1Request && request != sha1noNonse)
         {
-            if (!req.getReqPolicy().equals(TSPTestUtil.EuroPKI_TSA_Test_Policy.getId()))
+            if (!req.getReqPolicy().equals(TSPTestUtil.EuroPKI_TSA_Test_Policy))
             {
                 fail("" + algorithm + " failed policy check.");
             }
@@ -276,9 +278,9 @@ public class ParseTest
         
         assertEquals("version not 1", 1, req.getVersion());
         
-        assertNull("critical extensions found when none expected", req.getCriticalExtensionOIDs());
+        assertEquals("critical extensions found when none expected", 0, req.getCriticalExtensionOIDs().size());
         
-        assertNull("non-critical extensions found when none expected", req.getNonCriticalExtensionOIDs());
+        assertEquals("non-critical extensions found when none expected", 0, req.getNonCriticalExtensionOIDs().size());
         
         if (request != sha1noNonse)
         {
@@ -297,7 +299,7 @@ public class ParseTest
         
         try
         {
-            req.validate(TSPAlgorithms.ALLOWED, null, null, "BC");
+            req.validate(TSPAlgorithms.ALLOWED, null, null);
         }
         catch (Exception e)
         {
@@ -313,7 +315,7 @@ public class ParseTest
     private void responseParse(
         byte[]  request,
         byte[]  response,
-        String  algorithm) 
+        ASN1ObjectIdentifier algorithm)
         throws Exception
     {
         TimeStampRequest  req = new TimeStampRequest(request);
@@ -325,7 +327,7 @@ public class ParseTest
 
         resp.validate(req);
 
-        resp.getTimeStampToken().validate(cert, "BC");
+        resp.getTimeStampToken().validate(new JcaSimpleSignerInfoVerifierBuilder().setProvider("BC").build(cert));
     }
     
     private void unacceptableResponseParse(
@@ -387,10 +389,10 @@ public class ParseTest
     {
         TimeStampResponse response = new TimeStampResponse(encoded);
 
-        CertStore store = response.getTimeStampToken().getCertificatesAndCRLs("Collection", "BC");
-        X509Certificate cert = (X509Certificate)store.getCertificates(response.getTimeStampToken().getSID()).iterator().next();
+        Store store = response.getTimeStampToken().getCertificates();
+        X509CertificateHolder cert = (X509CertificateHolder)store.getMatches(response.getTimeStampToken().getSID()).iterator().next();
 
-        response.getTimeStampToken().validate(cert, "BC");
+        response.getTimeStampToken().validate(new JcaSimpleSignerInfoVerifierBuilder().setProvider("BC").build(cert));
     }
 
     public void parse(

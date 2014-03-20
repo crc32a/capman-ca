@@ -18,21 +18,18 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.jcajce.DefaultJcaJceHelper;
-import org.bouncycastle.jcajce.NamedJcaJceHelper;
-import org.bouncycastle.jcajce.ProviderJcaJceHelper;
 import org.bouncycastle.jcajce.io.MacOutputStream;
 import org.bouncycastle.operator.GenericKey;
 import org.bouncycastle.operator.MacCalculator;
+import org.bouncycastle.operator.jcajce.JceGenericKey;
 
 public class JceCMSMacCalculatorBuilder
 {
     private final ASN1ObjectIdentifier macOID;
     private final int                  keySize;
 
-    private EnvelopedDataHelper helper = new EnvelopedDataHelper(new DefaultJcaJceHelper());
+    private EnvelopedDataHelper helper = new EnvelopedDataHelper(new DefaultJcaJceExtHelper());
     private SecureRandom random;
-    private MacOutputStream macOutputStream;
 
     public JceCMSMacCalculatorBuilder(ASN1ObjectIdentifier macOID)
     {
@@ -47,14 +44,14 @@ public class JceCMSMacCalculatorBuilder
 
     public JceCMSMacCalculatorBuilder setProvider(Provider provider)
     {
-        this.helper = new EnvelopedDataHelper(new ProviderJcaJceHelper(provider));
+        this.helper = new EnvelopedDataHelper(new ProviderJcaJceExtHelper(provider));
 
         return this;
     }
 
     public JceCMSMacCalculatorBuilder setProvider(String providerName)
     {
-        this.helper = new EnvelopedDataHelper(new NamedJcaJceHelper(providerName));
+        this.helper = new EnvelopedDataHelper(new NamedJcaJceExtHelper(providerName));
 
         return this;
     }
@@ -69,10 +66,10 @@ public class JceCMSMacCalculatorBuilder
     public MacCalculator build()
         throws CMSException
     {
-        return new CMSOutputEncryptor(macOID, keySize, random);
+        return new CMSMacCalculator(macOID, keySize, random);
     }
 
-    private class CMSOutputEncryptor
+    private class CMSMacCalculator
         implements MacCalculator
     {
         private SecretKey encKey;
@@ -80,7 +77,7 @@ public class JceCMSMacCalculatorBuilder
         private Mac mac;
         private SecureRandom random;
 
-        CMSOutputEncryptor(ASN1ObjectIdentifier macOID, int keySize, SecureRandom random)
+        CMSMacCalculator(ASN1ObjectIdentifier macOID, int keySize, SecureRandom random)
             throws CMSException
         {
             KeyGenerator keyGen = helper.createKeyGenerator(macOID);
@@ -126,7 +123,7 @@ public class JceCMSMacCalculatorBuilder
 
         public GenericKey getKey()
         {
-            return new GenericKey(encKey);
+            return new JceGenericKey(algorithmIdentifier, encKey);
         }
 
         protected AlgorithmParameterSpec generateParameterSpec(ASN1ObjectIdentifier macOID, SecretKey encKey)

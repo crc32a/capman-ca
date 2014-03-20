@@ -1,8 +1,7 @@
 package org.bouncycastle.asn1.isismtt.x509;
 
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1String;
-import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.x500.DirectoryString;
 
 /**
@@ -12,7 +11,8 @@ import org.bouncycastle.asn1.x500.DirectoryString;
  *  RestrictionSyntax ::= DirectoryString (SIZE(1..1024))
  * </pre>
  */
-public class Restriction extends ASN1Encodable
+public class Restriction
+    extends ASN1Object
 {
     private DirectoryString restriction;
 
@@ -23,25 +23,24 @@ public class Restriction extends ASN1Encodable
             return (Restriction)obj;
         }
 
-        if (obj instanceof ASN1String)
+        if (obj != null)
         {
             return new Restriction(DirectoryString.getInstance(obj));
         }
 
-        throw new IllegalArgumentException("illegal object in getInstance: "
-            + obj.getClass().getName());
+        return null;
     }
 
     /**
-     * Constructor from DERString.
+     * Constructor from DirectoryString.
      * <p/>
-     * The DERString is of type RestrictionSyntax:
+     * The DirectoryString is of type RestrictionSyntax:
      * <p/>
      * <pre>
      *      RestrictionSyntax ::= DirectoryString (SIZE(1..1024))
      * </pre>
      *
-     * @param restriction A DERString.
+     * @param restriction A DirectoryString.
      */
     private Restriction(DirectoryString restriction)
     {
@@ -75,8 +74,8 @@ public class Restriction extends ASN1Encodable
      *
      * @return a DERObject
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
-        return restriction.toASN1Object();
+        return restriction.toASN1Primitive();
     }
 }

@@ -1,8 +1,40 @@
 package org.bouncycastle.jce.provider.test;
 
-import org.bouncycastle.asn1.ASN1Encodable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigInteger;
+import java.security.AlgorithmParameters;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.Signature;
+import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAKeyGenParameterSpec;
+import java.security.spec.RSAPrivateCrtKeySpec;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
+
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
@@ -11,37 +43,12 @@ import org.bouncycastle.asn1.pkcs.RSAESOAEPparams;
 import org.bouncycastle.asn1.teletrust.TeleTrusTObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.DigestInfo;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.SimpleTest;
-
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.OAEPParameterSpec;
-import javax.crypto.spec.PSource;
-
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Security;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.interfaces.RSAPrivateCrtKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.MGF1ParameterSpec;
-import java.security.spec.RSAKeyGenParameterSpec;
-import java.security.spec.RSAPrivateCrtKeySpec;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
 
 public class RSATest
     extends SimpleTest
@@ -312,8 +319,8 @@ public class RSATest
         
         if (!areEqual(oaepP.getEncoded(), 
                 new RSAESOAEPparams(
-                        new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, new DERNull()), 
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, new DERNull())),
+                        new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, DERNull.INSTANCE), 
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, DERNull.INSTANCE)),
                         new AlgorithmIdentifier(PKCSObjectIdentifiers.id_pSpecified, new DEROctetString(new byte[0]))).getEncoded()))
         {
             fail("OAEP test failed default sha-1 parameters");
@@ -346,8 +353,8 @@ public class RSATest
         
         if (!areEqual(oaepP.getEncoded(), 
                 new RSAESOAEPparams(
-                        new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224, new DERNull()), 
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224, new DERNull())),
+                        new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224, DERNull.INSTANCE), 
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224, DERNull.INSTANCE)),
                         new AlgorithmIdentifier(PKCSObjectIdentifiers.id_pSpecified, new DEROctetString(new byte[0]))).getEncoded()))
         {
             fail("OAEP test failed default sha-224 parameters");
@@ -380,8 +387,8 @@ public class RSATest
         
         if (!areEqual(oaepP.getEncoded(), 
                 new RSAESOAEPparams(
-                        new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256, new DERNull()), 
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256, new DERNull())),
+                        new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256, DERNull.INSTANCE), 
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256, DERNull.INSTANCE)),
                         new AlgorithmIdentifier(PKCSObjectIdentifiers.id_pSpecified, new DEROctetString(new byte[0]))).getEncoded()))
         {
             fail("OAEP test failed default sha-256 parameters");
@@ -414,8 +421,8 @@ public class RSATest
         
         if (!areEqual(oaepP.getEncoded(), 
                 new RSAESOAEPparams(
-                        new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha384, new DERNull()), 
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha384, new DERNull())),
+                        new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha384, DERNull.INSTANCE), 
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha384, DERNull.INSTANCE)),
                         new AlgorithmIdentifier(PKCSObjectIdentifiers.id_pSpecified, new DEROctetString(new byte[0]))).getEncoded()))
         {
             fail("OAEP test failed default sha-384 parameters");
@@ -448,8 +455,8 @@ public class RSATest
         
         if (!areEqual(oaepP.getEncoded(), 
                 new RSAESOAEPparams(
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.md5, new DERNull()), 
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(PKCSObjectIdentifiers.md5, new DERNull())),
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.md5, DERNull.INSTANCE), 
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(PKCSObjectIdentifiers.md5, DERNull.INSTANCE)),
                         new AlgorithmIdentifier(PKCSObjectIdentifiers.id_pSpecified, new DEROctetString(new byte[0]))).getEncoded()))
         {
             fail("OAEP test failed default md5 parameters");
@@ -500,8 +507,8 @@ public class RSATest
         
         if (!areEqual(oaepP.getEncoded(), 
                 new RSAESOAEPparams(
-                        new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, new DERNull()), 
-                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, new DERNull())),
+                        new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, DERNull.INSTANCE), 
+                        new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, DERNull.INSTANCE)),
                         new AlgorithmIdentifier(PKCSObjectIdentifiers.id_pSpecified, new DEROctetString(new byte[] { 1, 2, 3, 4, 5 }))).getEncoded()))
         {
             fail("OAEP test failed changed sha-1 parameters");
@@ -594,12 +601,73 @@ public class RSATest
         {
             fail("private key equality check failed");
         }
-        
+
+        crtKey = (RSAPrivateCrtKey)keyFact.generatePrivate(new PKCS8EncodedKeySpec(privKey.getEncoded()));
+
+        if (!privKey.equals(crtKey))
+        {
+            fail("private key equality check failed");
+        }
+
+        crtKey = (RSAPrivateCrtKey)serializeDeserialize(privKey);
+
+        if (!privKey.equals(crtKey))
+        {
+            fail("private key equality check failed");
+        }
+
+        if (privKey.hashCode() != crtKey.hashCode())
+        {
+            fail("private key hashCode check failed");
+        }
+
         RSAPublicKey copyKey = (RSAPublicKey)keyFact.translateKey(pubKey);
         
         if (!pubKey.equals(copyKey))
         {
             fail("public key equality check failed");
+        }
+
+        copyKey = (RSAPublicKey)keyFact.generatePublic(new X509EncodedKeySpec(pubKey.getEncoded()));
+
+        if (!pubKey.equals(copyKey))
+        {
+            fail("public key equality check failed");
+        }
+
+        copyKey = (RSAPublicKey)serializeDeserialize(pubKey);
+
+        if (!pubKey.equals(copyKey))
+        {
+            fail("public key equality check failed");
+        }
+
+        if (pubKey.hashCode() != copyKey.hashCode())
+        {
+            fail("public key hashCode check failed");
+        }
+
+        //
+        // test an OAEP key
+        //
+        SubjectPublicKeyInfo oaepKey = new SubjectPublicKeyInfo(new AlgorithmIdentifier(PKCSObjectIdentifiers.id_RSAES_OAEP, new RSAESOAEPparams()),
+                                                  SubjectPublicKeyInfo.getInstance(pubKey.getEncoded()).parsePublicKey());
+
+        copyKey = (RSAPublicKey)serializeDeserialize(keyFact.generatePublic(new X509EncodedKeySpec(oaepKey.getEncoded())));
+
+        if (!pubKey.equals(copyKey))
+        {
+            fail("public key equality check failed");
+        }
+
+        if (pubKey.hashCode() != copyKey.hashCode())
+        {
+            fail("public key hashCode check failed");
+        }
+
+        if (!Arrays.areEqual(copyKey.getEncoded(), oaepKey.getEncoded()))
+        {
+            fail("encoding does not match");
         }
 
         oaepCompatibilityTest("SHA-1", priv2048Key, pub2048Key);
@@ -612,13 +680,22 @@ public class RSATest
         rawModeTest("SHA1withRSA", X509ObjectIdentifiers.id_SHA1, priv2048Key, pub2048Key, random);
         rawModeTest("MD5withRSA", PKCSObjectIdentifiers.md5, priv2048Key, pub2048Key, random);
         rawModeTest("RIPEMD128withRSA", TeleTrusTObjectIdentifiers.ripemd128, priv2048Key, pub2048Key, random);
+
+        // init reset test
+        c.init(Cipher.ENCRYPT_MODE, pubKey, rand);
+
+        out = c.update(new byte[40]);
+
+        c.init(Cipher.ENCRYPT_MODE, pubKey, rand);
+
+        out = c.update(new byte[40]);
     }
 
     private void oaepCompatibilityTest(String digest, PrivateKey privKey, PublicKey pubKey)
         throws Exception
     {
         if (Security.getProvider("SunJCE") == null || Security.getProvider("SunRsaSign") == null)
-        {   System.out.println("return");
+        {
             return;
         }
 
@@ -671,7 +748,7 @@ public class RSATest
         }
     }
 
-    private void rawModeTest(String sigName, DERObjectIdentifier digestOID,
+    private void rawModeTest(String sigName, ASN1ObjectIdentifier digestOID,
         PrivateKey privKey, PublicKey pubKey, SecureRandom random) throws Exception
     {
         byte[] sampleMessage = new byte[1000 + random.nextInt(100)];
@@ -705,12 +782,26 @@ public class RSATest
         }
     }
 
-    private byte[] derEncode(DERObjectIdentifier oid, byte[] hash) throws IOException
+    private Object serializeDeserialize(Object o)
+        throws Exception
+    {
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        ObjectOutputStream oOut = new ObjectOutputStream(bOut);
+
+        oOut.writeObject(o);
+        oOut.close();
+
+        ObjectInputStream oIn = new ObjectInputStream(new ByteArrayInputStream(bOut.toByteArray()));
+
+        return oIn.readObject();
+    }
+
+    private byte[] derEncode(ASN1ObjectIdentifier oid, byte[] hash) throws IOException
     {
         AlgorithmIdentifier algId = new AlgorithmIdentifier(oid, DERNull.INSTANCE);
         DigestInfo dInfo = new DigestInfo(algId, hash);
 
-        return dInfo.getEncoded(ASN1Encodable.DER);
+        return dInfo.getEncoded(ASN1Encoding.DER);
     }
 
     public String getName()

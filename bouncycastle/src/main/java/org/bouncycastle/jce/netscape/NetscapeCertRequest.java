@@ -15,13 +15,14 @@ import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -42,7 +43,7 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
  *
  **/
 public class NetscapeCertRequest
-    extends ASN1Encodable
+    extends ASN1Object
 {
     AlgorithmIdentifier    sigAlg;
     AlgorithmIdentifier    keyAlg;
@@ -142,7 +143,14 @@ public class NetscapeCertRequest
         //content_der.add(new SubjectPublicKeyInfo(sigAlg, new RSAPublicKeyStructure(pubkey.getModulus(), pubkey.getPublicExponent()).getDERObject()));
         content_der.add(new DERIA5String(challenge));
 
-        content = new DERBitString(new DERSequence(content_der));
+        try
+        {
+            content = new DERBitString(new DERSequence(content_der));
+        }
+        catch (IOException e)
+        {
+            throw new InvalidKeySpecException("exception encoding key: " + e.toString());
+        }
     }
 
     public String getChallenge()
@@ -217,7 +225,7 @@ public class NetscapeCertRequest
             SignatureException, NoSuchProviderException,
             InvalidKeySpecException
     {
-        Signature sig = Signature.getInstance(sigAlg.getObjectId().getId(),
+        Signature sig = Signature.getInstance(sigAlg.getAlgorithm().getId(),
                 "BC");
 
         if (rand != null)
@@ -236,7 +244,7 @@ public class NetscapeCertRequest
 
         try
         {
-            sig.update(new DERSequence(pkac).getEncoded(ASN1Encodable.DER));
+            sig.update(new DERSequence(pkac).getEncoded(ASN1Encoding.DER));
         }
         catch (IOException ioe)
         {
@@ -246,12 +254,12 @@ public class NetscapeCertRequest
         sigBits = sig.sign();
     }
 
-    private DERObject getKeySpec() throws NoSuchAlgorithmException,
+    private ASN1Primitive getKeySpec() throws NoSuchAlgorithmException,
             InvalidKeySpecException, NoSuchProviderException
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        DERObject obj = null;
+        ASN1Primitive obj = null;
         try
         {
 
@@ -270,7 +278,7 @@ public class NetscapeCertRequest
         return obj;
     }
 
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector spkac = new ASN1EncodableVector();
         ASN1EncodableVector pkac = new ASN1EncodableVector();

@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.BodyPart;
@@ -31,7 +32,6 @@ import javax.mail.internet.MimeMultipart;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.DERSet;
@@ -46,10 +46,9 @@ import org.bouncycastle.asn1.smime.SMIMECapabilitiesAttribute;
 import org.bouncycastle.asn1.smime.SMIMECapability;
 import org.bouncycastle.asn1.smime.SMIMECapabilityVector;
 import org.bouncycastle.asn1.teletrust.TeleTrusTObjectIdentifiers;
+import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaAttrCertStore;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
-import org.bouncycastle.cert.jcajce.JcaX509AttributeCertificateHolder;
 import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
@@ -61,8 +60,9 @@ import org.bouncycastle.mail.smime.SMIMESignedGenerator;
 import org.bouncycastle.mail.smime.SMIMESignedParser;
 import org.bouncycastle.mail.smime.util.CRLFOutputStream;
 import org.bouncycastle.mail.smime.util.FileBackedMimeBodyPart;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.util.CollectionStore;
 import org.bouncycastle.util.Store;
-import org.bouncycastle.x509.X509AttributeCertificate;
 
 public class NewSMIMESignedTest
     extends TestCase
@@ -216,7 +216,7 @@ public class NewSMIMESignedTest
     public void testHeaders()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         BodyPart      bp = smm.getBodyPart(1);
 
         assertEquals("application/pkcs7-signature; name=smime.p7s; smime-type=signed-data", bp.getHeader("Content-Type")[0]);
@@ -321,7 +321,7 @@ public class NewSMIMESignedTest
 
         m.setContent(mp);
 
-        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", m);
+        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", m, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new SMIMESigned(smm);
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
@@ -377,7 +377,7 @@ public class NewSMIMESignedTest
     public void testSHA1WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new SMIMESigned(smm);
 
         verifyMessageBytes(msg, s.getContent());
@@ -388,7 +388,7 @@ public class NewSMIMESignedTest
     public void testSHA1WithRSAAddSigners()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new SMIMESigned(smm);
 
         List certList = new ArrayList();
@@ -414,8 +414,10 @@ public class NewSMIMESignedTest
     public void testMD5WithRSAAddSignersSHA1()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg, SMIMESignedGenerator.STANDARD_MICALGS);
         SMIMESigned   s = new SMIMESigned(smm);
+
+        assertEquals("sha-1", getMicAlg(smm));
 
         List certList = new ArrayList();
 
@@ -440,24 +442,24 @@ public class NewSMIMESignedTest
 
         verifySigners(newS.getCertificates(), newS.getSignerInfos());
 
-        assertEquals("\"md5,sha1\"", getMicAlg(smm));
+        assertEquals("\"md5,sha-1\"", getMicAlg(smm));
     }
 
     public void testSHA1WithRSACanonicalization()
         throws Exception
     {
         Date          testTime = new Date();
-        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg, testTime);
+        MimeMultipart smm = generateMultiPartRsa("SHA1withRSA", msg, testTime, SMIMESignedGenerator.RFC3851_MICALGS);
         
         byte[] sig1 = getEncodedStream(smm);
     
-        smm = generateMultiPartRsa("SHA1withRSA", msgR, testTime);
+        smm = generateMultiPartRsa("SHA1withRSA", msgR, testTime, SMIMESignedGenerator.RFC3851_MICALGS);
 
         byte[] sig2 = getEncodedStream(smm);
 
         assertTrue(Arrays.equals(sig1, sig2));
         
-        smm = generateMultiPartRsa("SHA1withRSA", msgRN, testTime);          
+        smm = generateMultiPartRsa("SHA1withRSA", msgRN, testTime, SMIMESignedGenerator.RFC3851_MICALGS);
 
         byte[] sig3 = getEncodedStream(smm);
 
@@ -489,7 +491,7 @@ public class NewSMIMESignedTest
         throws Exception
     {
         MimeBodyPart res = generateEncapsulatedRsa("SHA1withRSA", msg);
-        SMIMESignedParser s = new SMIMESignedParser(res);
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), res);
 
         FileBackedMimeBodyPart content = (FileBackedMimeBodyPart)s.getContent();
         
@@ -507,7 +509,7 @@ public class NewSMIMESignedTest
     {
         File         tmp = File.createTempFile("bcTest", ".mime");
         MimeBodyPart res = generateEncapsulatedRsa("SHA1withRSA", msg);       
-        SMIMESignedParser s = new SMIMESignedParser(res, tmp);
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), res, tmp);
         FileBackedMimeBodyPart content = (FileBackedMimeBodyPart)s.getContent();
     
         verifyMessageBytes(msg, s.getContent());
@@ -526,7 +528,7 @@ public class NewSMIMESignedTest
     public void testMD5WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("MD5withRSA", msg);       
+        MimeMultipart smm = generateMultiPartRsa("MD5withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         assertEquals("md5", getMicAlg(smm));
@@ -540,12 +542,26 @@ public class NewSMIMESignedTest
     public void testSHA224WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA224withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA224withRSA", msg, SMIMESignedGenerator.STANDARD_MICALGS);
+        SMIMESigned   s = new  SMIMESigned(smm);
+
+        assertEquals("sha-224", getMicAlg(smm));
+        assertEquals(getDigestOid(s.getSignerInfos()), NISTObjectIdentifiers.id_sha224.toString());
+        
+        verifyMessageBytes(msg, s.getContent());
+
+        verifySigners(s.getCertificates(), s.getSignerInfos());
+    }
+
+    public void testSHA224WithRSARfc3851()
+        throws Exception
+    {
+        MimeMultipart smm = generateMultiPartRsa("SHA224withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         assertEquals("sha224", getMicAlg(smm));
         assertEquals(getDigestOid(s.getSignerInfos()), NISTObjectIdentifiers.id_sha224.toString());
-        
+
         verifyMessageBytes(msg, s.getContent());
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
@@ -554,7 +570,21 @@ public class NewSMIMESignedTest
     public void testSHA256WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA256withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA256withRSA", msg, SMIMESignedGenerator.STANDARD_MICALGS);
+        SMIMESigned   s = new  SMIMESigned(smm);
+
+        assertEquals("sha-256", getMicAlg(smm));
+        assertEquals(getDigestOid(s.getSignerInfos()), NISTObjectIdentifiers.id_sha256.toString());
+
+        verifyMessageBytes(msg, s.getContent());
+
+        verifySigners(s.getCertificates(), s.getSignerInfos());
+    }
+
+    public void testSHA256WithRSARfc3851()
+        throws Exception
+    {
+        MimeMultipart smm = generateMultiPartRsa("SHA256withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         assertEquals("sha256", getMicAlg(smm));
@@ -568,7 +598,21 @@ public class NewSMIMESignedTest
     public void testSHA384WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA384withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA384withRSA", msg, SMIMESignedGenerator.STANDARD_MICALGS);
+        SMIMESigned   s = new  SMIMESigned(smm);
+
+        assertEquals("sha-384", getMicAlg(smm));
+        assertEquals(getDigestOid(s.getSignerInfos()), NISTObjectIdentifiers.id_sha384.toString());
+
+        verifyMessageBytes(msg, s.getContent());
+
+        verifySigners(s.getCertificates(), s.getSignerInfos());
+    }
+
+    public void testSHA384WithRSARfc3851()
+        throws Exception
+    {
+        MimeMultipart smm = generateMultiPartRsa("SHA384withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         assertEquals("sha384", getMicAlg(smm));
@@ -582,7 +626,21 @@ public class NewSMIMESignedTest
     public void testSHA512WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("SHA512withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA512withRSA", msg, SMIMESignedGenerator.STANDARD_MICALGS);
+        SMIMESigned   s = new  SMIMESigned(smm);
+
+        assertEquals("sha-512", getMicAlg(smm));
+        assertEquals(getDigestOid(s.getSignerInfos()), NISTObjectIdentifiers.id_sha512.toString());
+
+        verifyMessageBytes(msg, s.getContent());
+
+        verifySigners(s.getCertificates(), s.getSignerInfos());
+    }
+
+    public void testSHA512WithRSARfc3851()
+        throws Exception
+    {
+        MimeMultipart smm = generateMultiPartRsa("SHA512withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         assertEquals("sha512", getMicAlg(smm));
@@ -596,7 +654,7 @@ public class NewSMIMESignedTest
     public void testRIPEMD160WithRSA()
         throws Exception
     {
-        MimeMultipart smm = generateMultiPartRsa("RIPEMD160withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("RIPEMD160withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         assertEquals("unknown", getMicAlg(smm));
@@ -638,8 +696,8 @@ public class NewSMIMESignedTest
     public void testSHA224WithRSAParser()
         throws Exception
     {
-        MimeMultipart     smm = generateMultiPartRsa("SHA224withRSA", msg);
-        SMIMESignedParser s = new SMIMESignedParser(smm);
+        MimeMultipart     smm = generateMultiPartRsa("SHA224withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), smm);
         Store             certs = s.getCertificates();
         
         assertEquals(getDigestOid(s.getSignerInfos()), NISTObjectIdentifiers.id_sha224.toString());
@@ -667,7 +725,7 @@ public class NewSMIMESignedTest
         gen.addCertificates(certs);
 
         MimeMultipart     smm = gen.generate(msg);
-        SMIMESignedParser s = new SMIMESignedParser(smm);
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), smm);
         
         certs = s.getCertificates();
         
@@ -711,7 +769,7 @@ public class NewSMIMESignedTest
         throws Exception
     {
         MimeBodyPart  msg = generateBinaryPart();
-        MimeMultipart smm = generateMultiPartRsa("SHA256withRSA", msg);
+        MimeMultipart smm = generateMultiPartRsa("SHA256withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
         SMIMESigned   s = new  SMIMESigned(smm);
 
         verifyMessageBytes(msg, s.getContent());
@@ -723,8 +781,8 @@ public class NewSMIMESignedTest
         throws Exception
     {
         MimeBodyPart      msg = generateBinaryPart();
-        MimeMultipart     smm = generateMultiPartRsa("SHA256withRSA", msg);
-        SMIMESignedParser s = new SMIMESignedParser(smm);
+        MimeMultipart     smm = generateMultiPartRsa("SHA256withRSA", msg, SMIMESignedGenerator.RFC3851_MICALGS);
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), smm);
     
         verifyMessageBytes(msg, s.getContent());
     
@@ -749,13 +807,17 @@ public class NewSMIMESignedTest
 
         gen.addCertificates(certs);
 
-        X509AttributeCertificate attrCert = CMSTestUtil.getAttributeCertificate();
+        X509AttributeCertificateHolder attrCert = CMSTestUtil.getAttributeCertificate();
 
-        Store store = new JcaAttrCertStore(attrCert);
+        List attrCertList = new ArrayList();
+
+        attrCertList.add(attrCert);
+
+        Store store = new CollectionStore(attrCertList);
 
         gen.addAttributeCertificates(store);
 
-        SMIMESigned s = new SMIMESigned(gen.generateEncapsulated(msg, BC));
+        SMIMESigned s = new SMIMESigned(gen.generateEncapsulated(msg));
 
         verifyMessageBytes(msg, s.getContent());
 
@@ -763,14 +825,14 @@ public class NewSMIMESignedTest
 
         Store attrCerts = s.getAttributeCertificates();
 
-        assertTrue(attrCerts.getMatches(null).contains(new JcaX509AttributeCertificateHolder(attrCert)));
+        assertTrue(attrCerts.getMatches(null).contains(attrCert));
     }
 
     private void rsaPSSTest(String digest, String digestOID)
         throws Exception
     {
         MimeMultipart     smm = generateMultiPartRsaPSS(digest, msg, null);
-        SMIMESignedParser s = new SMIMESignedParser(smm);
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), smm);
         Store             certs = s.getCertificates();
 
         assertEquals(getDigestOid(s.getSignerInfos()), digestOID);
@@ -792,7 +854,8 @@ public class NewSMIMESignedTest
     private MimeMultipart generateMultiPartRsa(
         String       algorithm,
         MimeBodyPart msg,
-        Date         signingTime) 
+        Date         signingTime,
+        Map          micalgs)
         throws Exception
     {
         List certList = new ArrayList();
@@ -809,7 +872,7 @@ public class NewSMIMESignedTest
             signedAttrs.add(new Attribute(CMSAttributes.signingTime, new DERSet(new Time(signingTime))));
         }
     
-        SMIMESignedGenerator gen = new SMIMESignedGenerator();
+        SMIMESignedGenerator gen = new SMIMESignedGenerator(micalgs);
     
         gen.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider(BC).setSignedAttributeGenerator(new DefaultSignedAttributeTableGenerator(new AttributeTable(signedAttrs))).build(algorithm, _signKP.getPrivate(), _signCert));
         gen.addCertificates(certs);
@@ -883,10 +946,10 @@ public class NewSMIMESignedTest
         return gen.generate(msg);
     }
 
-    private MimeMultipart generateMultiPartRsa(String algorithm, MimeBodyPart msg)
+    private MimeMultipart generateMultiPartRsa(String algorithm, MimeBodyPart msg, Map micalgs)
         throws Exception
     {
-        return generateMultiPartRsa(algorithm, msg, null);
+        return generateMultiPartRsa(algorithm, msg, null, micalgs);
     }
     
     private MimeBodyPart generateEncapsulatedRsa(String sigAlg, MimeBodyPart msg)
@@ -923,7 +986,7 @@ public class NewSMIMESignedTest
 
         gen.addCertificates(certs);
         
-        MimeBodyPart smm = gen.generateCertificateManagement(BC);
+        MimeBodyPart smm = gen.generateCertificateManagement();
         
         SMIMESigned s = new  SMIMESigned(smm);
 
@@ -1012,7 +1075,7 @@ public class NewSMIMESignedTest
 
         MimeMultipart mm = gen.generate(m);
 
-        SMIMESignedParser s = new SMIMESignedParser(mm, "binary");
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), mm, "binary");
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
     }
@@ -1038,7 +1101,7 @@ public class NewSMIMESignedTest
 
         MimeMultipart mm = gen.generate(m);
 
-        SMIMESignedParser s = new SMIMESignedParser(mm, "binary");
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), mm, "binary");
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
 
@@ -1083,7 +1146,7 @@ public class NewSMIMESignedTest
     {
         MimeMessage message = loadMessage("quotable.message");
         
-        SMIMESignedParser s = new SMIMESignedParser((MimeMultipart)message.getContent());
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), (MimeMultipart)message.getContent());
         
         verifySigners(s.getCertificates(), s.getSignerInfos());
     }
@@ -1103,7 +1166,7 @@ public class NewSMIMESignedTest
     {
         MimeMessage message = loadMessage("embeddedmulti.message");
 
-        SMIMESignedParser s = new SMIMESignedParser((MimeMultipart)message.getContent());
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), (MimeMultipart)message.getContent());
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
     }
@@ -1147,13 +1210,13 @@ public class NewSMIMESignedTest
         gen.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider(BC).setSignedAttributeGenerator(new AttributeTable(signedAttrs)).build("SHA1withRSA", _signKP.getPrivate(), _signCert));
         gen.addCertificates(certs);
 
-        MimeMultipart mm = gen.generate(m, BC);
+        MimeMultipart mm = gen.generate(m);
 
         SMIMESigned s = new SMIMESigned(mm);
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
 
-        SMIMESignedParser sp = new SMIMESignedParser(mm);
+        SMIMESignedParser sp = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), mm);
 
         verifySigners(sp.getCertificates(), sp.getSignerInfos());
     }
@@ -1163,7 +1226,7 @@ public class NewSMIMESignedTest
     {
         MimeMessage message = loadMessage("multi-alternative.eml");
 
-        SMIMESignedParser s = new SMIMESignedParser((MimeMultipart)message.getContent());
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), (MimeMultipart)message.getContent());
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
     }
@@ -1183,7 +1246,17 @@ public class NewSMIMESignedTest
     {
         MimeMessage message = loadMessage("basicAS2.message");
 
-        SMIMESignedParser s = new SMIMESignedParser((MimeMultipart)message.getContent());
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), (MimeMultipart)message.getContent());
+
+        verifySigners(s.getCertificates(), s.getSignerInfos());
+    }
+
+    public void testRawAS2Parser()
+        throws Exception
+    {
+        MimeMessage message = loadMessage("rawAS2.message");
+
+        SMIMESignedParser s = new SMIMESignedParser(new JcaDigestCalculatorProviderBuilder().setProvider(BC).build(), (MimeMultipart)message.getContent());
 
         verifySigners(s.getCertificates(), s.getSignerInfos());
     }
@@ -1206,7 +1279,7 @@ public class NewSMIMESignedTest
     
             Iterator        certIt = certCollection.iterator();
             X509CertificateHolder certHolder = (X509CertificateHolder)certIt.next();
-    
+
             assertEquals(true, signer.verify(new JcaSimpleSignerInfoVerifierBuilder().build(certHolder)));
         }
     }

@@ -2,7 +2,6 @@ package org.bouncycastle.cms;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.Map;
 
 public class SignerInformationStore
 {
-    private ArrayList all = new ArrayList();
+    private List all = new ArrayList();
     private Map table = new HashMap();
 
     public SignerInformationStore(
@@ -23,31 +22,17 @@ public class SignerInformationStore
             SignerInformation   signer = (SignerInformation)it.next();
             SignerId            sid = signer.getSID();
 
-            if (table.get(sid) == null)
+            List list = (ArrayList)table.get(sid);
+            if (list == null)
             {
-                table.put(sid, signer);
-            }
-            else
-            {
-                Object o = table.get(sid);
-                
-                if (o instanceof List)
-                {
-                    ((List)o).add(signer);
-                }
-                else
-                {
-                    List l = new ArrayList();
-                    
-                    l.add(o);
-                    l.add(signer);
-                    
-                    table.put(sid, l);
-                }
+                list = new ArrayList(1);
+                table.put(sid, list);
             }
 
-            this.all = new ArrayList(signerInfos);
+            list.add(signer);
         }
+
+        this.all = new ArrayList(signerInfos);
     }
 
     /**
@@ -60,16 +45,9 @@ public class SignerInformationStore
     public SignerInformation get(
         SignerId        selector)
     {
-        Object o = table.get(selector);
-        
-        if (o instanceof List)
-        {
-            return (SignerInformation)((List)o).get(0);
-        }
-        else
-        {
-            return (SignerInformation)o;
-        }
+        Collection list = getSigners(selector);
+
+        return list.size() == 0 ? null : (SignerInformation) list.iterator().next();
     }
 
     /**
@@ -101,17 +79,31 @@ public class SignerInformationStore
     public Collection getSigners(
         SignerId selector)
     {
-        Object o = table.get(selector);
-        
-        if (o instanceof List)
+        if (selector.getIssuer() != null && selector.getSubjectKeyIdentifier() != null)
         {
-            return new ArrayList((List)o);
+            List results = new ArrayList();
+
+            Collection match1 = getSigners(new SignerId(selector.getIssuer(), selector.getSerialNumber()));
+
+            if (match1 != null)
+            {
+                results.addAll(match1);
+            }
+
+            Collection match2 = getSigners(new SignerId(selector.getSubjectKeyIdentifier()));
+
+            if (match2 != null)
+            {
+                results.addAll(match2);
+            }
+
+            return results;
         }
-        else if (o != null)
+        else
         {
-            return Collections.singletonList(o);
+            List list = (ArrayList)table.get(selector);
+
+            return list == null ? new ArrayList() : new ArrayList(list);
         }
-        
-        return new ArrayList();
     }
 }

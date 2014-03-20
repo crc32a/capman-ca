@@ -4,22 +4,31 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ocsp.BasicOCSPResponse;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.ocsp.OCSPResponse;
 import org.bouncycastle.asn1.ocsp.ResponseBytes;
 
+/**
+ * @deprecated use classes in org.bouncycastle.cert.ocsp.
+ */
 public class OCSPResp
 {
     private OCSPResponse    resp;
 
+    /**
+     * @deprecated use classes in org.bouncycastle.cert.ocsp.
+     */
     public OCSPResp(
         OCSPResponse    resp)
     {
         this.resp = resp;
     }
 
+    /**
+     * @deprecated use classes in org.bouncycastle.cert.ocsp.
+     */
     public OCSPResp(
         byte[]          resp)
         throws IOException
@@ -27,6 +36,9 @@ public class OCSPResp
         this(new ASN1InputStream(resp));
     }
 
+    /**
+     * @deprecated use classes in org.bouncycastle.cert.ocsp.
+     */
     public OCSPResp(
         InputStream     in)
         throws IOException
@@ -71,7 +83,7 @@ public class OCSPResp
         {
             try
             {
-                ASN1Object obj = ASN1Object.fromByteArray(rb.getResponse().getOctets());
+                ASN1Primitive obj = ASN1Primitive.fromByteArray(rb.getResponse().getOctets());
                 return new BasicOCSPResp(BasicOCSPResponse.getInstance(obj));
             }
             catch (Exception e)
@@ -89,7 +101,7 @@ public class OCSPResp
     public byte[] getEncoded()
         throws IOException
     {
-    	return resp.getEncoded();
+        return resp.getEncoded();
     }
     
     public boolean equals(Object o)

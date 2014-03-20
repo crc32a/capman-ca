@@ -3,42 +3,66 @@ package org.bouncycastle.crypto.engines;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.MaxBytesExceededException;
+import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.crypto.StreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.crypto.util.Pack;
 import org.bouncycastle.util.Strings;
 
 /**
  * Implementation of Daniel J. Bernstein's Salsa20 stream cipher, Snuffle 2005
  */
-
 public class Salsa20Engine
     implements StreamCipher
 {
+    public final static int DEFAULT_ROUNDS = 20;
+
     /** Constants */
-    private final static int stateSize = 16; // 16, 32 bit ints = 64 bytes
-    
-    private final static byte[]
+    private final static int STATE_SIZE = 16; // 16, 32 bit ints = 64 bytes
+
+    protected final static byte[]
         sigma = Strings.toByteArray("expand 32-byte k"),
         tau   = Strings.toByteArray("expand 16-byte k");
+
+    protected int rounds;
 
     /*
      * variables to hold the state of the engine
      * during encryption and decryption
      */
     private int         index = 0;
-    private int[]       engineState = new int[stateSize]; // state
-    private int[]       x = new int[stateSize] ; // internal buffer
-    private byte[]      keyStream   = new byte[stateSize * 4], // expanded state, 64 bytes
-                        workingKey  = null,
-                        workingIV   = null;
+    protected int[]     engineState = new int[STATE_SIZE]; // state
+    protected int[]       x = new int[STATE_SIZE] ; // internal buffer
+    private byte[]      keyStream   = new byte[STATE_SIZE * 4]; // expanded state, 64 bytes
     private boolean     initialised = false;
-    
+
     /*
      * internal counter
      */
     private int cW0, cW1, cW2;
-    
+
+    /**
+     * Creates a 20 round Salsa20 engine.
+     */
+    public Salsa20Engine()
+    {
+        this(DEFAULT_ROUNDS);
+    }
+
+    /**
+     * Creates a Salsa20 engine with a specific number of rounds.
+     * @param rounds the number of rounds (must be an even number).
+     */
+    public Salsa20Engine(int rounds)
+    {
+        if (rounds <= 0 || (rounds & 1) != 0)
+        {
+            throw new IllegalArgumentException("'rounds' must be a positive, even number");
+        }
+
+        this.rounds = rounds;
+    }
 
     /**
      * initialise a Salsa20 cipher.
@@ -60,34 +84,43 @@ public class Salsa20Engine
 
         if (!(params instanceof ParametersWithIV))
         {
-            throw new IllegalArgumentException("Salsa20 Init parameters must include an IV");
+            throw new IllegalArgumentException(getAlgorithmName() + " Init parameters must include an IV");
         }
 
         ParametersWithIV ivParams = (ParametersWithIV) params;
 
         byte[] iv = ivParams.getIV();
-
-        if (iv == null || iv.length != 8)
+        if (iv == null || iv.length != getNonceSize())
         {
-            throw new IllegalArgumentException("Salsa20 requires exactly 8 bytes of IV");
+            throw new IllegalArgumentException(getAlgorithmName() + " requires exactly " + getNonceSize()
+                    + " bytes of IV");
         }
 
         if (!(ivParams.getParameters() instanceof KeyParameter))
         {
-            throw new IllegalArgumentException("Salsa20 Init parameters must include a key");
+            throw new IllegalArgumentException(getAlgorithmName() + " Init parameters must include a key");
         }
 
         KeyParameter key = (KeyParameter) ivParams.getParameters();
 
-        workingKey = key.getKey();
-        workingIV = iv;
+        setKey(key.getKey(), iv);
+        reset();
+        initialised = true;
+    }
 
-        setKey(workingKey, workingIV);
+    protected int getNonceSize()
+    {
+        return 8;
     }
 
     public String getAlgorithmName()
     {
-        return "Salsa20";
+        String name = "Salsa20";
+        if (rounds != DEFAULT_ROUNDS)
+        {
+            name += "/" + rounds;
+        }
+        return name;
     }
 
     public byte returnByte(byte in)
@@ -96,20 +129,25 @@ public class Salsa20Engine
         {
             throw new MaxBytesExceededException("2^70 byte limit per IV; Change IV");
         }
-        
+
         if (index == 0)
         {
-            salsa20WordToByte(engineState, keyStream);
-            engineState[8]++;
-            if (engineState[8] == 0)
-            {
-                engineState[9]++;
-            }
+            generateKeyStream(keyStream);
+            advanceCounter();
         }
+
         byte out = (byte)(keyStream[index]^in);
         index = (index + 1) & 63;
-    
+
         return out;
+    }
+
+    protected void advanceCounter()
+    {
+        if (++engineState[8] == 0)
+        {
+            ++engineState[9];
+        }
     }
 
     public void processBytes(
@@ -121,9 +159,9 @@ public class Salsa20Engine
     {
         if (!initialised)
         {
-            throw new IllegalStateException(getAlgorithmName()+" not initialised");
+            throw new IllegalStateException(getAlgorithmName() + " not initialised");
         }
-        
+
         if ((inOff + len) > in.length)
         {
             throw new DataLengthException("input buffer too short");
@@ -131,7 +169,7 @@ public class Salsa20Engine
 
         if ((outOff + len) > out.length)
         {
-            throw new DataLengthException("output buffer too short");
+            throw new OutputLengthException("output buffer too short");
         }
 
         if (limitExceeded(len))
@@ -143,13 +181,10 @@ public class Salsa20Engine
         {
             if (index == 0)
             {
-                salsa20WordToByte(engineState, keyStream);
-                engineState[8]++;
-                if (engineState[8] == 0)
-                {
-                    engineState[9]++;
-                }
+                generateKeyStream(keyStream);
+                advanceCounter();
             }
+
             out[i+outOff] = (byte)(keyStream[index]^in[i+inOff]);
             index = (index + 1) & 63;
         }
@@ -157,28 +192,32 @@ public class Salsa20Engine
 
     public void reset()
     {
-        setKey(workingKey, workingIV);
+        index = 0;
+        resetLimitCounter();
+        resetCounter();
     }
 
-    // Private implementation
-
-    private void setKey(byte[] keyBytes, byte[] ivBytes)
+    protected void resetCounter()
     {
-        workingKey = keyBytes;
-        workingIV  = ivBytes;
+        engineState[8] = engineState[9] = 0;
+    }
 
-        index = 0;
-        resetCounter();
+    protected void setKey(byte[] keyBytes, byte[] ivBytes)
+    {
+        if ((keyBytes.length != 16) && (keyBytes.length != 32)) {
+            throw new IllegalArgumentException(getAlgorithmName() + " requires 128 bit or 256 bit key");
+        }
+        
         int offset = 0;
         byte[] constants;
-        
+
         // Key
-        engineState[1] = byteToIntLittle(workingKey, 0);
-        engineState[2] = byteToIntLittle(workingKey, 4);
-        engineState[3] = byteToIntLittle(workingKey, 8);
-        engineState[4] = byteToIntLittle(workingKey, 12);
-        
-        if (workingKey.length == 32)
+        engineState[1] = Pack.littleEndianToInt(keyBytes, 0);
+        engineState[2] = Pack.littleEndianToInt(keyBytes, 4);
+        engineState[3] = Pack.littleEndianToInt(keyBytes, 8);
+        engineState[4] = Pack.littleEndianToInt(keyBytes, 12);
+
+        if (keyBytes.length == 32)
         {
             constants = sigma;
             offset = 16;
@@ -187,24 +226,29 @@ public class Salsa20Engine
         {
             constants = tau;
         }
-        
-        engineState[11] = byteToIntLittle(workingKey, offset);
-        engineState[12] = byteToIntLittle(workingKey, offset+4);
-        engineState[13] = byteToIntLittle(workingKey, offset+8);
-        engineState[14] = byteToIntLittle(workingKey, offset+12);
-        engineState[0 ] = byteToIntLittle(constants, 0);
-        engineState[5 ] = byteToIntLittle(constants, 4);
-        engineState[10] = byteToIntLittle(constants, 8);
-        engineState[15] = byteToIntLittle(constants, 12);
-        
+
+        engineState[11] = Pack.littleEndianToInt(keyBytes, offset);
+        engineState[12] = Pack.littleEndianToInt(keyBytes, offset+4);
+        engineState[13] = Pack.littleEndianToInt(keyBytes, offset+8);
+        engineState[14] = Pack.littleEndianToInt(keyBytes, offset+12);
+
+        engineState[0 ] = Pack.littleEndianToInt(constants, 0);
+        engineState[5 ] = Pack.littleEndianToInt(constants, 4);
+        engineState[10] = Pack.littleEndianToInt(constants, 8);
+        engineState[15] = Pack.littleEndianToInt(constants, 12);
+
         // IV
-        engineState[6] = byteToIntLittle(workingIV, 0);
-        engineState[7] = byteToIntLittle(workingIV, 4);
-        engineState[8] = engineState[9] = 0;
-        
-        initialised = true;
+        engineState[6] = Pack.littleEndianToInt(ivBytes, 0);
+        engineState[7] = Pack.littleEndianToInt(ivBytes, 4);
+        resetCounter();
     }
-    
+
+    protected void generateKeyStream(byte[] output)
+    {
+        salsaCore(rounds, engineState, x);
+        Pack.intToLittleEndian(x, output, 0);
+    }
+
     /**
      * Salsa20 function
      *
@@ -212,76 +256,90 @@ public class Salsa20Engine
      *
      * @return  keystream
      */    
-    private void salsa20WordToByte(int[] input, byte[] output)
+    public static void salsaCore(int rounds, int[] input, int[] x)
     {
-        System.arraycopy(input, 0, x, 0, input.length);
-
-        for (int i = 0; i < 10; i++)
-        {
-            x[ 4] ^= rotl((x[ 0]+x[12]), 7);
-            x[ 8] ^= rotl((x[ 4]+x[ 0]), 9);
-            x[12] ^= rotl((x[ 8]+x[ 4]),13);
-            x[ 0] ^= rotl((x[12]+x[ 8]),18);
-            x[ 9] ^= rotl((x[ 5]+x[ 1]), 7);
-            x[13] ^= rotl((x[ 9]+x[ 5]), 9);
-            x[ 1] ^= rotl((x[13]+x[ 9]),13);
-            x[ 5] ^= rotl((x[ 1]+x[13]),18);
-            x[14] ^= rotl((x[10]+x[ 6]), 7);
-            x[ 2] ^= rotl((x[14]+x[10]), 9);
-            x[ 6] ^= rotl((x[ 2]+x[14]),13);
-            x[10] ^= rotl((x[ 6]+x[ 2]),18);
-            x[ 3] ^= rotl((x[15]+x[11]), 7);
-            x[ 7] ^= rotl((x[ 3]+x[15]), 9);
-            x[11] ^= rotl((x[ 7]+x[ 3]),13);
-            x[15] ^= rotl((x[11]+x[ 7]),18);
-            x[ 1] ^= rotl((x[ 0]+x[ 3]), 7);
-            x[ 2] ^= rotl((x[ 1]+x[ 0]), 9);
-            x[ 3] ^= rotl((x[ 2]+x[ 1]),13);
-            x[ 0] ^= rotl((x[ 3]+x[ 2]),18);
-            x[ 6] ^= rotl((x[ 5]+x[ 4]), 7);
-            x[ 7] ^= rotl((x[ 6]+x[ 5]), 9);
-            x[ 4] ^= rotl((x[ 7]+x[ 6]),13);
-            x[ 5] ^= rotl((x[ 4]+x[ 7]),18);
-            x[11] ^= rotl((x[10]+x[ 9]), 7);
-            x[ 8] ^= rotl((x[11]+x[10]), 9);
-            x[ 9] ^= rotl((x[ 8]+x[11]),13);
-            x[10] ^= rotl((x[ 9]+x[ 8]),18);
-            x[12] ^= rotl((x[15]+x[14]), 7);
-            x[13] ^= rotl((x[12]+x[15]), 9);
-            x[14] ^= rotl((x[13]+x[12]),13);
-            x[15] ^= rotl((x[14]+x[13]),18);
+        if (input.length != 16) {
+            throw new IllegalArgumentException();
+        }
+        if (x.length != 16) {
+            throw new IllegalArgumentException();
+        }
+        if (rounds % 2 != 0) {
+            throw new IllegalArgumentException("Number of rounds must be even");
         }
 
-        int offset = 0;
-        for (int i = 0; i < stateSize; i++)
+        int x00 = input[ 0];
+        int x01 = input[ 1];
+        int x02 = input[ 2];
+        int x03 = input[ 3];
+        int x04 = input[ 4];
+        int x05 = input[ 5];
+        int x06 = input[ 6];
+        int x07 = input[ 7];
+        int x08 = input[ 8];
+        int x09 = input[ 9];
+        int x10 = input[10];
+        int x11 = input[11];
+        int x12 = input[12];
+        int x13 = input[13];
+        int x14 = input[14];
+        int x15 = input[15];
+
+        for (int i = rounds; i > 0; i -= 2)
         {
-            intToByteLittle(x[i] + input[i], output, offset);
-            offset += 4;
+            x04 ^= rotl((x00+x12), 7);
+            x08 ^= rotl((x04+x00), 9);
+            x12 ^= rotl((x08+x04),13);
+            x00 ^= rotl((x12+x08),18);
+            x09 ^= rotl((x05+x01), 7);
+            x13 ^= rotl((x09+x05), 9);
+            x01 ^= rotl((x13+x09),13);
+            x05 ^= rotl((x01+x13),18);
+            x14 ^= rotl((x10+x06), 7);
+            x02 ^= rotl((x14+x10), 9);
+            x06 ^= rotl((x02+x14),13);
+            x10 ^= rotl((x06+x02),18);
+            x03 ^= rotl((x15+x11), 7);
+            x07 ^= rotl((x03+x15), 9);
+            x11 ^= rotl((x07+x03),13);
+            x15 ^= rotl((x11+x07),18);
+
+            x01 ^= rotl((x00+x03), 7);
+            x02 ^= rotl((x01+x00), 9);
+            x03 ^= rotl((x02+x01),13);
+            x00 ^= rotl((x03+x02),18);
+            x06 ^= rotl((x05+x04), 7);
+            x07 ^= rotl((x06+x05), 9);
+            x04 ^= rotl((x07+x06),13);
+            x05 ^= rotl((x04+x07),18);
+            x11 ^= rotl((x10+x09), 7);
+            x08 ^= rotl((x11+x10), 9);
+            x09 ^= rotl((x08+x11),13);
+            x10 ^= rotl((x09+x08),18);
+            x12 ^= rotl((x15+x14), 7);
+            x13 ^= rotl((x12+x15), 9);
+            x14 ^= rotl((x13+x12),13);
+            x15 ^= rotl((x14+x13),18);
         }
 
-        for (int i = stateSize; i < x.length; i++)
-        {
-            intToByteLittle(x[i], output, offset);
-            offset += 4;
-        }
+        x[ 0] = x00 + input[ 0];
+        x[ 1] = x01 + input[ 1];
+        x[ 2] = x02 + input[ 2];
+        x[ 3] = x03 + input[ 3];
+        x[ 4] = x04 + input[ 4];
+        x[ 5] = x05 + input[ 5];
+        x[ 6] = x06 + input[ 6];
+        x[ 7] = x07 + input[ 7];
+        x[ 8] = x08 + input[ 8];
+        x[ 9] = x09 + input[ 9];
+        x[10] = x10 + input[10];
+        x[11] = x11 + input[11];
+        x[12] = x12 + input[12];
+        x[13] = x13 + input[13];
+        x[14] = x14 + input[14];
+        x[15] = x15 + input[15];
     }
-    
-    /**
-     * 32 bit word to 4 byte array in little endian order
-     *
-     * @param   x   value to 'unpack'
-     *
-     * @return  value of x expressed as a byte[] array in little endian order
-     */
-    private byte[] intToByteLittle(int x, byte[] out, int off)
-    {
-        out[off] = (byte)x;
-        out[off + 1] = (byte)(x >>> 8);
-        out[off + 2] = (byte)(x >>> 16);
-        out[off + 3] = (byte)(x >>> 24);
-        return out;
-    }
-    
+
     /**
      * Rotate left
      *
@@ -290,28 +348,12 @@ public class Salsa20Engine
      *
      * @return  rotated x
      */
-    private int rotl(int x, int y)
+    protected static int rotl(int x, int y)
     {
         return (x << y) | (x >>> -y);
     }
-    
-    /**
-     * Pack byte[] array into an int in little endian order
-     *
-     * @param   x       byte array to 'pack'
-     * @param   offset  only x[offset]..x[offset+3] will be packed
-     *
-     * @return  x[offset]..x[offset+3] 'packed' into an int in little-endian order
-     */
-    private int byteToIntLittle(byte[] x, int offset)
-    {
-        return ((x[offset] & 255)) |
-               ((x[offset + 1] & 255) <<  8) |
-               ((x[offset + 2] & 255) << 16) |
-                (x[offset + 3] << 24);
-    }
 
-    private void resetCounter()
+    private void resetLimitCounter()
     {
         cW0 = 0;
         cW1 = 0;
@@ -320,14 +362,11 @@ public class Salsa20Engine
 
     private boolean limitExceeded()
     {
-        cW0++;
-        if (cW0 == 0)
+        if (++cW0 == 0)
         {
-            cW1++;
-            if (cW1 == 0)
+            if (++cW1 == 0)
             {
-                cW2++;
-                return (cW2 & 0x20) != 0;          // 2^(32 + 32 + 6)
+                return (++cW2 & 0x20) != 0;          // 2^(32 + 32 + 6)
             }
         }
 
@@ -339,21 +378,12 @@ public class Salsa20Engine
      */
     private boolean limitExceeded(int len)
     {
-        if (cW0 >= 0)
+        cW0 += len;
+        if (cW0 < len && cW0 >= 0)
         {
-            cW0 += len;
-        }
-        else
-        {
-            cW0 += len;
-            if (cW0 >= 0)
+            if (++cW1 == 0)
             {
-                cW1++;
-                if (cW1 == 0)
-                {
-                    cW2++;
-                    return (cW2 & 0x20) != 0;          // 2^(32 + 32 + 6)
-                }
+                return (++cW2 & 0x20) != 0;          // 2^(32 + 32 + 6)
             }
         }
 

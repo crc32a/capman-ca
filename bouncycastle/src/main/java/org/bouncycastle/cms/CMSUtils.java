@@ -3,38 +3,29 @@ package org.bouncycastle.cms;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchProviderException;
-import java.security.Provider;
-import java.security.Security;
-import java.security.cert.CRLException;
-import java.security.cert.CertStore;
-import java.security.cert.CertStoreException;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.BEROctetStringGenerator;
 import org.bouncycastle.asn1.BERSet;
-import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
-import org.bouncycastle.asn1.cms.IssuerAndSerialNumber;
-import org.bouncycastle.asn1.x509.CertificateList;
-import org.bouncycastle.asn1.x509.TBSCertificateStructure;
-import org.bouncycastle.asn1.x509.X509CertificateStructure;
+import org.bouncycastle.asn1.cms.OtherRevocationInfoFormat;
+import org.bouncycastle.asn1.ocsp.OCSPResponse;
+import org.bouncycastle.asn1.ocsp.OCSPResponseStatus;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.operator.DigestCalculator;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.io.Streams;
 import org.bouncycastle.util.io.TeeInputStream;
@@ -42,20 +33,6 @@ import org.bouncycastle.util.io.TeeOutputStream;
 
 class CMSUtils
 {
-    private static final Runtime RUNTIME = Runtime.getRuntime();
-    
-    static int getMaximumMemory()
-    {
-        long maxMem = RUNTIME.maxMemory();
-        
-        if (maxMem > Integer.MAX_VALUE)
-        {
-            return Integer.MAX_VALUE;
-        }
-        
-        return (int)maxMem;
-    }
-    
     static ContentInfo readContentInfo(
         byte[] input)
         throws CMSException
@@ -69,39 +46,8 @@ class CMSUtils
         throws CMSException
     {
         // enforce some limit checking
-        return readContentInfo(new ASN1InputStream(input, getMaximumMemory()));
+        return readContentInfo(new ASN1InputStream(input));
     } 
-
-    static List getCertificatesFromStore(CertStore certStore)
-        throws CertStoreException, CMSException
-    {
-        List certs = new ArrayList();
-
-        try
-        {
-            for (Iterator it = certStore.getCertificates(null).iterator(); it.hasNext();)
-            {
-                X509Certificate c = (X509Certificate)it.next();
-
-                certs.add(X509CertificateStructure.getInstance(
-                                                       ASN1Object.fromByteArray(c.getEncoded())));
-            }
-
-            return certs;
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new CMSException("error processing certs", e);
-        }
-        catch (IOException e)
-        {
-            throw new CMSException("error processing certs", e);
-        }
-        catch (CertificateEncodingException e)
-        {
-            throw new CMSException("error encoding certs", e);
-        }
-    }
 
     static List getCertificatesFromStore(Store certStore)
         throws CMSException
@@ -147,35 +93,6 @@ class CMSUtils
         }
     }
 
-    static List getCRLsFromStore(CertStore certStore)
-        throws CertStoreException, CMSException
-    {
-        List crls = new ArrayList();
-
-        try
-        {
-            for (Iterator it = certStore.getCRLs(null).iterator(); it.hasNext();)
-            {
-                X509CRL c = (X509CRL)it.next();
-
-                crls.add(CertificateList.getInstance(ASN1Object.fromByteArray(c.getEncoded())));
-            }
-
-            return crls;
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new CMSException("error processing crls", e);
-        }
-        catch (IOException e)
-        {
-            throw new CMSException("error processing crls", e);
-        }
-        catch (CRLException e)
-        {
-            throw new CMSException("error encoding crls", e);
-        }
-    }
 
     static List getCRLsFromStore(Store crlStore)
         throws CMSException
@@ -199,13 +116,37 @@ class CMSUtils
         }
     }
 
+    static Collection getOthersFromStore(ASN1ObjectIdentifier otherRevocationInfoFormat, Store otherRevocationInfos)
+    {
+        List others = new ArrayList();
+
+        for (Iterator it = otherRevocationInfos.getMatches(null).iterator(); it.hasNext();)
+        {
+            ASN1Encodable info = (ASN1Encodable)it.next();
+
+            if (CMSObjectIdentifiers.id_ri_ocsp_response.equals(otherRevocationInfoFormat))
+            {
+                OCSPResponse resp = OCSPResponse.getInstance(info);
+
+                if (resp.getResponseStatus().getValue().intValue() != OCSPResponseStatus.SUCCESSFUL)
+                {
+                    throw new IllegalArgumentException("cannot add unsuccessful OCSP response to CMS SignedData");
+                }
+            }
+
+            others.add(new DERTaggedObject(false, 1, new OtherRevocationInfoFormat(otherRevocationInfoFormat, info)));
+        }
+
+        return others;
+    }
+
     static ASN1Set createBerSetFromList(List derObjects)
     {
         ASN1EncodableVector v = new ASN1EncodableVector();
 
         for (Iterator it = derObjects.iterator(); it.hasNext();)
         {
-            v.add((DEREncodable)it.next());
+            v.add((ASN1Encodable)it.next());
         }
 
         return new BERSet(v);
@@ -217,7 +158,7 @@ class CMSUtils
 
         for (Iterator it = derObjects.iterator(); it.hasNext();)
         {
-            v.add((DEREncodable)it.next());
+            v.add((ASN1Encodable)it.next());
         }
 
         return new DERSet(v);
@@ -234,27 +175,6 @@ class CMSUtils
         }
 
         return octGen.getOctetOutputStream();
-    }
-
-    static TBSCertificateStructure getTBSCertificateStructure(
-        X509Certificate cert)
-    {
-        try
-        {
-            return TBSCertificateStructure.getInstance(
-                ASN1Object.fromByteArray(cert.getTBSCertificate()));
-        }
-        catch (Exception e)
-        {
-            throw new IllegalArgumentException(
-                "can't extract TBS structure from this cert");
-        }
-    }
-
-    static IssuerAndSerialNumber getIssuerAndSerialNumber(X509Certificate cert)
-    {
-        TBSCertificateStructure tbsCert = getTBSCertificateStructure(cert);
-        return new IssuerAndSerialNumber(tbsCert.getIssuer(), tbsCert.getSerialNumber().getValue());
     }
 
     private static ContentInfo readContentInfo(
@@ -294,44 +214,14 @@ class CMSUtils
         return Streams.readAllLimited(in, limit);
     }
 
-    public static Provider getProvider(String providerName)
-        throws NoSuchProviderException
-    {
-        if (providerName != null)
-        {
-            Provider prov = Security.getProvider(providerName);
-
-            if (prov != null)
-            {
-                return prov;
-            }
-
-            throw new NoSuchProviderException("provider " + providerName + " not found.");
-        }
-
-        return null; 
-    }
-
     static InputStream attachDigestsToInputStream(Collection digests, InputStream s)
     {
         InputStream result = s;
         Iterator it = digests.iterator();
         while (it.hasNext())
         {
-            MessageDigest digest = (MessageDigest)it.next();
-            result = new TeeInputStream(result, new DigOutputStream(digest));
-        }
-        return result;
-    }
-
-    static OutputStream attachDigestsToOutputStream(Collection digests, OutputStream s)
-    {
-        OutputStream result = s;
-        Iterator it = digests.iterator();
-        while (it.hasNext())
-        {
-            MessageDigest digest = (MessageDigest)it.next();
-            result = getSafeTeeOutputStream(result, new DigOutputStream(digest));
+            DigestCalculator digest = (DigestCalculator)it.next();
+            result = new TeeInputStream(result, digest.getOutputStream());
         }
         return result;
     }

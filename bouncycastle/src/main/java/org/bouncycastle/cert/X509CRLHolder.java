@@ -1,6 +1,8 @@
 package org.bouncycastle.cert;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -9,13 +11,17 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
-import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.CertificateList;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.Extensions;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.IssuingDistributionPoint;
 import org.bouncycastle.asn1.x509.TBSCertList;
-import org.bouncycastle.asn1.x509.X509Extension;
-import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.operator.ContentVerifier;
 import org.bouncycastle.operator.ContentVerifierProvider;
 
@@ -25,14 +31,16 @@ import org.bouncycastle.operator.ContentVerifierProvider;
 public class X509CRLHolder
 {
     private CertificateList x509CRL;
-    private X509Extensions extensions;
+    private boolean isIndirect;
+    private Extensions extensions;
+    private GeneralNames issuerName;
 
-    private static CertificateList parseBytes(byte[] crlEncoding)
+    private static CertificateList parseStream(InputStream stream)
         throws IOException
     {
         try
         {
-            return CertificateList.getInstance(ASN1Object.fromByteArray(crlEncoding));
+            return CertificateList.getInstance(new ASN1InputStream(stream, true).readObject());
         }
         catch (ClassCastException e)
         {
@@ -44,6 +52,18 @@ public class X509CRLHolder
         }
     }
 
+    private static boolean isIndirectCRL(Extensions extensions)
+    {
+        if (extensions == null)
+        {
+            return false;
+        }
+
+        Extension ext = extensions.getExtension(Extension.issuingDistributionPoint);
+
+        return ext != null && IssuingDistributionPoint.getInstance(ext.getParsedValue()).isIndirectCRL();
+    }
+
     /**
      * Create a X509CRLHolder from the passed in bytes.
      *
@@ -53,7 +73,19 @@ public class X509CRLHolder
     public X509CRLHolder(byte[] crlEncoding)
         throws IOException
     {
-        this(parseBytes(crlEncoding));
+        this(parseStream(new ByteArrayInputStream(crlEncoding)));
+    }
+
+    /**
+     * Create a X509CRLHolder from the passed in InputStream.
+     *
+     * @param crlStream BER/DER encoded InputStream of the CRL
+     * @throws IOException in the event of corrupted data, or an incorrect structure.
+     */
+    public X509CRLHolder(InputStream crlStream)
+        throws IOException
+    {
+        this(parseStream(crlStream));
     }
 
     /**
@@ -65,6 +97,8 @@ public class X509CRLHolder
     {
         this.x509CRL = x509CRL;
         this.extensions = x509CRL.getTBSCertList().getExtensions();
+        this.isIndirect = isIndirectCRL(extensions);
+        this.issuerName = new GeneralNames(new GeneralName(x509CRL.getIssuer()));
     }
 
     /**
@@ -91,13 +125,24 @@ public class X509CRLHolder
 
     public X509CRLEntryHolder getRevokedCertificate(BigInteger serialNumber)
     {
+        GeneralNames currentCA = issuerName;
         for (Enumeration en = x509CRL.getRevokedCertificateEnumeration(); en.hasMoreElements();)
         {
             TBSCertList.CRLEntry entry = (TBSCertList.CRLEntry)en.nextElement();
 
             if (entry.getUserCertificate().getValue().equals(serialNumber))
             {
-                return new X509CRLEntryHolder(entry);
+                return new X509CRLEntryHolder(entry, isIndirect, currentCA);
+            }
+
+            if (isIndirect && entry.hasExtensions())
+            {
+                Extension currentCaName = entry.getExtensions().getExtension(Extension.certificateIssuer);
+
+                if (currentCaName != null)
+                {
+                    currentCA = GeneralNames.getInstance(currentCaName.getParsedValue());
+                }
             }
         }
 
@@ -114,14 +159,16 @@ public class X509CRLHolder
     {
         TBSCertList.CRLEntry[] entries = x509CRL.getRevokedCertificates();
         List l = new ArrayList(entries.length);
+        GeneralNames currentCA = issuerName;
 
         for (Enumeration en = x509CRL.getRevokedCertificateEnumeration(); en.hasMoreElements();)
         {
             TBSCertList.CRLEntry entry = (TBSCertList.CRLEntry)en.nextElement();
+            X509CRLEntryHolder crlEntry = new X509CRLEntryHolder(entry, isIndirect, currentCA);
 
+            l.add(crlEntry);
 
-                l.add(new X509CRLEntryHolder(entry));
-
+            currentCA = crlEntry.getCertificateIssuer();
         }
 
         return l;
@@ -144,7 +191,7 @@ public class X509CRLHolder
      *
      * @return the extension if present, null otherwise.
      */
-    public X509Extension getExtension(ASN1ObjectIdentifier oid)
+    public Extension getExtension(ASN1ObjectIdentifier oid)
     {
         if (extensions != null)
         {
@@ -152,6 +199,16 @@ public class X509CRLHolder
         }
 
         return null;
+    }
+
+    /**
+     * Return the extensions block associated with this CRL if there is one.
+     *
+     * @return the extensions block, null otherwise.
+     */
+    public Extensions getExtensions()
+    {
+        return extensions;
     }
 
     /**
@@ -209,7 +266,7 @@ public class X509CRLHolder
     {
         TBSCertList tbsCRL = x509CRL.getTBSCertList();
 
-        if (!tbsCRL.getSignature().equals(x509CRL.getSignatureAlgorithm()))
+        if (!CertUtils.isAlgIdEqual(tbsCRL.getSignature(), x509CRL.getSignatureAlgorithm()))
         {
             throw new CertException("signature invalid - algorithm identifier mismatch");
         }
@@ -221,8 +278,9 @@ public class X509CRLHolder
             verifier = verifierProvider.get((tbsCRL.getSignature()));
 
             OutputStream sOut = verifier.getOutputStream();
+            DEROutputStream dOut = new DEROutputStream(sOut);
 
-            sOut.write(tbsCRL.getDEREncoded());
+            dOut.writeObject(tbsCRL);
 
             sOut.close();
         }

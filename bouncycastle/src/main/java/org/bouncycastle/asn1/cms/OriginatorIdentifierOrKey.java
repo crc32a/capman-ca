@@ -2,18 +2,31 @@ package org.bouncycastle.asn1.cms;
 
 import org.bouncycastle.asn1.ASN1Choice;
 import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DEREncodable;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 
+/**
+ * <a href="http://tools.ietf.org/html/rfc5652#section-6.2.2">RFC 5652</a>:
+ * Content encryption key delivery mechanisms.
+ * <pre>
+ * OriginatorIdentifierOrKey ::= CHOICE {
+ *     issuerAndSerialNumber IssuerAndSerialNumber,
+ *     subjectKeyIdentifier [0] SubjectKeyIdentifier,
+ *     originatorKey [1] OriginatorPublicKey 
+ * }
+ *
+ * SubjectKeyIdentifier ::= OCTET STRING
+ * </pre>
+ */
 public class OriginatorIdentifierOrKey
-    extends ASN1Encodable
+    extends ASN1Object
     implements ASN1Choice
 {
-    private DEREncodable id;
+    private ASN1Encodable id;
 
     public OriginatorIdentifierOrKey(
         IssuerAndSerialNumber id)
@@ -27,7 +40,7 @@ public class OriginatorIdentifierOrKey
     public OriginatorIdentifierOrKey(
         ASN1OctetString id)
     {
-        this(new SubjectKeyIdentifier(id));
+        this(new SubjectKeyIdentifier(id.getOctets()));
     }
 
     public OriginatorIdentifierOrKey(
@@ -46,13 +59,13 @@ public class OriginatorIdentifierOrKey
      * @deprecated use more specific version
      */
     public OriginatorIdentifierOrKey(
-        DERObject id)
+        ASN1Primitive id)
     {
         this.id = id;
     }
 
     /**
-     * return an OriginatorIdentifierOrKey object from a tagged object.
+     * Return an OriginatorIdentifierOrKey object from a tagged object.
      *
      * @param o the tagged object holding the object we want.
      * @param explicit true if the object is meant to be explicitly
@@ -74,7 +87,17 @@ public class OriginatorIdentifierOrKey
     }
     
     /**
-     * return an OriginatorIdentifierOrKey object from the given object.
+     * Return an OriginatorIdentifierOrKey object from the given object.
+     * <p>
+     * Accepted inputs:
+     * <ul>
+     * <li> null &rarr; null
+     * <li> {@link OriginatorIdentifierOrKey} object
+     * <li> {@link IssuerAndSerialNumber} object
+     * <li> {@link SubjectKeyIdentifier} object
+     * <li> {@link OriginatorPublicKey} object
+     * <li> {@link org.bouncycastle.asn1.ASN1TaggedObject#getInstance(java.lang.Object) ASN1TaggedObject} input formats with IssuerAndSerialNumber structure inside
+     * </ul>
      *
      * @param o the object we want converted.
      * @exception IllegalArgumentException if the object cannot be converted.
@@ -111,7 +134,7 @@ public class OriginatorIdentifierOrKey
         throw new IllegalArgumentException("Invalid OriginatorIdentifierOrKey: " + o.getClass().getName());
     }
 
-    public DEREncodable getId()
+    public ASN1Encodable getId()
     {
         return id;
     }
@@ -148,18 +171,9 @@ public class OriginatorIdentifierOrKey
 
     /**
      * Produce an object suitable for an ASN1OutputStream.
-     * <pre>
-     * OriginatorIdentifierOrKey ::= CHOICE {
-     *     issuerAndSerialNumber IssuerAndSerialNumber,
-     *     subjectKeyIdentifier [0] SubjectKeyIdentifier,
-     *     originatorKey [1] OriginatorPublicKey 
-     * }
-     *
-     * SubjectKeyIdentifier ::= OCTET STRING
-     * </pre>
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
-        return id.getDERObject();
+        return id.toASN1Primitive();
     }
 }

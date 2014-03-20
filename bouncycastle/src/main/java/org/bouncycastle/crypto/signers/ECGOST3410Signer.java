@@ -82,9 +82,9 @@ public class ECGOST3410Signer
                 }
                 while (k.equals(ECConstants.ZERO));
 
-                ECPoint p = key.getParameters().getG().multiply(k);
+                ECPoint p = key.getParameters().getG().multiply(k).normalize();
 
-                BigInteger x = p.getX().toBigInteger();
+                BigInteger x = p.getAffineXCoord().toBigInteger();
 
                 r = x.mod(n);
             }
@@ -143,9 +143,15 @@ public class ECGOST3410Signer
         ECPoint G = key.getParameters().getG(); // P
         ECPoint Q = ((ECPublicKeyParameters)key).getQ();
 
-        ECPoint point = ECAlgorithms.sumOfTwoMultiplies(G, z1, Q, z2);
+        ECPoint point = ECAlgorithms.sumOfTwoMultiplies(G, z1, Q, z2).normalize();
 
-        BigInteger R = point.getX().toBigInteger().mod(n);
+        // components must be bogus.
+        if (point.isInfinity())
+        {
+            return false;
+        }
+
+        BigInteger R = point.getAffineXCoord().toBigInteger().mod(n);
 
         return R.equals(r);
     }

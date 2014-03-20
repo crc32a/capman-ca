@@ -31,14 +31,17 @@ import javax.mail.internet.MimeMultipart;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.x509.X509Extension;
+import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.SignerInformation;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder;
 import org.bouncycastle.cms.test.CMSTestUtil;
 import org.bouncycastle.i18n.ErrorBundle;
 import org.bouncycastle.mail.smime.SMIMESignedGenerator;
 import org.bouncycastle.mail.smime.validator.SignedMailValidator;
+import org.bouncycastle.util.Store;
 import org.bouncycastle.x509.PKIXCertPathReviewer;
 import org.bouncycastle.x509.extension.X509ExtensionUtil;
 
@@ -216,15 +219,14 @@ public class SignedMailValidatorTest extends TestCase
 
         certList.add(signCert);
 
-        CertStore certs = CertStore.getInstance("Collection",
-                        new CollectionCertStoreParameters(certList), "BC");
+        Store certs = new JcaCertStore(certList);
 
         SMIMESignedGenerator gen = new SMIMESignedGenerator();
 
-        gen.addSigner(signKP.getPrivate(), signCert, SMIMESignedGenerator.DIGEST_SHA1);
-        gen.addCertificatesAndCRLs(certs);
+        gen.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider("BC").build("SHA1withRSA", signKP.getPrivate(), signCert));
+        gen.addCertificates(certs);
 
-        MimeMultipart signedMsg = gen.generate(baseMsg, "BC");
+        MimeMultipart signedMsg = gen.generate(baseMsg);
 
         Properties props = System.getProperties();
         Session session = Session.getDefaultInstance(props, null);
@@ -413,13 +415,13 @@ public class SignedMailValidatorTest extends TestCase
         if (cert != null)
         {
             byte[] ncBytes = cert
-                    .getExtensionValue(X509Extensions.NameConstraints.getId());
+                    .getExtensionValue(X509Extension.nameConstraints.getId());
 
             if (ncBytes != null)
             {
                 ASN1Encodable extValue = X509ExtensionUtil
                         .fromExtensionValue(ncBytes);
-                return new TrustAnchor(cert, extValue.getDEREncoded());
+                return new TrustAnchor(cert, extValue.toASN1Primitive().getEncoded(ASN1Encoding.DER));
             }
             return new TrustAnchor(cert, null);
         }

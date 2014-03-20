@@ -47,6 +47,11 @@ public class DHBasicAgreement
         this.dhParams = key.getParameters();
     }
 
+    public int getFieldSize()
+    {
+        return (key.getParameters().getP().bitLength() + 7) / 8;
+    }
+
     /**
      * given a short term public key from a given party calculate the next
      * message in the agreement sequence. 

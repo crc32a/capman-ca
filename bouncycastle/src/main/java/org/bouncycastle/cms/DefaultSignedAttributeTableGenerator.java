@@ -1,10 +1,11 @@
 package org.bouncycastle.cms;
 
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.cms.Attribute;
@@ -59,12 +60,12 @@ public class DefaultSignedAttributeTableGenerator
     protected Hashtable createStandardAttributeTable(
         Map parameters)
     {
-        Hashtable std = (Hashtable)table.clone();
+        Hashtable std = copyHashTable(table);
 
         if (!std.containsKey(CMSAttributes.contentType))
         {
-            DERObjectIdentifier contentType = (DERObjectIdentifier)
-                parameters.get(CMSAttributeTableGenerator.CONTENT_TYPE);
+            ASN1ObjectIdentifier contentType = ASN1ObjectIdentifier.getInstance(
+                parameters.get(CMSAttributeTableGenerator.CONTENT_TYPE));
 
             // contentType will be null if we're trying to generate a counter signature.
             if (contentType != null)
@@ -102,5 +103,19 @@ public class DefaultSignedAttributeTableGenerator
     public AttributeTable getAttributes(Map parameters)
     {
         return new AttributeTable(createStandardAttributeTable(parameters));
+    }
+
+    private static Hashtable copyHashTable(Hashtable paramsMap)
+    {
+        Hashtable newTable = new Hashtable();
+
+        Enumeration keys = paramsMap.keys();
+        while (keys.hasMoreElements())
+        {
+            Object key = keys.nextElement();
+            newTable.put(key, paramsMap.get(key));
+        }
+
+        return newTable;
     }
 }

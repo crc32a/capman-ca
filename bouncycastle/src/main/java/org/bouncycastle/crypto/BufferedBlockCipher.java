@@ -54,7 +54,7 @@ public class BufferedBlockCipher
         }
         else
         {
-            partialBlockOkay = (idx > 0 && (name.startsWith("CFB", idx) || name.startsWith("OFB", idx) || name.startsWith("OpenPGP", idx) || name.startsWith("SIC", idx) || name.startsWith("GCTR", idx)));
+            partialBlockOkay = (idx > 0 && (name.startsWith("CFB", idx) || name.startsWith("GCFB", idx) ||name.startsWith("OFB", idx) || name.startsWith("OpenPGP", idx) || name.startsWith("SIC", idx) || name.startsWith("GCTR", idx)));
         }
     }
 
@@ -201,7 +201,7 @@ public class BufferedBlockCipher
         {
             if ((outOff + length) > out.length)
             {
-                throw new DataLengthException("output buffer too short");
+                throw new OutputLengthException("output buffer too short");
             }
         }
 
@@ -265,7 +265,7 @@ public class BufferedBlockCipher
 
             if (outOff + bufOff > out.length)
             {
-                throw new DataLengthException("output buffer too short for doFinal()");
+                throw new OutputLengthException("output buffer too short for doFinal()");
             }
 
             if (bufOff != 0)

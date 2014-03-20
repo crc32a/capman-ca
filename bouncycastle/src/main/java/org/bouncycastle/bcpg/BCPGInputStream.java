@@ -1,10 +1,10 @@
 package org.bouncycastle.bcpg;
 
-import org.bouncycastle.util.io.Streams;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.bouncycastle.util.io.Streams;
 
 /**
  * reader for PGP objects
@@ -83,7 +83,13 @@ public class BCPGInputStream
             throw new EOFException();
         }
     }
-    
+
+    public byte[] readAll()
+        throws IOException
+    {
+        return Streams.readAll(this);
+    }
+
     public void readFully(
         byte[]    buf)
         throws IOException

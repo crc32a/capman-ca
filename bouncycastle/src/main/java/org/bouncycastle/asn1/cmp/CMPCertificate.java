@@ -1,19 +1,19 @@
 package org.bouncycastle.asn1.cmp;
 
 import org.bouncycastle.asn1.ASN1Choice;
-import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
-import org.bouncycastle.asn1.x509.X509CertificateStructure;
+import org.bouncycastle.asn1.x509.Certificate;
 
 public class CMPCertificate
-    extends ASN1Encodable
+    extends ASN1Object
     implements ASN1Choice
 {
-    private X509CertificateStructure x509v3PKCert;
+    private Certificate x509v3PKCert;
     private AttributeCertificate x509v2AttrCert;
 
     /**
@@ -24,9 +24,9 @@ public class CMPCertificate
         this.x509v2AttrCert = x509v2AttrCert;
     }
 
-    public CMPCertificate(X509CertificateStructure x509v3PKCert)
+    public CMPCertificate(Certificate x509v3PKCert)
     {
-        if (x509v3PKCert.getVersion() != 3)
+        if (x509v3PKCert.getVersionNumber() != 3)
         {
             throw new IllegalArgumentException("only version 3 certificates allowed");
         }
@@ -36,14 +36,14 @@ public class CMPCertificate
 
     public static CMPCertificate getInstance(Object o)
     {
-        if (o instanceof CMPCertificate)
+        if (o == null || o instanceof CMPCertificate)
         {
             return (CMPCertificate)o;
         }
 
-        if (o instanceof ASN1Sequence)
+        if (o instanceof ASN1Sequence || o instanceof byte[])
         {
-            return new CMPCertificate(X509CertificateStructure.getInstance(o));
+            return new CMPCertificate(Certificate.getInstance(o));
         }
 
         if (o instanceof ASN1TaggedObject)
@@ -59,7 +59,7 @@ public class CMPCertificate
          return x509v3PKCert != null;
     }
 
-    public X509CertificateStructure getX509v3PKCert()
+    public Certificate getX509v3PKCert()
     {
         return x509v3PKCert;
     }
@@ -80,13 +80,13 @@ public class CMPCertificate
      *
      * @return a basic ASN.1 object representation.
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         if (x509v2AttrCert != null)
         {        // explicit following CMP conventions
             return new DERTaggedObject(true, 1, x509v2AttrCert);
         }
 
-        return x509v3PKCert.toASN1Object();
+        return x509v3PKCert.toASN1Primitive();
     }
 }

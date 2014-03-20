@@ -1,10 +1,10 @@
 package org.bouncycastle.asn1.x509;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERObject;
-import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 
 /**
@@ -24,7 +24,7 @@ import org.bouncycastle.asn1.DERSequence;
  * </pre>
  */
 public class AuthorityInformationAccess
-    extends ASN1Encodable
+    extends ASN1Object
 {
     private AccessDescription[]    descriptions;
 
@@ -36,20 +36,15 @@ public class AuthorityInformationAccess
             return (AuthorityInformationAccess)obj;
         }
 
-        if (obj instanceof ASN1Sequence)
+        if (obj != null)
         {
-            return new AuthorityInformationAccess((ASN1Sequence)obj);
+            return new AuthorityInformationAccess(ASN1Sequence.getInstance(obj));
         }
 
-        if (obj instanceof X509Extension)
-        {
-            return getInstance(X509Extension.convertValueToObject((X509Extension)obj));
-        }
-
-        throw new IllegalArgumentException("unknown object in factory: " + obj.getClass().getName());
+        return null;
     }
  
-    public AuthorityInformationAccess(
+    private AuthorityInformationAccess(
         ASN1Sequence   seq)
     {
         if (seq.size() < 1) 
@@ -69,7 +64,7 @@ public class AuthorityInformationAccess
      * create an AuthorityInformationAccess with the oid and location provided.
      */
     public AuthorityInformationAccess(
-        DERObjectIdentifier oid,
+        ASN1ObjectIdentifier oid,
         GeneralName location)
     {
         descriptions = new AccessDescription[1];
@@ -87,7 +82,7 @@ public class AuthorityInformationAccess
         return descriptions;
     }
     
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector vec = new ASN1EncodableVector();
         

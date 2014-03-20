@@ -2,8 +2,8 @@ package org.bouncycastle.cert.crmf;
 
 import java.io.IOException;
 
-import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.crmf.AttributeTypeAndValue;
 import org.bouncycastle.asn1.crmf.CRMFObjectIdentifiers;
@@ -37,7 +37,7 @@ public class CertificateRequestMessage
     {
         try
         {
-            return CertReqMsg.getInstance(ASN1Object.fromByteArray(encoding));
+            return CertReqMsg.getInstance(ASN1Primitive.fromByteArray(encoding));
         }
         catch (ClassCastException e)
         {
@@ -216,7 +216,7 @@ public class CertificateRequestMessage
         {
             POPOSigningKey popoSign = POPOSigningKey.getInstance(pop.getObject());
 
-            if (popoSign.getPoposkInput().getPublicKeyMAC() != null)
+            if (popoSign.getPoposkInput() != null && popoSign.getPoposkInput().getPublicKeyMAC() != null)
             {
                 throw new IllegalStateException("verification requires password check");
             }
@@ -248,7 +248,7 @@ public class CertificateRequestMessage
         {
             POPOSigningKey popoSign = POPOSigningKey.getInstance(pop.getObject());
 
-            if (popoSign.getPoposkInput().getSender() != null)
+            if (popoSign.getPoposkInput() == null || popoSign.getPoposkInput().getSender() != null)
             {
                 throw new IllegalStateException("no PKMAC present in proof of possession");
             }
@@ -283,7 +283,14 @@ public class CertificateRequestMessage
             throw new CRMFException("unable to create verifier: " + e.getMessage(), e);
         }
 
-        CRMFUtil.derEncodeToStream(popoSign.getPoposkInput(), verifier.getOutputStream());
+        if (popoSign.getPoposkInput() != null)
+        {
+            CRMFUtil.derEncodeToStream(popoSign.getPoposkInput(), verifier.getOutputStream());
+        }
+        else
+        {
+            CRMFUtil.derEncodeToStream(certReqMsg.getCertReq(), verifier.getOutputStream());
+        }
 
         return verifier.verify(popoSign.getSignature().getBytes());
     }

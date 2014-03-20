@@ -15,8 +15,8 @@ import java.util.List;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OutputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERNull;
@@ -27,11 +27,15 @@ import org.bouncycastle.asn1.ocsp.Request;
 import org.bouncycastle.asn1.ocsp.Signature;
 import org.bouncycastle.asn1.ocsp.TBSRequest;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.jce.X509Principal;
 
+/**
+ * @deprecated use classes in org.bouncycastle.cert.ocsp.
+ */
 public class OCSPReqGenerator
 {
     private List            list = new ArrayList();
@@ -54,7 +58,7 @@ public class OCSPReqGenerator
         public Request toRequest()
             throws Exception
         {
-            return new Request(certId.toASN1Object(), extensions);
+            return new Request(certId.toASN1Object(), Extensions.getInstance(extensions));
         }
     }
 
@@ -188,7 +192,7 @@ public class OCSPReqGenerator
                 throw new OCSPException("exception processing TBSRequest: " + e, e);
             }
 
-            AlgorithmIdentifier sigAlgId = new AlgorithmIdentifier(signingAlgorithm, new DERNull());
+            AlgorithmIdentifier sigAlgId = new AlgorithmIdentifier(signingAlgorithm, DERNull.INSTANCE);
 
             if (chain != null && chain.length > 0)
             {
@@ -198,7 +202,7 @@ public class OCSPReqGenerator
                     for (int i = 0; i != chain.length; i++)
                     {
                         v.add(new X509CertificateStructure(
-                            (ASN1Sequence)ASN1Object.fromByteArray(chain[i].getEncoded())));
+                            (ASN1Sequence)ASN1Primitive.fromByteArray(chain[i].getEncoded())));
                     }
                 }
                 catch (IOException e)

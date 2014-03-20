@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OutputStream;
@@ -61,6 +62,8 @@ import org.bouncycastle.asn1.x509.X509Extensions;
  *       issuerKeyHash       OCTET STRING, -- Hash of Issuers public key
  *       serialNumber        CertificateSerialNumber }
  * </pre>
+ *
+ * @deprecated use classes in org.bouncycastle.cert.ocsp.
  */
 public class OCSPReq
     implements java.security.cert.X509Extension
@@ -205,7 +208,7 @@ public class OCSPReq
             {
                 try
                 {
-                    aOut.writeObject(e.nextElement());
+                    aOut.writeObject((ASN1Encodable)e.nextElement());
 
                     certs.add(cf.generateCertificate(
                         new ByteArrayInputStream(bOut.toByteArray())));
@@ -400,7 +403,7 @@ public class OCSPReq
             {
                 try
                 {
-                    return ext.getValue().getEncoded(ASN1Encodable.DER);
+                    return ext.getValue().getEncoded(ASN1Encoding.DER);
                 }
                 catch (Exception e)
                 {

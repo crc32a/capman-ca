@@ -1,14 +1,14 @@
 package org.bouncycastle.asn1.isismtt.x509;
 
+import org.bouncycastle.asn1.ASN1Boolean;
 import org.bouncycastle.asn1.ASN1Choice;
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1GeneralizedTime;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERBoolean;
-import org.bouncycastle.asn1.DERGeneralizedTime;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERPrintableString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
@@ -33,7 +33,7 @@ import org.bouncycastle.asn1.DERTaggedObject;
  * of a specific country.
  */
 public class DeclarationOfMajority
-    extends ASN1Encodable
+    extends ASN1Object
     implements ASN1Choice
 {
     public static final int notYoungerThan = 0;
@@ -44,7 +44,7 @@ public class DeclarationOfMajority
 
     public DeclarationOfMajority(int notYoungerThan)
     {
-        declaration = new DERTaggedObject(false, 0, new DERInteger(notYoungerThan));
+        declaration = new DERTaggedObject(false, 0, new ASN1Integer(notYoungerThan));
     }
 
     public DeclarationOfMajority(boolean fullAge, String country)
@@ -62,14 +62,14 @@ public class DeclarationOfMajority
         {
             ASN1EncodableVector v = new ASN1EncodableVector();
 
-            v.add(DERBoolean.FALSE);
+            v.add(ASN1Boolean.FALSE);
             v.add(new DERPrintableString(country, true));
 
             declaration = new DERTaggedObject(false, 1, new DERSequence(v));
         }
     }
 
-    public DeclarationOfMajority(DERGeneralizedTime dateOfBirth)
+    public DeclarationOfMajority(ASN1GeneralizedTime dateOfBirth)
     {
         declaration = new DERTaggedObject(false, 2, dateOfBirth);
     }
@@ -119,7 +119,7 @@ public class DeclarationOfMajority
      *
      * @return a DERObject
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         return declaration;
     }
@@ -139,7 +139,7 @@ public class DeclarationOfMajority
             return -1;
         }
 
-        return DERInteger.getInstance(declaration, false).getValue().intValue();
+        return ASN1Integer.getInstance(declaration, false).getValue().intValue();
     }
 
     public ASN1Sequence fullAgeAtCountry()
@@ -152,13 +152,13 @@ public class DeclarationOfMajority
         return ASN1Sequence.getInstance(declaration, false);
     }
 
-    public DERGeneralizedTime getDateOfBirth()
+    public ASN1GeneralizedTime getDateOfBirth()
     {
         if (declaration.getTagNo() != 2)
         {
             return null;
         }
 
-        return DERGeneralizedTime.getInstance(declaration, false);
+        return ASN1GeneralizedTime.getInstance(declaration, false);
     }
 }

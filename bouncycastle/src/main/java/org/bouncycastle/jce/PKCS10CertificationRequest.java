@@ -21,13 +21,13 @@ import java.util.Set;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DEREncodable;
-import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.cryptopro.CryptoProObjectIdentifiers;
@@ -68,6 +68,7 @@ import org.bouncycastle.util.Strings;
  *    values  SET SIZE(1..MAX) OF ATTRIBUTE.&Type({IOSet}{\@type})
  *  }
  * </pre>
+ * @deprecated use classes in org.bouncycastle.pkcs.
  */
 public class PKCS10CertificationRequest
     extends CertificationRequest
@@ -176,19 +177,19 @@ public class PKCS10CertificationRequest
         //
         // explicit params
         //
-        AlgorithmIdentifier sha1AlgId = new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, new DERNull());
+        AlgorithmIdentifier sha1AlgId = new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1, DERNull.INSTANCE);
         params.put("SHA1WITHRSAANDMGF1", creatPSSParams(sha1AlgId, 20));
 
-        AlgorithmIdentifier sha224AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224, new DERNull());
+        AlgorithmIdentifier sha224AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha224, DERNull.INSTANCE);
         params.put("SHA224WITHRSAANDMGF1", creatPSSParams(sha224AlgId, 28));
 
-        AlgorithmIdentifier sha256AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256, new DERNull());
+        AlgorithmIdentifier sha256AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha256, DERNull.INSTANCE);
         params.put("SHA256WITHRSAANDMGF1", creatPSSParams(sha256AlgId, 32));
 
-        AlgorithmIdentifier sha384AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha384, new DERNull());
+        AlgorithmIdentifier sha384AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha384, DERNull.INSTANCE);
         params.put("SHA384WITHRSAANDMGF1", creatPSSParams(sha384AlgId, 48));
 
-        AlgorithmIdentifier sha512AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha512, new DERNull());
+        AlgorithmIdentifier sha512AlgId = new AlgorithmIdentifier(NISTObjectIdentifiers.id_sha512, DERNull.INSTANCE);
         params.put("SHA512WITHRSAANDMGF1", creatPSSParams(sha512AlgId, 64));
     }
 
@@ -197,8 +198,8 @@ public class PKCS10CertificationRequest
         return new RSASSAPSSparams(
             hashAlgId,
             new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, hashAlgId),
-            new DERInteger(saltSize),
-            new DERInteger(1));
+            new ASN1Integer(saltSize),
+            new ASN1Integer(1));
     }
 
     private static ASN1Sequence toDERSequence(
@@ -335,7 +336,7 @@ public class PKCS10CertificationRequest
         }
         else if (params.containsKey(algorithmName))
         {
-            this.sigAlgId = new AlgorithmIdentifier(sigOID, (DEREncodable)params.get(algorithmName));
+            this.sigAlgId = new AlgorithmIdentifier(sigOID, (ASN1Encodable)params.get(algorithmName));
         }
         else
         {
@@ -344,7 +345,7 @@ public class PKCS10CertificationRequest
 
         try
         {
-            ASN1Sequence seq = (ASN1Sequence)ASN1Object.fromByteArray(key.getEncoded());
+            ASN1Sequence seq = (ASN1Sequence)ASN1Primitive.fromByteArray(key.getEncoded());
             this.reqInfo = new CertificationRequestInfo(subject, new SubjectPublicKeyInfo(seq), attributes);
         }
         catch (IOException e)
@@ -366,7 +367,7 @@ public class PKCS10CertificationRequest
 
         try
         {
-            sig.update(reqInfo.getEncoded(ASN1Encodable.DER));
+            sig.update(reqInfo.getEncoded(ASN1Encoding.DER));
         }
         catch (Exception e)
         {
@@ -392,20 +393,21 @@ public class PKCS10CertificationRequest
                 InvalidKeyException
     {
         SubjectPublicKeyInfo    subjectPKInfo = reqInfo.getSubjectPublicKeyInfo();
-        X509EncodedKeySpec      xspec = new X509EncodedKeySpec(new DERBitString(subjectPKInfo).getBytes());
-        AlgorithmIdentifier     keyAlg = subjectPKInfo.getAlgorithmId();
+
         
         try
         {
+            X509EncodedKeySpec      xspec = new X509EncodedKeySpec(new DERBitString(subjectPKInfo).getBytes());
+            AlgorithmIdentifier     keyAlg = subjectPKInfo.getAlgorithm();
             try
             {
                 if (provider == null)
                 {
-                    return KeyFactory.getInstance(keyAlg.getObjectId().getId()).generatePublic(xspec);
+                    return KeyFactory.getInstance(keyAlg.getAlgorithm().getId()).generatePublic(xspec);
                 }
                 else
                 {
-                    return KeyFactory.getInstance(keyAlg.getObjectId().getId(), provider).generatePublic(xspec);
+                    return KeyFactory.getInstance(keyAlg.getAlgorithm().getId(), provider).generatePublic(xspec);
                 }
             }
             catch (NoSuchAlgorithmException e)
@@ -431,6 +433,10 @@ public class PKCS10CertificationRequest
             }
         }
         catch (InvalidKeySpecException e)
+        {
+            throw new InvalidKeyException("error decoding public key");
+        }
+        catch (IOException e)
         {
             throw new InvalidKeyException("error decoding public key");
         }
@@ -509,7 +515,7 @@ public class PKCS10CertificationRequest
 
         try
         {
-            sig.update(reqInfo.getEncoded(ASN1Encodable.DER));
+            sig.update(reqInfo.getEncoded(ASN1Encoding.DER));
         }
         catch (Exception e)
         {
@@ -526,7 +532,7 @@ public class PKCS10CertificationRequest
     {
         try
         {
-            return this.getEncoded(ASN1Encodable.DER);
+            return this.getEncoded(ASN1Encoding.DER);
         }
         catch (IOException e)
         {
@@ -536,7 +542,7 @@ public class PKCS10CertificationRequest
 
     private void setSignatureParameters(
         Signature signature,
-        DEREncodable params)
+        ASN1Encodable params)
         throws NoSuchAlgorithmException, SignatureException, InvalidKeyException
     {
         if (params != null && !DERNull.INSTANCE.equals(params))
@@ -545,7 +551,7 @@ public class PKCS10CertificationRequest
 
             try
             {
-                sigParams.init(params.getDERObject().getDEREncoded());
+                sigParams.init(params.toASN1Primitive().getEncoded(ASN1Encoding.DER));
             }
             catch (IOException e)
             {
@@ -569,7 +575,7 @@ public class PKCS10CertificationRequest
     static String getSignatureName(
         AlgorithmIdentifier sigAlgId)
     {
-        DEREncodable params = sigAlgId.getParameters();
+        ASN1Encodable params = sigAlgId.getParameters();
 
         if (params != null && !DERNull.INSTANCE.equals(params))
         {

@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca;
 
+import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -41,14 +42,18 @@ public class CsrUtils {
         FAILED = "FAILED";
     }
 
-    public static DERSet getCaExt(boolean isCa) {
+    public static DERSet getCaExt(boolean isCa) throws RsaException {
         Vector extOids = new Vector();
         Vector extVals = new Vector();
 
         extOids.add(X509Extension.basicConstraints);
         BasicConstraints basicConstraints = new BasicConstraints(isCa);
-        DEROctetString basicConstraintOctets = new DEROctetString(
-                basicConstraints);
+        DEROctetString basicConstraintOctets;
+        try {
+            basicConstraintOctets = new DEROctetString(basicConstraints);
+        } catch (IOException ex) {
+            throw new RsaException("error decoding Ca extension from Csr", ex);
+        }
         X509Extension basicConstraintsExt = new X509Extension(true,
                 basicConstraintOctets);
         extVals.add(basicConstraintsExt);
@@ -86,8 +91,7 @@ public class CsrUtils {
         CertificationRequestInfo reqInfo = req.getCertificationRequestInfo();
         String validStr;
         JCERSAPublicKey jPub;
-        X509Name x509Name = reqInfo.getSubject();
-        X500Name x500Name = X500Name.getInstance(x509Name);
+        X500Name x500Name = reqInfo.getSubject();
         String version = reqInfo.getVersion().getValue().toString();
         try {
             jPub = (JCERSAPublicKey) req.getPublicKey();

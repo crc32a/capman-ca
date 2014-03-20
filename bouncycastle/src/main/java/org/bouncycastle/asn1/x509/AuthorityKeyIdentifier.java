@@ -1,20 +1,20 @@
 package org.bouncycastle.asn1.x509;
 
-import org.bouncycastle.asn1.ASN1Encodable;
+import java.math.BigInteger;
+import java.util.Enumeration;
+
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA1Digest;
-
-import java.math.BigInteger;
-import java.util.Enumeration;
 
 /**
  * The AuthorityKeyIdentifier object.
@@ -31,11 +31,11 @@ import java.util.Enumeration;
  *
  */
 public class AuthorityKeyIdentifier
-    extends ASN1Encodable
+    extends ASN1Object
 {
     ASN1OctetString keyidentifier=null;
     GeneralNames certissuer=null;
-    DERInteger certserno=null;
+    ASN1Integer certserno=null;
 
     public static AuthorityKeyIdentifier getInstance(
         ASN1TaggedObject obj,
@@ -51,19 +51,20 @@ public class AuthorityKeyIdentifier
         {
             return (AuthorityKeyIdentifier)obj;
         }
-        if (obj instanceof ASN1Sequence)
+        if (obj != null)
         {
-            return new AuthorityKeyIdentifier((ASN1Sequence)obj);
-        }
-        if (obj instanceof X509Extension)
-        {
-            return getInstance(X509Extension.convertValueToObject((X509Extension)obj));
+            return new AuthorityKeyIdentifier(ASN1Sequence.getInstance(obj));
         }
 
-        throw new IllegalArgumentException("unknown object in factory: " + obj.getClass().getName());
+        return null;
     }
 
-    public AuthorityKeyIdentifier(
+    public static AuthorityKeyIdentifier fromExtensions(Extensions extensions)
+    {
+         return AuthorityKeyIdentifier.getInstance(extensions.getExtensionParsedValue(Extension.authorityKeyIdentifier));
+    }
+
+    protected AuthorityKeyIdentifier(
         ASN1Sequence   seq)
     {
         Enumeration     e = seq.getObjects();
@@ -81,7 +82,7 @@ public class AuthorityKeyIdentifier
                 this.certissuer = GeneralNames.getInstance(o, false);
                 break;
             case 2:
-                this.certserno = DERInteger.getInstance(o, false);
+                this.certserno = ASN1Integer.getInstance(o, false);
                 break;
             default:
                 throw new IllegalArgumentException("illegal tag");
@@ -131,8 +132,8 @@ public class AuthorityKeyIdentifier
         digest.doFinal(resBuf, 0);
 
         this.keyidentifier = new DEROctetString(resBuf);
-        this.certissuer = GeneralNames.getInstance(name.toASN1Object());
-        this.certserno = new DERInteger(serialNumber);
+        this.certissuer = GeneralNames.getInstance(name.toASN1Primitive());
+        this.certserno = new ASN1Integer(serialNumber);
     }
 
     /**
@@ -144,12 +145,12 @@ public class AuthorityKeyIdentifier
         BigInteger              serialNumber)
     {
         this.keyidentifier = null;
-        this.certissuer = GeneralNames.getInstance(name.toASN1Object());
-        this.certserno = new DERInteger(serialNumber);
+        this.certissuer = GeneralNames.getInstance(name.toASN1Primitive());
+        this.certserno = new ASN1Integer(serialNumber);
     }
 
     /**
-      * create an AuthorityKeyIdentifier with a precomupted key identifier
+      * create an AuthorityKeyIdentifier with a precomputed key identifier
       */
      public AuthorityKeyIdentifier(
          byte[]                  keyIdentifier)
@@ -160,7 +161,7 @@ public class AuthorityKeyIdentifier
      }
 
     /**
-     * create an AuthorityKeyIdentifier with a precomupted key identifier
+     * create an AuthorityKeyIdentifier with a precomputed key identifier
      * and the GeneralNames tag and the serial number provided as well.
      */
     public AuthorityKeyIdentifier(
@@ -169,8 +170,8 @@ public class AuthorityKeyIdentifier
         BigInteger              serialNumber)
     {
         this.keyidentifier = new DEROctetString(keyIdentifier);
-        this.certissuer = GeneralNames.getInstance(name.toASN1Object());
-        this.certserno = new DERInteger(serialNumber);
+        this.certissuer = GeneralNames.getInstance(name.toASN1Primitive());
+        this.certserno = new ASN1Integer(serialNumber);
     }
     
     public byte[] getKeyIdentifier()
@@ -201,7 +202,7 @@ public class AuthorityKeyIdentifier
     /**
      * Produce an object suitable for an ASN1OutputStream.
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector  v = new ASN1EncodableVector();
 

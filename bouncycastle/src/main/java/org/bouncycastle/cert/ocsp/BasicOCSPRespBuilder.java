@@ -6,8 +6,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.ASN1GeneralizedTime;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERNull;
@@ -19,8 +20,8 @@ import org.bouncycastle.asn1.ocsp.RevokedInfo;
 import org.bouncycastle.asn1.ocsp.SingleResponse;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.CRLReason;
+import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DigestCalculator;
@@ -31,7 +32,7 @@ import org.bouncycastle.operator.DigestCalculator;
 public class BasicOCSPRespBuilder
 {
     private List            list = new ArrayList();
-    private X509Extensions  responseExtensions = null;
+    private Extensions  responseExtensions = null;
     private RespID          responderID;
 
     private class ResponseObject
@@ -40,14 +41,14 @@ public class BasicOCSPRespBuilder
         CertStatus            certStatus;
         DERGeneralizedTime    thisUpdate;
         DERGeneralizedTime    nextUpdate;
-        X509Extensions        extensions;
+        Extensions        extensions;
 
         public ResponseObject(
             CertificateID     certId,
             CertificateStatus certStatus,
             Date              thisUpdate,
             Date              nextUpdate,
-            X509Extensions    extensions)
+            Extensions    extensions)
         {
             this.certId = certId;
 
@@ -57,7 +58,7 @@ public class BasicOCSPRespBuilder
             }
             else if (certStatus instanceof UnknownStatus)
             {
-                this.certStatus = new CertStatus(2, new DERNull());
+                this.certStatus = new CertStatus(2, DERNull.INSTANCE);
             }
             else
             {
@@ -66,12 +67,12 @@ public class BasicOCSPRespBuilder
                 if (rs.hasRevocationReason())
                 {
                     this.certStatus = new CertStatus(
-                                            new RevokedInfo(new DERGeneralizedTime(rs.getRevocationTime()), new CRLReason(rs.getRevocationReason())));
+                                            new RevokedInfo(new ASN1GeneralizedTime(rs.getRevocationTime()), CRLReason.lookup(rs.getRevocationReason())));
                 }
                 else
                 {
                     this.certStatus = new CertStatus(
-                                            new RevokedInfo(new DERGeneralizedTime(rs.getRevocationTime()), null));
+                                            new RevokedInfo(new ASN1GeneralizedTime(rs.getRevocationTime()), null));
                 }
             }
 
@@ -144,7 +145,7 @@ public class BasicOCSPRespBuilder
     public BasicOCSPRespBuilder addResponse(
         CertificateID       certID,
         CertificateStatus   certStatus,
-        X509Extensions      singleExtensions)
+        Extensions      singleExtensions)
     {
         list.add(new ResponseObject(certID, certStatus, new Date(), null, singleExtensions));
 
@@ -163,7 +164,7 @@ public class BasicOCSPRespBuilder
         CertificateID       certID,
         CertificateStatus   certStatus,
         Date                nextUpdate,
-        X509Extensions      singleExtensions)
+        Extensions      singleExtensions)
     {
         list.add(new ResponseObject(certID, certStatus, new Date(), nextUpdate, singleExtensions));
 
@@ -184,7 +185,7 @@ public class BasicOCSPRespBuilder
         CertificateStatus   certStatus,
         Date                thisUpdate,
         Date                nextUpdate,
-        X509Extensions      singleExtensions)
+        Extensions      singleExtensions)
     {
         list.add(new ResponseObject(certID, certStatus, thisUpdate, nextUpdate, singleExtensions));
 
@@ -197,7 +198,7 @@ public class BasicOCSPRespBuilder
      * @param responseExtensions the extension object to carry.
      */
     public BasicOCSPRespBuilder setResponseExtensions(
-        X509Extensions  responseExtensions)
+        Extensions  responseExtensions)
     {
         this.responseExtensions = responseExtensions;
 
@@ -226,14 +227,14 @@ public class BasicOCSPRespBuilder
             }
         }
 
-        ResponseData  tbsResp = new ResponseData(responderID.toASN1Object(), new DERGeneralizedTime(producedAt), new DERSequence(responses), responseExtensions);
+        ResponseData  tbsResp = new ResponseData(responderID.toASN1Object(), new ASN1GeneralizedTime(producedAt), new DERSequence(responses), responseExtensions);
         DERBitString    bitSig;
 
         try
         {
             OutputStream sigOut = signer.getOutputStream();
 
-            sigOut.write(tbsResp.getEncoded(ASN1Encodable.DER));
+            sigOut.write(tbsResp.getEncoded(ASN1Encoding.DER));
             sigOut.close();
 
             bitSig = new DERBitString(signer.getSignature());

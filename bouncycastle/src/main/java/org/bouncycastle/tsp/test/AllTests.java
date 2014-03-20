@@ -5,7 +5,6 @@ import java.security.Security;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class AllTests
@@ -23,7 +22,6 @@ public class AllTests
         TestSuite suite = new TestSuite("TSP Tests");
         
         suite.addTestSuite(ParseTest.class);
-        suite.addTestSuite(TSPTest.class);
         suite.addTestSuite(NewTSPTest.class);
         suite.addTestSuite(CMSTimeStampedDataTest.class);
         suite.addTestSuite(CMSTimeStampedDataParserTest.class);

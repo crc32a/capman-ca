@@ -18,17 +18,19 @@ import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1GeneralizedTime;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DEREncodable;
-import org.bouncycastle.asn1.DERGeneralizedTime;
-import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.CertificateList;
+import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.TBSCertList;
 import org.bouncycastle.asn1.x509.Time;
 import org.bouncycastle.asn1.x509.V2TBSCertListGenerator;
@@ -110,7 +112,7 @@ public class X509V2CRLGenerator
      **/
     public void addCRLEntry(BigInteger userCertificate, Date revocationDate, int reason)
     {
-        tbsGen.addCRLEntry(new DERInteger(userCertificate), new Time(revocationDate), reason);
+        tbsGen.addCRLEntry(new ASN1Integer(userCertificate), new Time(revocationDate), reason);
     }
 
     /**
@@ -120,7 +122,7 @@ public class X509V2CRLGenerator
      **/
     public void addCRLEntry(BigInteger userCertificate, Date revocationDate, int reason, Date invalidityDate)
     {
-        tbsGen.addCRLEntry(new DERInteger(userCertificate), new Time(revocationDate), reason, new DERGeneralizedTime(invalidityDate));
+        tbsGen.addCRLEntry(new ASN1Integer(userCertificate), new Time(revocationDate), reason, new ASN1GeneralizedTime(invalidityDate));
     }
    
     /**
@@ -128,7 +130,7 @@ public class X509V2CRLGenerator
      **/
     public void addCRLEntry(BigInteger userCertificate, Date revocationDate, X509Extensions extensions)
     {
-        tbsGen.addCRLEntry(new DERInteger(userCertificate), new Time(revocationDate), extensions);
+        tbsGen.addCRLEntry(new ASN1Integer(userCertificate), new Time(revocationDate), Extensions.getInstance(extensions));
     }
     
     /**
@@ -193,7 +195,7 @@ public class X509V2CRLGenerator
     public void addExtension(
         String          oid,
         boolean         critical,
-        DEREncodable    value)
+        ASN1Encodable    value)
     {
         this.addExtension(new DERObjectIdentifier(oid), critical, value);
     }
@@ -204,9 +206,9 @@ public class X509V2CRLGenerator
     public void addExtension(
         DERObjectIdentifier oid,
         boolean             critical,
-        DEREncodable        value)
+        ASN1Encodable value)
     {
-        extGenerator.addExtension(oid, critical, value);
+        extGenerator.addExtension(new ASN1ObjectIdentifier(oid.getId()), critical, value);
     }
 
     /**
@@ -228,7 +230,7 @@ public class X509V2CRLGenerator
         boolean             critical,
         byte[]              value)
     {
-        extGenerator.addExtension(oid, critical, value);
+        extGenerator.addExtension(new ASN1ObjectIdentifier(oid.getId()), critical, value);
     }
 
     /**

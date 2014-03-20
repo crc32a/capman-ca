@@ -8,16 +8,17 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.AttCertValidityPeriod;
 import org.bouncycastle.asn1.x509.Attribute;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.bouncycastle.asn1.x509.AttributeCertificateInfo;
-import org.bouncycastle.asn1.x509.X509Extension;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.operator.ContentVerifier;
 import org.bouncycastle.operator.ContentVerifierProvider;
 
@@ -29,14 +30,14 @@ public class X509AttributeCertificateHolder
     private static Attribute[] EMPTY_ARRAY = new Attribute[0];
     
     private AttributeCertificate attrCert;
-    private X509Extensions extensions;
+    private Extensions extensions;
 
     private static AttributeCertificate parseBytes(byte[] certEncoding)
         throws IOException
     {
         try
         {
-            return AttributeCertificate.getInstance(ASN1Object.fromByteArray(certEncoding));
+            return AttributeCertificate.getInstance(ASN1Primitive.fromByteArray(certEncoding));
         }
         catch (ClassCastException e)
         {
@@ -105,7 +106,7 @@ public class X509AttributeCertificateHolder
      */
     public AttributeCertificateHolder getHolder()
     {
-        return new AttributeCertificateHolder((ASN1Sequence)attrCert.getAcinfo().getHolder().toASN1Object());
+        return new AttributeCertificateHolder((ASN1Sequence)attrCert.getAcinfo().getHolder().toASN1Primitive());
     }
 
     /**
@@ -201,7 +202,7 @@ public class X509AttributeCertificateHolder
      *
      * @return the extension if present, null otherwise.
      */
-    public X509Extension getExtension(ASN1ObjectIdentifier oid)
+    public Extension getExtension(ASN1ObjectIdentifier oid)
     {
         if (extensions != null)
         {
@@ -209,6 +210,16 @@ public class X509AttributeCertificateHolder
         }
 
         return null;
+    }
+
+    /**
+     * Return the extensions block associated with this certificate if there is one.
+     *
+     * @return the extensions block, null otherwise.
+     */
+    public Extensions getExtensions()
+    {
+        return extensions;
     }
 
     /**
@@ -304,7 +315,7 @@ public class X509AttributeCertificateHolder
     {
         AttributeCertificateInfo acinfo = attrCert.getAcinfo();
 
-        if (!acinfo.getSignature().equals(attrCert.getSignatureAlgorithm()))
+        if (!CertUtils.isAlgIdEqual(acinfo.getSignature(), attrCert.getSignatureAlgorithm()))
         {
             throw new CertException("signature invalid - algorithm identifier mismatch");
         }
@@ -316,8 +327,9 @@ public class X509AttributeCertificateHolder
             verifier = verifierProvider.get((acinfo.getSignature()));
 
             OutputStream sOut = verifier.getOutputStream();
+            DEROutputStream dOut = new DEROutputStream(sOut);
 
-            sOut.write(acinfo.getDEREncoded());
+            dOut.writeObject(acinfo);
 
             sOut.close();
         }

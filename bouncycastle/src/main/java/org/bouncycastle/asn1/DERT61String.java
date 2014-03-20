@@ -2,14 +2,18 @@ package org.bouncycastle.asn1;
 
 import java.io.IOException;
 
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Strings;
+
 /**
- * DER T61String (also the teletex string)
+ * DER T61String (also the teletex string), try not to use this if you don't need to. The standard support the encoding for
+ * this has been withdrawn.
  */
 public class DERT61String
-    extends ASN1Object
-    implements DERString
+    extends ASN1Primitive
+    implements ASN1String
 {
-    String  string;
+    private byte[] string;
 
     /**
      * return a T61 string from the passed in object.
@@ -22,6 +26,18 @@ public class DERT61String
         if (obj == null || obj instanceof DERT61String)
         {
             return (DERT61String)obj;
+        }
+
+        if (obj instanceof byte[])
+        {
+            try
+            {
+                return (DERT61String)fromByteArray((byte[])obj);
+            }
+            catch (Exception e)
+            {
+                throw new IllegalArgumentException("encoding error in getInstance: " + e.toString());
+            }
         }
 
         throw new IllegalArgumentException("illegal object in getInstance: " + obj.getClass().getName());
@@ -40,9 +56,9 @@ public class DERT61String
         ASN1TaggedObject obj,
         boolean          explicit)
     {
-        DERObject o = obj.getObject();
+        ASN1Primitive o = obj.getObject();
 
-        if (explicit)
+        if (explicit || o instanceof DERT61String)
         {
             return getInstance(o);
         }
@@ -53,73 +69,76 @@ public class DERT61String
     }
 
     /**
-     * basic constructor - with bytes.
+     * basic constructor - string encoded as a sequence of bytes.
      */
     public DERT61String(
         byte[]   string)
     {
-        char[]  cs = new char[string.length];
-
-        for (int i = 0; i != cs.length; i++)
-        {
-            cs[i] = (char)(string[i] & 0xff);
-        }
-
-        this.string = new String(cs);
+        this.string = string;
     }
 
     /**
-     * basic constructor - with string.
+     * basic constructor - with string 8 bit assumed.
      */
     public DERT61String(
         String   string)
     {
-        this.string = string;
+        this(Strings.toByteArray(string));
     }
 
+    /**
+     * Decode the encoded string and return it, 8 bit encoding assumed.
+     * @return the decoded String
+     */
     public String getString()
     {
-        return string;
+        return Strings.fromByteArray(string);
     }
 
     public String toString()
     {
-        return string;
+        return getString();
+    }
+
+    boolean isConstructed()
+    {
+        return false;
+    }
+
+    int encodedLength()
+    {
+        return 1 + StreamUtil.calculateBodyLength(string.length) + string.length;
     }
 
     void encode(
-        DEROutputStream  out)
+        ASN1OutputStream out)
         throws IOException
     {
-        out.writeEncoded(T61_STRING, this.getOctets());
+        out.writeEncoded(BERTags.T61_STRING, string);
     }
-    
+
+    /**
+     * Return the encoded string as a byte array.
+     * @return the actual bytes making up the encoded body of the T61 string.
+     */
     public byte[] getOctets()
     {
-        char[]  cs = string.toCharArray();
-        byte[]  bs = new byte[cs.length];
-
-        for (int i = 0; i != cs.length; i++)
-        {
-            bs[i] = (byte)cs[i];
-        }
-
-        return bs; 
+        return Arrays.clone(string);
     }
 
     boolean asn1Equals(
-        DERObject  o)
+        ASN1Primitive o)
     {
         if (!(o instanceof DERT61String))
         {
             return false;
         }
 
-        return this.getString().equals(((DERT61String)o).getString());
+        return Arrays.areEqual(string, ((DERT61String)o).string);
     }
     
     public int hashCode()
     {
-        return this.getString().hashCode();
+        return Arrays.hashCode(string);
     }
 }

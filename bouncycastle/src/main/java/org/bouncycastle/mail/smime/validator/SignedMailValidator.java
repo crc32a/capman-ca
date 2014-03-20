@@ -34,13 +34,14 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.cms.Attribute;
 import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.cms.CMSAttributes;
@@ -50,14 +51,18 @@ import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
+import org.bouncycastle.cms.jcajce.JcaX509CertSelectorConverter;
 import org.bouncycastle.i18n.ErrorBundle;
 import org.bouncycastle.i18n.filter.TrustedInput;
 import org.bouncycastle.i18n.filter.UntrustedInput;
 import org.bouncycastle.jce.PrincipalUtil;
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.mail.smime.SMIMESigned;
+import org.bouncycastle.util.Integers;
 import org.bouncycastle.x509.CertPathReviewerException;
 import org.bouncycastle.x509.PKIXCertPathReviewer;
 
@@ -77,6 +82,8 @@ public class SignedMailValidator
     
     // (365.25*30)*24*3600*1000
     private static final long THIRTY_YEARS_IN_MILLI_SEC = 21915l*12l*3600l*1000l;
+
+    private static final JcaX509CertSelectorConverter selectorConverter = new JcaX509CertSelectorConverter();
 
     private CertStore certs;
 
@@ -174,7 +181,7 @@ public class SignedMailValidator
             }
 
             // save certstore and signerInformationStore
-            certs = s.getCertificatesAndCRLs("Collection", "BC");
+            certs = new JcaCertStoreBuilder().addCertificates(s.getCertificates()).addCRLs(s.getCRLs()).setProvider("BC").build();
             signers = s.getSignerInfos();
 
             // save "from" addresses from message
@@ -245,7 +252,7 @@ public class SignedMailValidator
             try
             {
                 Collection certCollection = findCerts(usedParameters
-                        .getCertStores(), signer.getSID());
+                        .getCertStores(), selectorConverter.getCertSelector(signer.getSID()));
 
                 Iterator certIt = certCollection.iterator();
                 if (certIt.hasNext())
@@ -267,7 +274,7 @@ public class SignedMailValidator
                 boolean validSignature = false;
                 try
                 {
-                    validSignature = signer.verify(cert.getPublicKey(), "BC");
+                    validSignature = signer.verify(new JcaSimpleSignerInfoVerifierBuilder().setProvider("BC").build(cert.getPublicKey()));
                     if (!validSignature)
                     {
                         ErrorBundle msg = new ErrorBundle(RESOURCE_NAME,
@@ -423,7 +430,7 @@ public class SignedMailValidator
         byte[] ext = cert.getExtensionValue(SUBJECT_ALTERNATIVE_NAME);
         if (ext != null)
         {
-            DERSequence altNames = (DERSequence) getObject(ext);
+            ASN1Sequence altNames = ASN1Sequence.getInstance(getObject(ext));
             for (int j = 0; j < altNames.size(); j++)
             {
                 ASN1TaggedObject o = (ASN1TaggedObject) altNames
@@ -431,7 +438,7 @@ public class SignedMailValidator
 
                 if (o.getTagNo() == 1)
                 {
-                    String email = DERIA5String.getInstance(o, true)
+                    String email = DERIA5String.getInstance(o, false)
                             .getString().toLowerCase();
                     addresses.add(email);
                 }
@@ -441,7 +448,7 @@ public class SignedMailValidator
         return addresses;
     }
 
-    private static DERObject getObject(byte[] ext) throws IOException
+    private static ASN1Primitive getObject(byte[] ext) throws IOException
     {
         ASN1InputStream aIn = new ASN1InputStream(ext);
         ASN1OctetString octs = (ASN1OctetString) aIn.readObject();
@@ -468,7 +475,7 @@ public class SignedMailValidator
         {
             ErrorBundle msg = new ErrorBundle(RESOURCE_NAME,
                     "SignedMailValidator.shortSigningKey",
-                    new Object[] { new Integer(keyLenght) });
+                    new Object[]{Integers.valueOf(keyLenght)});
             notifications.add(msg);
         }
         
@@ -595,7 +602,7 @@ public class SignedMailValidator
             if (attr != null)
             {
                 Time t = Time.getInstance(attr.getAttrValues().getObjectAt(0)
-                        .getDERObject());
+                        .toASN1Primitive());
                 result = t.getDate();
             }
         }
@@ -743,7 +750,7 @@ public class SignedMailValidator
                         AuthorityKeyIdentifier kid = AuthorityKeyIdentifier.getInstance(getObject(authKeyIdentBytes));
                         if (kid.getKeyIdentifier() != null)
                         {
-                            select.setSubjectKeyIdentifier(new DEROctetString(kid.getKeyIdentifier()).getDEREncoded());
+                            select.setSubjectKeyIdentifier(new DEROctetString(kid.getKeyIdentifier()).getEncoded(ASN1Encoding.DER));
                         }
                     }
                     catch (IOException ioe)

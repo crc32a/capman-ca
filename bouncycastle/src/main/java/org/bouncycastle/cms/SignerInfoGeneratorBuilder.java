@@ -1,22 +1,43 @@
 package org.bouncycastle.cms;
 
 import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.cms.IssuerAndSerialNumber;
 import org.bouncycastle.asn1.cms.SignerIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 
+/**
+ * Builder for SignerInfo generator objects.
+ */
 public class SignerInfoGeneratorBuilder
 {
     private DigestCalculatorProvider digestProvider;
     private boolean directSignature;
     private CMSAttributeTableGenerator signedGen;
     private CMSAttributeTableGenerator unsignedGen;
+    private CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder;
 
+    /**
+     *  Base constructor.
+     *
+     * @param digestProvider  a provider of digest calculators for the algorithms required in the signature and attribute calculations.
+     */
     public SignerInfoGeneratorBuilder(DigestCalculatorProvider digestProvider)
     {
+        this(digestProvider, new DefaultCMSSignatureEncryptionAlgorithmFinder());
+    }
+
+        /**
+     *  Base constructor.
+     *
+     * @param digestProvider  a provider of digest calculators for the algorithms required in the signature and attribute calculations.
+     */
+    public SignerInfoGeneratorBuilder(DigestCalculatorProvider digestProvider, CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder)
+    {
         this.digestProvider = digestProvider;
+        this.sigEncAlgFinder = sigEncAlgFinder;
     }
 
     /**
@@ -32,6 +53,12 @@ public class SignerInfoGeneratorBuilder
         return this;
     }
 
+    /**
+     *  Provide a custom signed attribute generator.
+     *
+     * @param signedGen a generator of signed attributes.
+     * @return the builder object
+     */
     public SignerInfoGeneratorBuilder setSignedAttributeGenerator(CMSAttributeTableGenerator signedGen)
     {
         this.signedGen = signedGen;
@@ -39,6 +66,12 @@ public class SignerInfoGeneratorBuilder
         return this;
     }
 
+    /**
+     * Provide a generator of unsigned attributes.
+     *
+     * @param unsignedGen  a generator for signed attributes.
+     * @return the builder object
+     */
     public SignerInfoGeneratorBuilder setUnsignedAttributeGenerator(CMSAttributeTableGenerator unsignedGen)
     {
         this.unsignedGen = unsignedGen;
@@ -46,10 +79,18 @@ public class SignerInfoGeneratorBuilder
         return this;
     }
 
+    /**
+     * Build a generator with the passed in certHolder issuer and serial number as the signerIdentifier.
+     *
+     * @param contentSigner  operator for generating the final signature in the SignerInfo with.
+     * @param certHolder  carrier for the X.509 certificate related to the contentSigner.
+     * @return  a SignerInfoGenerator
+     * @throws OperatorCreationException   if the generator cannot be built.
+     */
     public SignerInfoGenerator build(ContentSigner contentSigner, X509CertificateHolder certHolder)
         throws OperatorCreationException
     {
-        SignerIdentifier sigId = new SignerIdentifier(certHolder.getIssuerAndSerialNumber());
+        SignerIdentifier sigId = new SignerIdentifier(new IssuerAndSerialNumber(certHolder.toASN1Structure()));
 
         SignerInfoGenerator sigInfoGen = createGenerator(contentSigner, sigId);
 
@@ -58,10 +99,19 @@ public class SignerInfoGeneratorBuilder
         return sigInfoGen;
     }
 
-    public SignerInfoGenerator build(ContentSigner contentSigner, byte[] keyIdentifier)
+    /**
+     * Build a generator with the passed in subjectKeyIdentifier as the signerIdentifier. If used  you should
+     * try to follow the calculation described in RFC 5280 section 4.2.1.2.
+     *
+     * @param contentSigner  operator for generating the final signature in the SignerInfo with.
+     * @param subjectKeyIdentifier    key identifier to identify the public key for verifying the signature.
+     * @return  a SignerInfoGenerator
+     * @throws OperatorCreationException if the generator cannot be built.
+     */
+    public SignerInfoGenerator build(ContentSigner contentSigner, byte[] subjectKeyIdentifier)
         throws OperatorCreationException
     {
-        SignerIdentifier sigId = new SignerIdentifier(new DEROctetString(keyIdentifier));
+        SignerIdentifier sigId = new SignerIdentifier(new DEROctetString(subjectKeyIdentifier));
 
         return createGenerator(contentSigner, sigId);
     }
@@ -71,7 +121,7 @@ public class SignerInfoGeneratorBuilder
     {
         if (directSignature)
         {
-            return new SignerInfoGenerator(sigId, contentSigner, digestProvider, true);
+            return new SignerInfoGenerator(sigId, contentSigner, digestProvider, sigEncAlgFinder, true);
         }
 
         if (signedGen != null || unsignedGen != null)
@@ -81,9 +131,9 @@ public class SignerInfoGeneratorBuilder
                 signedGen = new DefaultSignedAttributeTableGenerator();
             }
 
-            return new SignerInfoGenerator(sigId, contentSigner, digestProvider, signedGen, unsignedGen);
+            return new SignerInfoGenerator(sigId, contentSigner, digestProvider, sigEncAlgFinder, signedGen, unsignedGen);
         }
         
-        return new SignerInfoGenerator(sigId, contentSigner, digestProvider);
+        return new SignerInfoGenerator(sigId, contentSigner, digestProvider, sigEncAlgFinder);
     }
 }

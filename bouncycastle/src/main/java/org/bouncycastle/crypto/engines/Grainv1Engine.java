@@ -2,6 +2,7 @@ package org.bouncycastle.crypto.engines;
 
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.crypto.StreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
@@ -88,8 +89,7 @@ public class Grainv1Engine
         System.arraycopy(iv, 0, workingIV, 0, iv.length);
         System.arraycopy(key.getKey(), 0, workingKey, 0, key.getKey().length);
 
-        setKey(workingKey, workingIV);
-        initGrain();
+        reset();
     }
 
     /**
@@ -237,7 +237,7 @@ public class Grainv1Engine
 
         if ((outOff + len) > out.length)
         {
-            throw new DataLengthException("output buffer too short");
+            throw new OutputLengthException("output buffer too short");
         }
 
         for (int i = 0; i < len; i++)

@@ -1,20 +1,41 @@
 package org.bouncycastle.asn1.cms;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.BERSequence;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERTaggedObject;
 
+/**
+ * <a href="http://tools.ietf.org/html/rfc5083">RFC 5083</a>:
+ *
+ * CMS AuthEnveloped Data object.
+ * <p>
+ * ASN.1:
+ * <pre>
+ * id-ct-authEnvelopedData OBJECT IDENTIFIER ::= { iso(1)
+ *       member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+ *       smime(16) ct(1) 23 }
+ *
+ * AuthEnvelopedData ::= SEQUENCE {
+ *       version CMSVersion,
+ *       originatorInfo [0] IMPLICIT OriginatorInfo OPTIONAL,
+ *       recipientInfos RecipientInfos,
+ *       authEncryptedContentInfo EncryptedContentInfo,
+ *       authAttrs [1] IMPLICIT AuthAttributes OPTIONAL,
+ *       mac MessageAuthenticationCode,
+ *       unauthAttrs [2] IMPLICIT UnauthAttributes OPTIONAL }
+ * </pre>
+ */
 public class AuthEnvelopedData
-    extends ASN1Encodable
+    extends ASN1Object
 {
-    private DERInteger version;
+    private ASN1Integer version;
     private OriginatorInfo originatorInfo;
     private ASN1Set recipientInfos;
     private EncryptedContentInfo authEncryptedContentInfo;
@@ -31,7 +52,7 @@ public class AuthEnvelopedData
         ASN1Set unauthAttrs)
     {
         // "It MUST be set to 0."
-        this.version = new DERInteger(0);
+        this.version = new ASN1Integer(0);
 
         this.originatorInfo = originatorInfo;
 
@@ -51,6 +72,12 @@ public class AuthEnvelopedData
         this.unauthAttrs = unauthAttrs;
     }
 
+    /**
+     * Constructs AuthEnvelopedData by parsing supplied ASN1Sequence
+     * <p>
+     * @param seq An ASN1Sequence with AuthEnvelopedData
+     * @deprecated use getInstance().
+     */
     public AuthEnvelopedData(
         ASN1Sequence seq)
     {
@@ -58,28 +85,28 @@ public class AuthEnvelopedData
 
         // TODO
         // "It MUST be set to 0."
-        DERObject tmp = seq.getObjectAt(index++).getDERObject();
-        version = (DERInteger)tmp;
+        ASN1Primitive tmp = seq.getObjectAt(index++).toASN1Primitive();
+        version = (ASN1Integer)tmp;
 
-        tmp = seq.getObjectAt(index++).getDERObject();
+        tmp = seq.getObjectAt(index++).toASN1Primitive();
         if (tmp instanceof ASN1TaggedObject)
         {
             originatorInfo = OriginatorInfo.getInstance((ASN1TaggedObject)tmp, false);
-            tmp = seq.getObjectAt(index++).getDERObject();
+            tmp = seq.getObjectAt(index++).toASN1Primitive();
         }
 
         // TODO
         // "There MUST be at least one element in the collection."
         recipientInfos = ASN1Set.getInstance(tmp);
 
-        tmp = seq.getObjectAt(index++).getDERObject();
+        tmp = seq.getObjectAt(index++).toASN1Primitive();
         authEncryptedContentInfo = EncryptedContentInfo.getInstance(tmp);
 
-        tmp = seq.getObjectAt(index++).getDERObject();
+        tmp = seq.getObjectAt(index++).toASN1Primitive();
         if (tmp instanceof ASN1TaggedObject)
         {
             authAttrs = ASN1Set.getInstance((ASN1TaggedObject)tmp, false);
-            tmp = seq.getObjectAt(index++).getDERObject();
+            tmp = seq.getObjectAt(index++).toASN1Primitive();
         }
         else
         {
@@ -92,14 +119,20 @@ public class AuthEnvelopedData
 
         if (seq.size() > index)
         {
-            tmp = seq.getObjectAt(index++).getDERObject();
+            tmp = seq.getObjectAt(index++).toASN1Primitive();
             unauthAttrs = ASN1Set.getInstance((ASN1TaggedObject)tmp, false);
         }
     }
 
     /**
-     * return an AuthEnvelopedData object from a tagged object.
+     * Return an AuthEnvelopedData object from a tagged object.
+     * <p>
+     * Accepted inputs:
+     * <ul>
+     * <li> {@link org.bouncycastle.asn1.ASN1Sequence#getInstance(java.lang.Object) ASN1Sequence} input formats
+     * </ul>
      *
+
      * @param obj      the tagged object holding the object we want.
      * @param explicit true if the object is meant to be explicitly
      *                 tagged false otherwise.
@@ -114,10 +147,17 @@ public class AuthEnvelopedData
     }
 
     /**
-     * return an AuthEnvelopedData object from the given object.
+     * Return an AuthEnvelopedData object from the given object.
+     * <p>
+     * Accepted inputs:
+     * <ul>
+     * <li> null &rarr; null
+     * <li> {@link AuthEnvelopedData} object
+     * <li> {@link ASN1Sequence org.bouncycastle.asn1.ASN1Sequence} input formats with AuthEnvelopedData structure inside
+     * </ul>
      *
-     * @param obj the object we want converted.
-     * @throws IllegalArgumentException if the object cannot be converted.
+     * @param obj The object we want converted.
+     * @throws IllegalArgumentException if the object cannot be converted, or was null.
      */
     public static AuthEnvelopedData getInstance(
         Object obj)
@@ -135,7 +175,7 @@ public class AuthEnvelopedData
         throw new IllegalArgumentException("Invalid AuthEnvelopedData: " + obj.getClass().getName());
     }
 
-    public DERInteger getVersion()
+    public ASN1Integer getVersion()
     {
         return version;
     }
@@ -172,18 +212,8 @@ public class AuthEnvelopedData
 
     /**
      * Produce an object suitable for an ASN1OutputStream.
-     * <pre>
-     * AuthEnvelopedData ::= SEQUENCE {
-     *   version CMSVersion,
-     *   originatorInfo [0] IMPLICIT OriginatorInfo OPTIONAL,
-     *   recipientInfos RecipientInfos,
-     *   authEncryptedContentInfo EncryptedContentInfo,
-     *   authAttrs [1] IMPLICIT AuthAttributes OPTIONAL,
-     *   mac MessageAuthenticationCode,
-     *   unauthAttrs [2] IMPLICIT UnauthAttributes OPTIONAL }
-     * </pre>
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector v = new ASN1EncodableVector();
 

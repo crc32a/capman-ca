@@ -1,16 +1,16 @@
 package org.bouncycastle.asn1.isismtt.ocsp;
 
+import java.io.IOException;
+
 import org.bouncycastle.asn1.ASN1Choice;
-import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERTaggedObject;
-import org.bouncycastle.asn1.x509.X509CertificateStructure;
-
-import java.io.IOException;
+import org.bouncycastle.asn1.x509.Certificate;
 
 /**
  * ISIS-MTT-Optional: The certificate requested by the client by inserting the
@@ -46,14 +46,14 @@ import java.io.IOException;
  * </pre>
  */
 public class RequestedCertificate
-    extends ASN1Encodable
+    extends ASN1Object
     implements ASN1Choice
 {
     public static final int certificate = -1;
     public static final int publicKeyCertificate = 0;
     public static final int attributeCertificate = 1;
 
-    private X509CertificateStructure cert;
+    private Certificate cert;
     private byte[] publicKeyCert;
     private byte[] attributeCert;
 
@@ -66,7 +66,7 @@ public class RequestedCertificate
 
         if (obj instanceof ASN1Sequence)
         {
-            return new RequestedCertificate(X509CertificateStructure.getInstance(obj));
+            return new RequestedCertificate(Certificate.getInstance(obj));
         }
         if (obj instanceof ASN1TaggedObject)
         {
@@ -110,7 +110,7 @@ public class RequestedCertificate
      *
      * @param certificate          Given as Certificate
      */
-    public RequestedCertificate(X509CertificateStructure certificate)
+    public RequestedCertificate(Certificate certificate)
     {
         this.cert = certificate;
     }
@@ -168,7 +168,7 @@ public class RequestedCertificate
      *
      * @return a DERObject
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         if (publicKeyCert != null)
         {
@@ -178,6 +178,6 @@ public class RequestedCertificate
         {
             return new DERTaggedObject(1, new DEROctetString(attributeCert));
         }
-        return cert.getDERObject();
+        return cert.toASN1Primitive();
     }
 }

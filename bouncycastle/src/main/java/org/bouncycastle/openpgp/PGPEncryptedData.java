@@ -3,12 +3,12 @@ package org.bouncycastle.openpgp;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
+import java.io.OutputStream;
 
 import org.bouncycastle.bcpg.InputStreamPacket;
 import org.bouncycastle.bcpg.SymmetricEncIntegrityPacket;
 import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags;
+import org.bouncycastle.openpgp.operator.PGPDigestCalculator;
 import org.bouncycastle.util.Arrays;
 
 public abstract class PGPEncryptedData
@@ -75,7 +75,8 @@ public abstract class PGPEncryptedData
     InputStreamPacket        encData;
     InputStream              encStream;
     TruncatedStream          truncStream;
-    
+    PGPDigestCalculator      integrityCalculator;
+
     PGPEncryptedData(
         InputStreamPacket    encData)
     {
@@ -114,8 +115,6 @@ public abstract class PGPEncryptedData
         {
             throw new PGPException("data not integrity protected.");
         }
-        
-        DigestInputStream    dIn = (DigestInputStream)encStream;
 
         //
         // make sure we are at the end.
@@ -125,19 +124,19 @@ public abstract class PGPEncryptedData
             // do nothing
         }
 
-        MessageDigest        hash = dIn.getMessageDigest();
-        
         //
         // process the MDC packet
         //
-        int[]    lookAhead = truncStream.getLookAhead();
+        int[] lookAhead = truncStream.getLookAhead();
 
-        hash.update((byte)lookAhead[0]);
-        hash.update((byte)lookAhead[1]);
+        OutputStream dOut = integrityCalculator.getOutputStream();
 
-        byte[]    digest = hash.digest();
-        byte[]  streamDigest = new byte[digest.length];
-        
+        dOut.write((byte)lookAhead[0]);
+        dOut.write((byte)lookAhead[1]);
+
+        byte[] digest = integrityCalculator.getDigest();
+        byte[] streamDigest = new byte[digest.length];
+
         for (int i = 0; i != streamDigest.length; i++)
         {
             streamDigest[i] = (byte)lookAhead[i + 2];

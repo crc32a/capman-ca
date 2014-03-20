@@ -2,22 +2,46 @@ package org.bouncycastle.asn1.cms;
 
 import java.util.Enumeration;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.BERSequence;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 
+/**
+ * <a href="http://tools.ietf.org/html/rfc5652#section-9.1">RFC 5652</a> section 9.1:
+ * The AuthenticatedData carries AuthAttributes and other data
+ * which define what really is being signed.
+ * <p>
+ * <pre>
+ * AuthenticatedData ::= SEQUENCE {
+ *       version CMSVersion,
+ *       originatorInfo [0] IMPLICIT OriginatorInfo OPTIONAL,
+ *       recipientInfos RecipientInfos,
+ *       macAlgorithm MessageAuthenticationCodeAlgorithm,
+ *       digestAlgorithm [1] DigestAlgorithmIdentifier OPTIONAL,
+ *       encapContentInfo EncapsulatedContentInfo,
+ *       authAttrs [2] IMPLICIT AuthAttributes OPTIONAL,
+ *       mac MessageAuthenticationCode,
+ *       unauthAttrs [3] IMPLICIT UnauthAttributes OPTIONAL }
+ *
+ * AuthAttributes ::= SET SIZE (1..MAX) OF Attribute
+ *
+ * UnauthAttributes ::= SET SIZE (1..MAX) OF Attribute
+ *
+ * MessageAuthenticationCode ::= OCTET STRING
+ * </pre>
+ */
 public class AuthenticatedData
-    extends ASN1Encodable
+    extends ASN1Object
 {
-    private DERInteger version;
+    private ASN1Integer version;
     private OriginatorInfo originatorInfo;
     private ASN1Set recipientInfos;
     private AlgorithmIdentifier macAlgorithm;
@@ -45,7 +69,7 @@ public class AuthenticatedData
             }
         }
 
-        version = new DERInteger(calculateVersion(originatorInfo));
+        version = new ASN1Integer(calculateVersion(originatorInfo));
         
         this.originatorInfo = originatorInfo;
         this.macAlgorithm = macAlgorithm;
@@ -57,12 +81,15 @@ public class AuthenticatedData
         this.unauthAttrs = unauthAttrs;
     }
 
+    /**
+     * @deprecated use getInstance()
+     */
     public AuthenticatedData(
         ASN1Sequence seq)
     {
         int index = 0;
 
-        version = (DERInteger)seq.getObjectAt(index++);
+        version = (ASN1Integer)seq.getObjectAt(index++);
 
         Object tmp = seq.getObjectAt(index++);
 
@@ -102,7 +129,7 @@ public class AuthenticatedData
     }
 
     /**
-     * return an AuthenticatedData object from a tagged object.
+     * Return an AuthenticatedData object from a tagged object.
      *
      * @param obj      the tagged object holding the object we want.
      * @param explicit true if the object is meant to be explicitly
@@ -118,7 +145,14 @@ public class AuthenticatedData
     }
 
     /**
-     * return an AuthenticatedData object from the given object.
+     * Return an AuthenticatedData object from the given object.
+     * <p>
+     * Accepted inputs:
+     * <ul>
+     * <li> null &rarr; null
+     * <li> {@link AuthenticatedData} object
+     * <li> {@link org.bouncycastle.asn1.ASN1Sequence#getInstance(java.lang.Object) ASN1Sequence} input formats with AuthenticatedData structure inside
+     * </ul>
      *
      * @param obj the object we want converted.
      * @throws IllegalArgumentException if the object cannot be converted.
@@ -139,7 +173,7 @@ public class AuthenticatedData
         throw new IllegalArgumentException("Invalid AuthenticatedData: " + obj.getClass().getName());
     }
 
-    public DERInteger getVersion()
+    public ASN1Integer getVersion()
     {
         return version;
     }
@@ -186,26 +220,8 @@ public class AuthenticatedData
 
     /**
      * Produce an object suitable for an ASN1OutputStream.
-     * <pre>
-     * AuthenticatedData ::= SEQUENCE {
-     *       version CMSVersion,
-     *       originatorInfo [0] IMPLICIT OriginatorInfo OPTIONAL,
-     *       recipientInfos RecipientInfos,
-     *       macAlgorithm MessageAuthenticationCodeAlgorithm,
-     *       digestAlgorithm [1] DigestAlgorithmIdentifier OPTIONAL,
-     *       encapContentInfo EncapsulatedContentInfo,
-     *       authAttrs [2] IMPLICIT AuthAttributes OPTIONAL,
-     *       mac MessageAuthenticationCode,
-     *       unauthAttrs [3] IMPLICIT UnauthAttributes OPTIONAL }
-     *
-     * AuthAttributes ::= SET SIZE (1..MAX) OF Attribute
-     *
-     * UnauthAttributes ::= SET SIZE (1..MAX) OF Attribute
-     *
-     * MessageAuthenticationCode ::= OCTET STRING
-     * </pre>
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector v = new ASN1EncodableVector();
 
@@ -271,18 +287,21 @@ public class AuthenticatedData
                 }
             }
 
-            for (Enumeration e = origInfo.getCRLs().getObjects(); e.hasMoreElements();)
+            if (origInfo.getCRLs() != null)
             {
-                Object obj = e.nextElement();
-
-                if (obj instanceof ASN1TaggedObject)
+                for (Enumeration e = origInfo.getCRLs().getObjects(); e.hasMoreElements();)
                 {
-                    ASN1TaggedObject tag = (ASN1TaggedObject)obj;
+                    Object obj = e.nextElement();
 
-                    if (tag.getTagNo() == 1)
+                    if (obj instanceof ASN1TaggedObject)
                     {
-                        ver = 3;
-                        break;
+                        ASN1TaggedObject tag = (ASN1TaggedObject)obj;
+
+                        if (tag.getTagNo() == 1)
+                        {
+                            ver = 3;
+                            break;
+                        }
                     }
                 }
             }

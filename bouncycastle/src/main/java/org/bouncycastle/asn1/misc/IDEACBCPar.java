@@ -1,9 +1,15 @@
 package org.bouncycastle.asn1.misc;
 
-import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
 
 public class IDEACBCPar
-    extends ASN1Encodable
+    extends ASN1Object
 {
     ASN1OctetString  iv;
 
@@ -14,12 +20,12 @@ public class IDEACBCPar
         {
             return (IDEACBCPar)o;
         }
-        else if (o instanceof ASN1Sequence)
+        else if (o != null)
         {
-            return new IDEACBCPar((ASN1Sequence)o);
+            return new IDEACBCPar(ASN1Sequence.getInstance(o));
         }
 
-        throw new IllegalArgumentException("unknown object in IDEACBCPar factory");
+        return null;
     }
 
     public IDEACBCPar(
@@ -61,7 +67,7 @@ public class IDEACBCPar
      *                  }
      * </pre>
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector  v = new ASN1EncodableVector();
 

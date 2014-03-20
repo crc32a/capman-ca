@@ -1,15 +1,13 @@
 package org.bouncycastle.voms;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import org.bouncycastle.asn1.ASN1OctetString;
-import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.IetfAttrSyntax;
 import org.bouncycastle.x509.X509Attribute;
 import org.bouncycastle.x509.X509AttributeCertificate;
-
-import java.util.List;
-import java.util.Vector;
 
 
 /**
@@ -27,8 +25,8 @@ public class VOMSAttribute
     private X509AttributeCertificate myAC;
     private String myHostPort;
     private String myVo;
-    private Vector myStringList = new Vector();
-    private Vector myFQANs = new Vector();
+    private List myStringList = new ArrayList();
+    private List myFQANs = new ArrayList();
 
     /**
      * Parses the contents of an attribute certificate.<br>
@@ -56,10 +54,10 @@ public class VOMSAttribute
         {
             for (int i = 0; i != l.length; i++) 
             {
-                IetfAttrSyntax attr = new IetfAttrSyntax((ASN1Sequence)l[i].getValues()[0]);
+                IetfAttrSyntax attr = IetfAttrSyntax.getInstance(l[i].getValues()[0]);
 
                 // policyAuthority is on the format <vo>/<host>:<port>
-                String url = ((DERIA5String)GeneralName.getInstance(((ASN1Sequence) attr.getPolicyAuthority().getDERObject()).getObjectAt(0)).getName()).getString();
+                String url = ((DERIA5String)attr.getPolicyAuthority().getNames()[0].getName()).getString();
                 int idx = url.indexOf("://");
 
                 if ((idx < 0) || (idx == (url.length() - 1)))
@@ -122,7 +120,6 @@ public class VOMSAttribute
     /**
      * @return List of FQAN of the VOMS fully qualified
      * attributes names (FQANs)
-     * @see #FQAN
      */
     public List getListOfFQAN()
     {

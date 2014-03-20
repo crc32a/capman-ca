@@ -1,13 +1,13 @@
 package org.bouncycastle.crypto.encodings;
 
+import java.security.SecureRandom;
+
 import org.bouncycastle.crypto.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
-
-import java.security.SecureRandom;
 
 /**
  * Optimal Asymmetric Encryption Padding (OAEP) - see PKCS 1 V 2.
@@ -16,7 +16,6 @@ public class OAEPEncoding
     implements AsymmetricBlockCipher
 {
     private byte[]                  defHash;
-    private Digest                  hash;
     private Digest                  mgf1Hash;
 
     private AsymmetricBlockCipher   engine;
@@ -51,9 +50,10 @@ public class OAEPEncoding
         byte[]                      encodingParams)
     {
         this.engine = cipher;
-        this.hash = hash;
         this.mgf1Hash = mgf1Hash;
         this.defHash = new byte[hash.getDigestSize()];
+
+        hash.reset();
 
         if (encodingParams != null)
         {
@@ -252,13 +252,21 @@ public class OAEPEncoding
 
         //
         // check the hash of the encoding params.
+        // long check to try to avoid this been a source of a timing attack.
         //
+        boolean defHashWrong = false;
+
         for (int i = 0; i != defHash.length; i++)
         {
             if (defHash[i] != block[defHash.length + i])
             {
-                throw new InvalidCipherTextException("data hash wrong");
+                defHashWrong = true;
             }
+        }
+
+        if (defHashWrong)
+        {
+            throw new InvalidCipherTextException("data hash wrong");
         }
 
         //
@@ -318,9 +326,9 @@ public class OAEPEncoding
         byte[]  C = new byte[4];
         int     counter = 0;
 
-        hash.reset();
+        mgf1Hash.reset();
 
-        do
+        while (counter < (length / hashBuf.length))
         {
             ItoOSP(counter, C);
 
@@ -329,8 +337,9 @@ public class OAEPEncoding
             mgf1Hash.doFinal(hashBuf, 0);
 
             System.arraycopy(hashBuf, 0, mask, counter * hashBuf.length, hashBuf.length);
+
+            counter++;
         }
-        while (++counter < (length / hashBuf.length));
 
         if ((counter * hashBuf.length) < length)
         {

@@ -48,6 +48,9 @@ public class EAXBlockCipher
     private byte[] bufBlock;
     private int bufOff;
 
+    private boolean cipherInitialized;
+    private byte[] initialAssociatedText;
+
     /**
      * Constructor that accepts an instance of a block cipher engine.
      *
@@ -84,7 +87,7 @@ public class EAXBlockCipher
     {
         this.forEncryption = forEncryption;
 
-        byte[] nonce, associatedText;
+        byte[] nonce;
         CipherParameters keyParam;
 
         if (params instanceof AEADParameters)
@@ -92,7 +95,7 @@ public class EAXBlockCipher
             AEADParameters param = (AEADParameters)params;
 
             nonce = param.getNonce();
-            associatedText = param.getAssociatedText();
+            initialAssociatedText = param.getAssociatedText();
             macSize = param.getMacSize() / 8;
             keyParam = param.getKey();
         }
@@ -101,7 +104,7 @@ public class EAXBlockCipher
             ParametersWithIV param = (ParametersWithIV)params;
 
             nonce = param.getIV();
-            associatedText = new byte[0];
+            initialAssociatedText = null;
             macSize = mac.getMacSize() / 2;
             keyParam = param.getParameters();
         }
@@ -112,21 +115,34 @@ public class EAXBlockCipher
 
         byte[] tag = new byte[blockSize];
 
+        // Key reuse implemented in CBC mode of underlying CMac
         mac.init(keyParam);
-        tag[blockSize - 1] = hTAG;
-        mac.update(tag, 0, blockSize);
-        mac.update(associatedText, 0, associatedText.length);
-        mac.doFinal(associatedTextMac, 0);
 
         tag[blockSize - 1] = nTAG;
         mac.update(tag, 0, blockSize);
         mac.update(nonce, 0, nonce.length);
         mac.doFinal(nonceMac, 0);
 
+        // Same BlockCipher underlies this and the mac, so reuse last key on cipher 
+        cipher.init(true, new ParametersWithIV(null, nonceMac));
+        
+        reset();
+    }
+
+    private void initCipher()
+    {
+        if (cipherInitialized)
+        {
+            return;
+        }
+
+        cipherInitialized = true;
+
+        mac.doFinal(associatedTextMac, 0);
+
+        byte[] tag = new byte[blockSize];
         tag[blockSize - 1] = cTAG;
         mac.update(tag, 0, blockSize);
-
-        cipher.init(true, new ParametersWithIV(keyParam, nonceMac));
     }
 
     private void calculateMac()
@@ -148,7 +164,7 @@ public class EAXBlockCipher
     private void reset(
         boolean clearMac)
     {
-        cipher.reset();
+        cipher.reset(); // TODO Redundant since the mac will reset it?
         mac.reset();
 
         bufOff = 0;
@@ -160,19 +176,48 @@ public class EAXBlockCipher
         }
 
         byte[] tag = new byte[blockSize];
-        tag[blockSize - 1] = cTAG;
+        tag[blockSize - 1] = hTAG;
         mac.update(tag, 0, blockSize);
+
+        cipherInitialized = false;
+
+        if (initialAssociatedText != null)
+        {
+           processAADBytes(initialAssociatedText, 0, initialAssociatedText.length);
+        }
+    }
+
+    public void processAADByte(byte in)
+    {
+        if (cipherInitialized)
+        {
+            throw new IllegalStateException("AAD data cannot be added after encryption/decription processing has begun.");
+        }
+        mac.update(in);
+    }
+
+    public void processAADBytes(byte[] in, int inOff, int len)
+    {
+        if (cipherInitialized)
+        {
+            throw new IllegalStateException("AAD data cannot be added after encryption/decryption processing has begun.");
+        }
+        mac.update(in, inOff, len);
     }
 
     public int processByte(byte in, byte[] out, int outOff)
         throws DataLengthException
     {
+        initCipher();
+
         return process(in, out, outOff);
     }
 
     public int processBytes(byte[] in, int inOff, int len, byte[] out, int outOff)
         throws DataLengthException
     {
+        initCipher();
+
         int resultLen = 0;
 
         for (int i = 0; i != len; i++)
@@ -186,6 +231,8 @@ public class EAXBlockCipher
     public int doFinal(byte[] out, int outOff)
         throws IllegalStateException, InvalidCipherTextException
     {
+        initCipher();
+
         int extra = bufOff;
         byte[] tmp = new byte[bufBlock.length];
 
@@ -193,6 +240,10 @@ public class EAXBlockCipher
 
         if (forEncryption)
         {
+            if (out.length < (outOff + extra))
+            {
+                throw new DataLengthException("Output buffer too short");
+            }
             cipher.processBlock(bufBlock, 0, tmp, 0);
             cipher.processBlock(bufBlock, blockSize, tmp, blockSize);
 
@@ -210,6 +261,10 @@ public class EAXBlockCipher
         }
         else
         {
+            if (extra < macSize)
+            {
+                throw new InvalidCipherTextException("data too short");
+            }
             if (extra > macSize)
             {
                 mac.update(bufBlock, 0, extra - macSize);
@@ -244,19 +299,28 @@ public class EAXBlockCipher
 
     public int getUpdateOutputSize(int len)
     {
-        return ((len + bufOff) / blockSize) * blockSize;
+        int totalData = len + bufOff;
+        if (!forEncryption)
+        {
+            if (totalData < macSize)
+            {
+                return 0;
+            }
+            totalData -= macSize;
+        }
+        return totalData - totalData % blockSize;
     }
 
     public int getOutputSize(int len)
     {
+        int totalData = len + bufOff;
+
         if (forEncryption)
         {
-             return len + bufOff + macSize;
+            return totalData + macSize;
         }
-        else
-        {
-             return len + bufOff - macSize;
-        }
+
+        return totalData < macSize ? 0 : totalData - macSize;
     }
 
     private int process(byte b, byte[] out, int outOff)
@@ -265,6 +329,9 @@ public class EAXBlockCipher
 
         if (bufOff == bufBlock.length)
         {
+            // TODO Could move the processByte(s) calls to here
+//            initCipher();
+
             int size;
 
             if (forEncryption)
@@ -291,14 +358,13 @@ public class EAXBlockCipher
 
     private boolean verifyMac(byte[] mac, int off)
     {
+        int nonEqual = 0;
+
         for (int i = 0; i < macSize; i++)
         {
-            if (macBlock[i] != mac[off + i])
-            {
-                return false;
-            }
+            nonEqual |= (macBlock[i] ^ mac[off + i]);
         }
 
-        return true;
+        return nonEqual == 0;
     }
 }

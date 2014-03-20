@@ -5,7 +5,8 @@ import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 
-class TlsECDSASigner extends TlsDSASigner
+public class TlsECDSASigner
+    extends TlsDSASigner
 {
     public boolean isValidPublicKey(AsymmetricKeyParameter publicKey)
     {
@@ -15,5 +16,10 @@ class TlsECDSASigner extends TlsDSASigner
     protected DSA createDSAImpl()
     {
         return new ECDSASigner();
+    }
+
+    protected short getSignatureAlgorithm()
+    {
+        return SignatureAlgorithm.ecdsa;
     }
 }

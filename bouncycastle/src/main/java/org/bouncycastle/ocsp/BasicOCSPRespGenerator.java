@@ -1,8 +1,23 @@
 package org.bouncycastle.ocsp;
 
-import org.bouncycastle.asn1.ASN1Encodable;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
 import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.ASN1GeneralizedTime;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERGeneralizedTime;
@@ -19,22 +34,10 @@ import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
 import org.bouncycastle.asn1.x509.X509Extensions;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Signature;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 /**
  * Generator for basic OCSP response objects.
+ *
+ * @deprecated use classes in org.bouncycastle.cert.ocsp.
  */
 public class BasicOCSPRespGenerator
 {
@@ -65,7 +68,7 @@ public class BasicOCSPRespGenerator
             }
             else if (certStatus instanceof UnknownStatus)
             {
-                this.certStatus = new CertStatus(2, new DERNull());
+                this.certStatus = new CertStatus(2, DERNull.INSTANCE);
             }
             else 
             {
@@ -74,12 +77,12 @@ public class BasicOCSPRespGenerator
                 if (rs.hasRevocationReason())
                 {
                     this.certStatus = new CertStatus(
-                                            new RevokedInfo(new DERGeneralizedTime(rs.getRevocationTime()), new CRLReason(rs.getRevocationReason())));
+                                            new RevokedInfo(new ASN1GeneralizedTime(rs.getRevocationTime()), CRLReason.lookup(rs.getRevocationReason())));
                 }
                 else
                 {
                     this.certStatus = new CertStatus(
-                                            new RevokedInfo(new DERGeneralizedTime(rs.getRevocationTime()), null));
+                                            new RevokedInfo(new ASN1GeneralizedTime(rs.getRevocationTime()), null));
                 }
             }
 
@@ -263,7 +266,7 @@ public class BasicOCSPRespGenerator
 
         try
         {
-            sig.update(tbsResp.getEncoded(ASN1Encodable.DER));
+            sig.update(tbsResp.getEncoded(ASN1Encoding.DER));
 
             bitSig = new DERBitString(sig.sign());
         }
@@ -283,7 +286,7 @@ public class BasicOCSPRespGenerator
                 for (int i = 0; i != chain.length; i++)
                 {
                     v.add(new X509CertificateStructure(
-                        (ASN1Sequence)ASN1Object.fromByteArray(chain[i].getEncoded())));
+                        (ASN1Sequence)ASN1Primitive.fromByteArray(chain[i].getEncoded())));
                 }
             }
             catch (IOException e)

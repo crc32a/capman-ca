@@ -5,8 +5,11 @@ import java.math.BigInteger;
 
 import org.bouncycastle.util.Arrays;
 
+/**
+ * Use ASN1Integer instead of this,
+ */
 public class DERInteger
-    extends ASN1Object
+    extends ASN1Primitive
 {
     byte[]      bytes;
 
@@ -15,12 +18,28 @@ public class DERInteger
      *
      * @exception IllegalArgumentException if the object cannot be converted.
      */
-    public static DERInteger getInstance(
+    public static ASN1Integer getInstance(
         Object  obj)
     {
-        if (obj == null || obj instanceof DERInteger)
+        if (obj == null || obj instanceof ASN1Integer)
         {
-            return (DERInteger)obj;
+            return (ASN1Integer)obj;
+        }
+        if (obj instanceof DERInteger)
+        {
+            return new ASN1Integer((((DERInteger)obj).getValue()));
+        }
+
+        if (obj instanceof byte[])
+        {
+            try
+            {
+                return (ASN1Integer)fromByteArray((byte[])obj);
+            }
+            catch (Exception e)
+            {
+                throw new IllegalArgumentException("encoding error in getInstance: " + e.toString());
+            }
         }
 
         throw new IllegalArgumentException("illegal object in getInstance: " + obj.getClass().getName());
@@ -35,11 +54,11 @@ public class DERInteger
      * @exception IllegalArgumentException if the tagged object cannot
      *               be converted.
      */
-    public static DERInteger getInstance(
+    public static ASN1Integer getInstance(
         ASN1TaggedObject obj,
         boolean          explicit)
     {
-        DERObject o = obj.getObject();
+        ASN1Primitive o = obj.getObject();
 
         if (explicit || o instanceof DERInteger)
         {
@@ -51,18 +70,27 @@ public class DERInteger
         }
     }
 
+    /**
+     * @deprecated use ASN1Integer constructor
+     */
     public DERInteger(
-        int         value)
+        long         value)
     {
         bytes = BigInteger.valueOf(value).toByteArray();
     }
 
+    /**
+     * @deprecated use ASN1Integer constructor
+     */
     public DERInteger(
         BigInteger   value)
     {
         bytes = value.toByteArray();
     }
 
+    /**
+     * @deprecated use ASN1Integer constructor
+     */
     public DERInteger(
         byte[]   bytes)
     {
@@ -83,11 +111,21 @@ public class DERInteger
         return new BigInteger(1, bytes);
     }
 
+    boolean isConstructed()
+    {
+        return false;
+    }
+
+    int encodedLength()
+    {
+        return 1 + StreamUtil.calculateBodyLength(bytes.length) + bytes.length;
+    }
+
     void encode(
-        DEROutputStream out)
+        ASN1OutputStream out)
         throws IOException
     {
-        out.writeEncoded(INTEGER, bytes);
+        out.writeEncoded(BERTags.INTEGER, bytes);
     }
     
     public int hashCode()
@@ -103,7 +141,7 @@ public class DERInteger
     }
 
     boolean asn1Equals(
-        DERObject  o)
+        ASN1Primitive  o)
     {
         if (!(o instanceof DERInteger))
         {

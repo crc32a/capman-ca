@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERSet;
@@ -47,6 +48,7 @@ public class PKCS10CertificationRequestBuilder
     private SubjectPublicKeyInfo publicKeyInfo;
     private X500Name subject;
     private List attributes = new ArrayList();
+    private boolean leaveOffEmpty = false;
 
     /**
      * Basic constructor.
@@ -89,19 +91,40 @@ public class PKCS10CertificationRequestBuilder
     }
 
     /**
+     * The attributes field in PKCS10 should encoded to an empty tagged set if there are
+     * no attributes. Some CAs will reject requests with the attribute field present.
+     *
+     * @param leaveOffEmpty true if empty attributes should be left out of the encoding false otherwise.
+     * @return this builder object.
+     */
+    public PKCS10CertificationRequestBuilder setLeaveOffEmptyAttributes(boolean leaveOffEmpty)
+    {
+        this.leaveOffEmpty = leaveOffEmpty;
+
+        return this;
+    }
+
+    /**
      * Generate an PKCS#10 request based on the past in signer.
      *
      * @param signer the content signer to be used to generate the signature validating the certificate.
      * @return a holder containing the resulting PKCS#10 certification request.
      */
-    public PKCS10CertificationRequestHolder build(
+    public PKCS10CertificationRequest build(
         ContentSigner signer)
     {
         CertificationRequestInfo info;
 
         if (attributes.isEmpty())
         {
-            info = new CertificationRequestInfo(subject, publicKeyInfo, null);
+            if (leaveOffEmpty)
+            {
+                info = new CertificationRequestInfo(subject, publicKeyInfo, null);
+            }
+            else
+            {
+                info = new CertificationRequestInfo(subject, publicKeyInfo, new DERSet());
+            }
         }
         else
         {
@@ -119,11 +142,11 @@ public class PKCS10CertificationRequestBuilder
         {
             OutputStream sOut = signer.getOutputStream();
 
-            sOut.write(info.getDEREncoded());
+            sOut.write(info.getEncoded(ASN1Encoding.DER));
 
             sOut.close();
 
-            return new PKCS10CertificationRequestHolder(new CertificationRequest(info, signer.getAlgorithmIdentifier(), new DERBitString(signer.getSignature())));
+            return new PKCS10CertificationRequest(new CertificationRequest(info, signer.getAlgorithmIdentifier(), new DERBitString(signer.getSignature())));
         }
         catch (IOException e)
         {

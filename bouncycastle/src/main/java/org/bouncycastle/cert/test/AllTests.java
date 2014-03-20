@@ -5,7 +5,6 @@ import java.security.Security;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.test.SimpleTestResult;
 
@@ -14,7 +13,7 @@ public class AllTests
 {
     public void testSimpleTests()
     {
-        org.bouncycastle.util.test.Test[] tests = new org.bouncycastle.util.test.Test[] { new CertTest(), new PKCS10Test(), new AttrCertSelectorTest(), new AttrCertTest() };
+        org.bouncycastle.util.test.Test[] tests = new org.bouncycastle.util.test.Test[] { new CertTest(), new PKCS10Test(), new AttrCertSelectorTest(), new AttrCertTest(), new X509ExtensionUtilsTest() };
 
         for (int i = 0; i != tests.length; i++)
         {
@@ -46,6 +45,12 @@ public class AllTests
         }
 
         suite.addTestSuite(AllTests.class);
+        suite.addTestSuite(BcAttrCertSelectorTest.class);
+        suite.addTestSuite(BcAttrCertSelectorTest.class);
+        suite.addTestSuite(BcAttrCertTest.class);
+        suite.addTestSuite(BcCertTest.class);
+        suite.addTestSuite(BcPKCS10Test.class);
+        suite.addTest(ConverterTest.suite());
 
         return suite;
     }

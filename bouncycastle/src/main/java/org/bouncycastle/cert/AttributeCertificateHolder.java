@@ -5,10 +5,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.GeneralName;
@@ -58,14 +57,14 @@ public class AttributeCertificateHolder
         BigInteger serialNumber)
     {
         holder = new Holder(new IssuerSerial(
-            new GeneralNames(new DERSequence(new GeneralName(issuerName))),
-            new DERInteger(serialNumber)));
+            new GeneralNames(new GeneralName(issuerName)),
+            new ASN1Integer(serialNumber)));
     }
 
     public AttributeCertificateHolder(X509CertificateHolder cert)
     {
         holder = new Holder(new IssuerSerial(generateGeneralNames(cert.getIssuer()),
-            new DERInteger(cert.getSerialNumber())));
+            new ASN1Integer(cert.getSerialNumber())));
     }
 
     public AttributeCertificateHolder(X500Name principal)
@@ -97,7 +96,7 @@ public class AttributeCertificateHolder
      * @param objectDigest The hash value.
      */
     public AttributeCertificateHolder(int digestedObjectType,
-        String digestAlgorithm, String otherObjectTypeID, byte[] objectDigest)
+        ASN1ObjectIdentifier digestAlgorithm, ASN1ObjectIdentifier otherObjectTypeID, byte[] objectDigest)
     {
         holder = new Holder(new ObjectDigestInfo(digestedObjectType,
             otherObjectTypeID, new AlgorithmIdentifier(digestAlgorithm), Arrays
@@ -173,7 +172,7 @@ public class AttributeCertificateHolder
 
     private GeneralNames generateGeneralNames(X500Name principal)
     {
-        return new GeneralNames(new DERSequence(new GeneralName(principal)));
+        return new GeneralNames(new GeneralName(principal));
     }
 
     private boolean matchesDN(X500Name subject, GeneralNames targets)
@@ -262,7 +261,7 @@ public class AttributeCertificateHolder
 
     public Object clone()
     {
-        return new AttributeCertificateHolder((ASN1Sequence)holder.toASN1Object());
+        return new AttributeCertificateHolder((ASN1Sequence)holder.toASN1Primitive());
     }
 
     public boolean match(Object obj)

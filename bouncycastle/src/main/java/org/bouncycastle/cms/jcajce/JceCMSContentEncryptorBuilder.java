@@ -12,43 +12,64 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.jcajce.DefaultJcaJceHelper;
-import org.bouncycastle.jcajce.NamedJcaJceHelper;
-import org.bouncycastle.jcajce.ProviderJcaJceHelper;
+import org.bouncycastle.operator.DefaultSecretKeySizeProvider;
 import org.bouncycastle.operator.GenericKey;
 import org.bouncycastle.operator.OutputEncryptor;
+import org.bouncycastle.operator.SecretKeySizeProvider;
+import org.bouncycastle.operator.jcajce.JceGenericKey;
 
 public class JceCMSContentEncryptorBuilder
 {
+    private static final SecretKeySizeProvider KEY_SIZE_PROVIDER = DefaultSecretKeySizeProvider.INSTANCE;
+
+
     private final ASN1ObjectIdentifier encryptionOID;
     private final int                  keySize;
 
-    private EnvelopedDataHelper helper = new EnvelopedDataHelper(new DefaultJcaJceHelper());
+    private EnvelopedDataHelper helper = new EnvelopedDataHelper(new DefaultJcaJceExtHelper());
     private SecureRandom random;
 
     public JceCMSContentEncryptorBuilder(ASN1ObjectIdentifier encryptionOID)
     {
-        this(encryptionOID, -1);
+        this(encryptionOID, KEY_SIZE_PROVIDER.getKeySize(encryptionOID));
     }
 
     public JceCMSContentEncryptorBuilder(ASN1ObjectIdentifier encryptionOID, int keySize)
     {
         this.encryptionOID = encryptionOID;
         this.keySize = keySize;
+
+        int fixedSize = KEY_SIZE_PROVIDER.getKeySize(encryptionOID);
+
+        if (encryptionOID.equals(PKCSObjectIdentifiers.des_EDE3_CBC))
+        {
+            if (keySize != 168 && keySize != fixedSize)
+            {
+                throw new IllegalArgumentException("incorrect keySize for encryptionOID passed to builder.");
+            }
+        }
+        else
+        {
+            if (fixedSize > 0 && fixedSize != keySize)
+            {
+                throw new IllegalArgumentException("incorrect keySize for encryptionOID passed to builder.");
+            }
+        }
     }
 
     public JceCMSContentEncryptorBuilder setProvider(Provider provider)
     {
-        this.helper = new EnvelopedDataHelper(new ProviderJcaJceHelper(provider));
+        this.helper = new EnvelopedDataHelper(new ProviderJcaJceExtHelper(provider));
 
         return this;
     }
 
     public JceCMSContentEncryptorBuilder setProvider(String providerName)
     {
-        this.helper = new EnvelopedDataHelper(new NamedJcaJceHelper(providerName));
+        this.helper = new EnvelopedDataHelper(new NamedJcaJceExtHelper(providerName));
 
         return this;
     }
@@ -89,6 +110,10 @@ public class JceCMSContentEncryptorBuilder
             }
             else
             {
+                if (encryptionOID.equals(PKCSObjectIdentifiers.des_EDE3_CBC) && keySize == 192)
+                {
+                    keySize = 168;
+                }
                 keyGen.init(keySize, random);
             }
 
@@ -129,7 +154,7 @@ public class JceCMSContentEncryptorBuilder
 
         public GenericKey getKey()
         {
-            return new GenericKey(encKey);
+            return new JceGenericKey(algorithmIdentifier, encKey);
         }
     }
 }

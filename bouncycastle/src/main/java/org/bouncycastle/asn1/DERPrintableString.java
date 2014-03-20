@@ -2,14 +2,17 @@ package org.bouncycastle.asn1;
 
 import java.io.IOException;
 
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Strings;
+
 /**
  * DER PrintableString object.
  */
 public class DERPrintableString
-    extends ASN1Object
-    implements DERString
+    extends ASN1Primitive
+    implements ASN1String
 {
-    String  string;
+    private byte[]  string;
 
     /**
      * return a printable string from the passed in object.
@@ -22,6 +25,18 @@ public class DERPrintableString
         if (obj == null || obj instanceof DERPrintableString)
         {
             return (DERPrintableString)obj;
+        }
+
+        if (obj instanceof byte[])
+        {
+            try
+            {
+                return (DERPrintableString)fromByteArray((byte[])obj);
+            }
+            catch (Exception e)
+            {
+                throw new IllegalArgumentException("encoding error in getInstance: " + e.toString());
+            }
         }
 
         throw new IllegalArgumentException("illegal object in getInstance: " + obj.getClass().getName());
@@ -40,7 +55,7 @@ public class DERPrintableString
         ASN1TaggedObject obj,
         boolean          explicit)
     {
-        DERObject o = obj.getObject();
+        ASN1Primitive o = obj.getObject();
 
         if (explicit || o instanceof DERPrintableString)
         {
@@ -55,17 +70,10 @@ public class DERPrintableString
     /**
      * basic constructor - byte encoded string.
      */
-    public DERPrintableString(
+    DERPrintableString(
         byte[]   string)
     {
-        char[]  cs = new char[string.length];
-
-        for (int i = 0; i != cs.length; i++)
-        {
-            cs[i] = (char)(string[i] & 0xff);
-        }
-
-        this.string = new String(cs);
+        this.string = string;
     }
 
     /**
@@ -94,41 +102,43 @@ public class DERPrintableString
             throw new IllegalArgumentException("string contains illegal characters");
         }
 
-        this.string = string;
+        this.string = Strings.toByteArray(string);
     }
 
     public String getString()
     {
-        return string;
+        return Strings.fromByteArray(string);
     }
 
     public byte[] getOctets()
     {
-        char[]  cs = string.toCharArray();
-        byte[]  bs = new byte[cs.length];
+        return Arrays.clone(string);
+    }
 
-        for (int i = 0; i != cs.length; i++)
-        {
-            bs[i] = (byte)cs[i];
-        }
+    boolean isConstructed()
+    {
+        return false;
+    }
 
-        return bs; 
+    int encodedLength()
+    {
+        return 1 + StreamUtil.calculateBodyLength(string.length) + string.length;
     }
 
     void encode(
-        DEROutputStream  out)
+        ASN1OutputStream out)
         throws IOException
     {
-        out.writeEncoded(PRINTABLE_STRING, this.getOctets());
+        out.writeEncoded(BERTags.PRINTABLE_STRING, string);
     }
 
     public int hashCode()
     {
-        return this.getString().hashCode();
+        return Arrays.hashCode(string);
     }
 
     boolean asn1Equals(
-        DERObject  o)
+        ASN1Primitive o)
     {
         if (!(o instanceof DERPrintableString))
         {
@@ -137,12 +147,12 @@ public class DERPrintableString
 
         DERPrintableString  s = (DERPrintableString)o;
 
-        return this.getString().equals(s.getString());
+        return Arrays.areEqual(string, s.string);
     }
 
     public String toString()
     {
-        return string;
+        return getString();
     }
 
     /**

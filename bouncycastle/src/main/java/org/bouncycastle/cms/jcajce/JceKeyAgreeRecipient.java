@@ -17,9 +17,9 @@ import javax.crypto.KeyAgreement;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.cms.ecc.MQVuserKeyingMaterial;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -27,9 +27,6 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cms.CMSEnvelopedGenerator;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.KeyAgreeRecipient;
-import org.bouncycastle.jcajce.DefaultJcaJceHelper;
-import org.bouncycastle.jcajce.NamedJcaJceHelper;
-import org.bouncycastle.jcajce.ProviderJcaJceHelper;
 import org.bouncycastle.jce.spec.MQVPrivateKeySpec;
 import org.bouncycastle.jce.spec.MQVPublicKeySpec;
 
@@ -37,7 +34,7 @@ public abstract class JceKeyAgreeRecipient
     implements KeyAgreeRecipient
 {
     private PrivateKey recipientKey;
-    protected EnvelopedDataHelper helper = new EnvelopedDataHelper(new DefaultJcaJceHelper());
+    protected EnvelopedDataHelper helper = new EnvelopedDataHelper(new DefaultJcaJceExtHelper());
     protected EnvelopedDataHelper contentHelper = helper;
 
     public JceKeyAgreeRecipient(PrivateKey recipientKey)
@@ -53,7 +50,7 @@ public abstract class JceKeyAgreeRecipient
      */
     public JceKeyAgreeRecipient setProvider(Provider provider)
     {
-        this.helper = new EnvelopedDataHelper(new ProviderJcaJceHelper(provider));
+        this.helper = new EnvelopedDataHelper(new ProviderJcaJceExtHelper(provider));
         this.contentHelper = helper;
 
         return this;
@@ -67,34 +64,36 @@ public abstract class JceKeyAgreeRecipient
      */
     public JceKeyAgreeRecipient setProvider(String providerName)
     {
-        this.helper = new EnvelopedDataHelper(new NamedJcaJceHelper(providerName));
+        this.helper = new EnvelopedDataHelper(new NamedJcaJceExtHelper(providerName));
         this.contentHelper = helper;
 
         return this;
     }
 
     /**
-     * Set the provider to use for content processing.
+     * Set the provider to use for content processing.  If providerName is null a "no provider" search will be
+     *  used to satisfy getInstance calls.
      *
      * @param provider the provider to use.
      * @return this recipient.
      */
     public JceKeyAgreeRecipient setContentProvider(Provider provider)
     {
-        this.contentHelper = new EnvelopedDataHelper(new ProviderJcaJceHelper(provider));
+        this.contentHelper = CMSUtils.createContentHelper(provider);
 
         return this;
     }
 
     /**
-     * Set the provider to use for content processing.
+     * Set the provider to use for content processing. If providerName is null a "no provider" search will be
+     * used to satisfy getInstance calls.
      *
      * @param providerName the name of the provider to use.
      * @return this recipient.
      */
     public JceKeyAgreeRecipient setContentProvider(String providerName)
     {
-        this.contentHelper = new EnvelopedDataHelper(new NamedJcaJceHelper(providerName));
+        this.contentHelper = CMSUtils.createContentHelper(providerName);
 
         return this;
     }
@@ -109,7 +108,7 @@ public abstract class JceKeyAgreeRecipient
         {
             byte[] ukmEncoding = userKeyingMaterial.getOctets();
             MQVuserKeyingMaterial ukm = MQVuserKeyingMaterial.getInstance(
-                ASN1Object.fromByteArray(ukmEncoding));
+                ASN1Primitive.fromByteArray(ukmEncoding));
 
             SubjectPublicKeyInfo pubInfo = new SubjectPublicKeyInfo(
                                                 getPrivateKeyAlgorithmIdentifier(),
@@ -180,6 +179,6 @@ public abstract class JceKeyAgreeRecipient
 
     public AlgorithmIdentifier getPrivateKeyAlgorithmIdentifier()
     {
-        return PrivateKeyInfo.getInstance(recipientKey.getEncoded()).getAlgorithmId();
+        return PrivateKeyInfo.getInstance(recipientKey.getEncoded()).getPrivateKeyAlgorithm();
     }
 }

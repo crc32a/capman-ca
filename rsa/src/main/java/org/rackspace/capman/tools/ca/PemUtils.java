@@ -2,7 +2,7 @@ package org.rackspace.capman.tools.ca;
 
 import java.util.Set;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMWriter;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.primitives.PemBlock;
@@ -78,7 +78,8 @@ public class PemUtils {
         Object out;
         ByteArrayInputStream bas;
         InputStreamReader isr;
-        PEMReader pr;
+//        PEMReader pr;
+        PEMParser pr;
 
         if (pem == null) {
             throw new NotAPemObject("byte[] parameter pem in call to PemUtils.fromPem(byte[] pem) was null");
@@ -86,7 +87,7 @@ public class PemUtils {
 
         bas = new ByteArrayInputStream(pem);
         isr = new InputStreamReader(bas);
-        pr = new PEMReader(isr);
+        pr = new PEMParser(isr);
         try {
             out = pr.readObject();
             pr.close();

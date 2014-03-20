@@ -1,6 +1,5 @@
 package org.bouncycastle.cms.jcajce;
 
-import java.io.IOException;
 import java.security.AlgorithmParameterGenerator;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
@@ -26,14 +25,13 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.RC2ParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Null;
-import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
-import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.RC2CBCParameter;
@@ -41,33 +39,48 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cms.CMSAlgorithm;
 import org.bouncycastle.cms.CMSEnvelopedDataGenerator;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.jcajce.JcaJceHelper;
-import org.bouncycastle.operator.AsymmetricKeyUnwrapper;
+import org.bouncycastle.operator.DefaultSecretKeySizeProvider;
+import org.bouncycastle.operator.GenericKey;
+import org.bouncycastle.operator.SecretKeySizeProvider;
 import org.bouncycastle.operator.SymmetricKeyUnwrapper;
+import org.bouncycastle.operator.jcajce.JceAsymmetricKeyUnwrapper;
 
-class EnvelopedDataHelper
+public class EnvelopedDataHelper
 {
+    protected static final SecretKeySizeProvider KEY_SIZE_PROVIDER = DefaultSecretKeySizeProvider.INSTANCE;
+
     protected static final Map BASE_CIPHER_NAMES = new HashMap();
     protected static final Map CIPHER_ALG_NAMES = new HashMap();
     protected static final Map MAC_ALG_NAMES = new HashMap();
 
     static
     {
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.DES_CBC,  "DES");
         BASE_CIPHER_NAMES.put(CMSAlgorithm.DES_EDE3_CBC,  "DESEDE");
         BASE_CIPHER_NAMES.put(CMSAlgorithm.AES128_CBC,  "AES");
         BASE_CIPHER_NAMES.put(CMSAlgorithm.AES192_CBC,  "AES");
         BASE_CIPHER_NAMES.put(CMSAlgorithm.AES256_CBC,  "AES");
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.RC2_CBC,  "RC2");
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.CAST5_CBC, "CAST5");
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.CAMELLIA128_CBC, "Camellia");
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.CAMELLIA192_CBC, "Camellia");
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.CAMELLIA256_CBC, "Camellia");
+        BASE_CIPHER_NAMES.put(CMSAlgorithm.SEED_CBC, "SEED");
+        BASE_CIPHER_NAMES.put(PKCSObjectIdentifiers.rc4, "RC4");
 
+        CIPHER_ALG_NAMES.put(CMSAlgorithm.DES_CBC,  "DES/CBC/PKCS5Padding");
+        CIPHER_ALG_NAMES.put(CMSAlgorithm.RC2_CBC,  "RC2/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.DES_EDE3_CBC,  "DESEDE/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.AES128_CBC,  "AES/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.AES192_CBC,  "AES/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.AES256_CBC,  "AES/CBC/PKCS5Padding");
-        CIPHER_ALG_NAMES.put(new ASN1ObjectIdentifier(PKCSObjectIdentifiers.rsaEncryption.getId()), "RSA/ECB/PKCS1Padding");
+        CIPHER_ALG_NAMES.put(PKCSObjectIdentifiers.rsaEncryption, "RSA/ECB/PKCS1Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.CAST5_CBC, "CAST5/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.CAMELLIA128_CBC, "Camellia/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.CAMELLIA192_CBC, "Camellia/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.CAMELLIA256_CBC, "Camellia/CBC/PKCS5Padding");
         CIPHER_ALG_NAMES.put(CMSAlgorithm.SEED_CBC, "SEED/CBC/PKCS5Padding");
+        CIPHER_ALG_NAMES.put(PKCSObjectIdentifiers.rc4, "RC4");
 
         MAC_ALG_NAMES.put(CMSAlgorithm.DES_EDE3_CBC,  "DESEDEMac");
         MAC_ALG_NAMES.put(CMSAlgorithm.AES128_CBC,  "AESMac");
@@ -114,9 +127,9 @@ class EnvelopedDataHelper
         0x3b, 0x05, 0x03, 0x54, 0x60, 0x48, 0x65, 0x18, 0xd2, 0xcd, 0x5f, 0x32, 0x88, 0x0e, 0x35, 0xfd
     };
 
-    private JcaJceHelper        helper;
+    private JcaJceExtHelper helper;
 
-    EnvelopedDataHelper(JcaJceHelper helper)
+    EnvelopedDataHelper(JcaJceExtHelper helper)
     {
         this.helper = helper;
     }
@@ -132,7 +145,64 @@ class EnvelopedDataHelper
 
         return name;
     }
-    
+
+    Key getJceKey(GenericKey key)
+    {
+        if (key.getRepresentation() instanceof Key)
+        {
+            return (Key)key.getRepresentation();
+        }
+
+        if (key.getRepresentation() instanceof byte[])
+        {
+            return new SecretKeySpec((byte[])key.getRepresentation(), "ENC");
+        }
+
+        throw new IllegalArgumentException("unknown generic key type");
+    }
+
+    public Key getJceKey(ASN1ObjectIdentifier algorithm, GenericKey key)
+    {
+        if (key.getRepresentation() instanceof Key)
+        {
+            return (Key)key.getRepresentation();
+        }
+
+        if (key.getRepresentation() instanceof byte[])
+        {
+            return new SecretKeySpec((byte[])key.getRepresentation(), getBaseCipherName(algorithm));
+        }
+
+        throw new IllegalArgumentException("unknown generic key type");
+    }
+
+    public void keySizeCheck(AlgorithmIdentifier keyAlgorithm, Key key)
+        throws CMSException
+    {
+        int expectedKeySize = EnvelopedDataHelper.KEY_SIZE_PROVIDER.getKeySize(keyAlgorithm);
+        if (expectedKeySize > 0)
+        {
+            byte[] keyEnc = null;
+
+            try
+            {
+                keyEnc = key.getEncoded();
+            }
+            catch (Exception e)
+            {
+                // ignore - we're using a HSM...
+            }
+
+            if (keyEnc != null)
+            {
+                if (keyEnc.length * 8 != expectedKeySize)
+                {
+                    throw new CMSException("Expected key size for algorithm OID not found in recipient.");
+                }
+            }
+        }
+    }
+
     Cipher createCipher(ASN1ObjectIdentifier algorithm)
         throws CMSException
     {
@@ -256,7 +326,7 @@ class EnvelopedDataHelper
         return helper.createAlgorithmParameterGenerator(algorithm.getId());
     }
 
-    Cipher createContentCipher(final Key sKey, final AlgorithmIdentifier encryptionAlgID)
+    public Cipher createContentCipher(final Key sKey, final AlgorithmIdentifier encryptionAlgID)
         throws CMSException
     {
         return (Cipher)execute(new JCECallback()
@@ -267,7 +337,7 @@ class EnvelopedDataHelper
                 NoSuchPaddingException, NoSuchProviderException
             {
                 Cipher cipher = createCipher(encryptionAlgID.getAlgorithm());
-                ASN1Object sParams = (ASN1Object)encryptionAlgID.getParameters().getDERObject();
+                ASN1Encodable sParams = encryptionAlgID.getParameters();
                 String encAlg = encryptionAlgID.getAlgorithm().getId();
 
                 if (sParams != null && !(sParams instanceof ASN1Null))
@@ -276,20 +346,14 @@ class EnvelopedDataHelper
                     {
                         AlgorithmParameters params = createAlgorithmParameters(encryptionAlgID.getAlgorithm());
 
-                        try
-                        {
-                            params.init(sParams.getEncoded(), "ASN.1");
-                        }
-                        catch (IOException e)
-                        {
-                            throw new CMSException("error decoding algorithm parameters.", e);
-                        }
+                        CMSUtils.loadParameters(params, sParams);
 
                         cipher.init(Cipher.DECRYPT_MODE, sKey, params);
                     }
                     catch (NoSuchAlgorithmException e)
                     {
-                        if (encAlg.equals(CMSEnvelopedDataGenerator.DES_EDE3_CBC)
+                        if (encAlg.equals(CMSAlgorithm.DES_CBC.getId())
+                            || encAlg.equals(CMSEnvelopedDataGenerator.DES_EDE3_CBC)
                             || encAlg.equals(CMSEnvelopedDataGenerator.IDEA_CBC)
                             || encAlg.equals(CMSEnvelopedDataGenerator.AES128_CBC)
                             || encAlg.equals(CMSEnvelopedDataGenerator.AES192_CBC)
@@ -306,7 +370,8 @@ class EnvelopedDataHelper
                 }
                 else
                 {
-                    if (encAlg.equals(CMSEnvelopedDataGenerator.DES_EDE3_CBC)
+                    if (encAlg.equals(CMSAlgorithm.DES_CBC.getId())
+                        || encAlg.equals(CMSEnvelopedDataGenerator.DES_EDE3_CBC)
                         || encAlg.equals(CMSEnvelopedDataGenerator.IDEA_CBC)
                         || encAlg.equals(CMSEnvelopedDataGenerator.CAST5_CBC))
                     {
@@ -334,7 +399,7 @@ class EnvelopedDataHelper
                 NoSuchPaddingException, NoSuchProviderException
             {
                 Mac mac = createMac(macAlgId.getAlgorithm());
-                ASN1Object sParams = (ASN1Object)macAlgId.getParameters().getDERObject();
+                ASN1Encodable sParams = macAlgId.getParameters();
                 String macAlg = macAlgId.getAlgorithm().getId();
 
                 if (sParams != null && !(sParams instanceof ASN1Null))
@@ -343,14 +408,7 @@ class EnvelopedDataHelper
                     {
                         AlgorithmParameters params = createAlgorithmParameters(macAlgId.getAlgorithm());
 
-                        try
-                        {
-                            params.init(sParams.getEncoded(), "ASN.1");
-                        }
-                        catch (IOException e)
-                        {
-                            throw new CMSException("error decoding algorithm parameters.", e);
-                        }
+                        CMSUtils.loadParameters(params, sParams);
 
                         mac.init(sKey, params.getParameterSpec(IvParameterSpec.class));
                     }
@@ -390,7 +448,7 @@ class EnvelopedDataHelper
     }
 
 
-    KeyPairGenerator createKeyPairGenerator(DERObjectIdentifier algorithm)
+    KeyPairGenerator createKeyPairGenerator(ASN1ObjectIdentifier algorithm)
         throws CMSException
     {
         try
@@ -451,7 +509,7 @@ class EnvelopedDataHelper
         {
             AlgorithmParameterGenerator pGen = createAlgorithmParameterGenerator(encryptionOID);
 
-            if (encryptionOID.equals(CMSEnvelopedDataGenerator.RC2_CBC))
+            if (encryptionOID.equals(CMSAlgorithm.RC2_CBC))
             {
                 byte[]  iv = new byte[8];
 
@@ -482,17 +540,10 @@ class EnvelopedDataHelper
     AlgorithmIdentifier getAlgorithmIdentifier(ASN1ObjectIdentifier encryptionOID, AlgorithmParameters params)
         throws CMSException
     {
-        DEREncodable asn1Params;
+        ASN1Encodable asn1Params;
         if (params != null)
         {
-            try
-            {
-                asn1Params = ASN1Object.fromByteArray(params.getEncoded("ASN.1"));
-            }
-            catch (IOException e)
-            {
-                throw new CMSException("cannot encode parameters: " + e.getMessage(), e);
-            }
+            asn1Params = CMSUtils.extractParameters(params);
         }
         else
         {
@@ -563,7 +614,7 @@ class EnvelopedDataHelper
         }
     }
 
-    public AsymmetricKeyUnwrapper createAsymmetricUnwrapper(AlgorithmIdentifier keyEncryptionAlgorithm, PrivateKey keyEncryptionKey)
+    public JceAsymmetricKeyUnwrapper createAsymmetricUnwrapper(AlgorithmIdentifier keyEncryptionAlgorithm, PrivateKey keyEncryptionKey)
     {
         return helper.createAsymmetricUnwrapper(keyEncryptionAlgorithm, keyEncryptionKey);
     }
@@ -579,6 +630,7 @@ class EnvelopedDataHelper
         {
             return new AlgorithmIdentifier(macOID, new DEROctetString(((IvParameterSpec)paramSpec).getIV()));
         }
+
         if (paramSpec instanceof RC2ParameterSpec)
         {
             RC2ParameterSpec rc2Spec = (RC2ParameterSpec)paramSpec;
@@ -604,7 +656,7 @@ class EnvelopedDataHelper
             return new AlgorithmIdentifier(macOID, new RC2CBCParameter(rc2Spec.getIV()));
         }
 
-        throw new IllegalStateException("unknown parameter spec");
+        throw new IllegalStateException("unknown parameter spec: " + paramSpec);
     }
 
     static interface JCECallback

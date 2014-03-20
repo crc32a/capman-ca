@@ -9,8 +9,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.KeyPair;
 import org.bouncycastle.jce.provider.JCERSAPublicKey;
-import org.bouncycastle.jce.provider.JDKKeyFactory;
-import org.bouncycastle.jce.provider.JDKKeyFactory.RSA;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.KeyFactorySpi;
 
 public class HackedProviderAccessor {
 
@@ -37,6 +36,7 @@ public class HackedProviderAccessor {
         BigInteger pubExp = privKey.getPublicExponent();
         RSAPublicKeySpec rsaPubKeySpec = new RSAPublicKeySpec(mod, pubExp);
         JDKRsaFactoryExtender rsaFactory = new JDKRsaFactoryExtender();
+        KeyFactorySpi wtf = new KeyFactorySpi();
         JCERSAPublicKey publicKey = (JCERSAPublicKey) rsaFactory.getPublicKeyFromSpec(rsaPubKeySpec);
         return publicKey;
     }

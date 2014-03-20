@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.asn1.x509.Certificate;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.X509CertificateStructure;
@@ -78,7 +79,7 @@ public class X509Inspector {
     public static X509Inspector newX509Inspector(X509Certificate x509Cert) throws CertificateEncodingException, CertificateParsingException, NotAnX509CertificateException {
         byte[] encoded = x509Cert.getEncoded();
         X509CertificateStructure x509Struct = X509CertificateStructure.getInstance(encoded);
-        X509CertificateObject x509obj = new X509CertificateObject(x509Struct);
+        X509CertificateObject x509obj = new X509CertificateObject(Certificate.getInstance(encoded));
         X509Inspector x509Reader = new X509Inspector(x509obj);
         return x509Reader;
     }

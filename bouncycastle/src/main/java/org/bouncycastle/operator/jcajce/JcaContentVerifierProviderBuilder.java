@@ -12,6 +12,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.jcajce.DefaultJcaJceHelper;
@@ -144,6 +145,12 @@ public class JcaContentVerifierProviderBuilder
         };
     }
 
+    public ContentVerifierProvider build(SubjectPublicKeyInfo publicKey)
+        throws OperatorCreationException
+    {
+        return this.build(helper.convertPublicKey(publicKey));
+    }
+
     private SignatureOutputStream createSignatureStream(AlgorithmIdentifier algorithm, PublicKey publicKey)
         throws OperatorCreationException
     {
@@ -168,7 +175,10 @@ public class JcaContentVerifierProviderBuilder
         {
             rawSig = helper.createRawSignature(algorithm);
 
-            rawSig.initVerify(publicKey);
+            if (rawSig != null)
+            {
+                rawSig.initVerify(publicKey);
+            }
         }
         catch (Exception e)
         {

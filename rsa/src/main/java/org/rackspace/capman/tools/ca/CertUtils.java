@@ -1,5 +1,6 @@
 package org.rackspace.capman.tools.ca;
 
+import java.io.IOException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.logging.Level;
@@ -7,7 +8,7 @@ import java.util.logging.Logger;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Set;
-import org.bouncycastle.asn1.DEREncodable;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Attribute;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Set;
 import javax.security.auth.x500.X500Principal;
 import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.rackspace.capman.tools.ca.PemUtils;
@@ -118,7 +120,12 @@ public class CertUtils {
         }
         // If the user left a blank serial number then use the current time for the serial number
         serialNum = (serial == null) ? BigInteger.valueOf(System.currentTimeMillis()) : serial;
-        byte[] encodedSubject = req.getCertificationRequestInfo().getSubject().toASN1Object().getDEREncoded();
+        byte[] encodedSubject;
+        try {
+            encodedSubject = req.getCertificationRequestInfo().getSubject().toASN1Object().getEncoded();
+        } catch (IOException ex) {
+            throw new RsaException("unable to sign", ex);
+        }
         subject = new X500Principal(encodedSubject);
         //subject = new X500Principal(req.getCertificationRequestInfo().getSubject().toString());
         issuer = caCrt.getSubjectX500Principal();
@@ -132,11 +139,15 @@ public class CertUtils {
             for (i = 0; i < attrs.size(); i++) {
                 Attribute attr = Attribute.getInstance(attrs.getObjectAt(i));
                 if (attr.getAttrType().equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
-                    DEREncodable extsDer = attr.getAttrValues().getObjectAt(0);
+                    ASN1Encodable extsDer = attr.getAttrValues().getObjectAt(0);
                     X509Extensions exts = X509Extensions.getInstance(extsDer);
                     for (ASN1ObjectIdentifier oid : exts.getExtensionOIDs()) {
                         ext = exts.getExtension(oid);
-                        certBuilder.addExtension(oid, ext.isCritical(), ext.getParsedValue());
+                        try {
+                            certBuilder.addExtension(oid, ext.isCritical(), ext.getParsedValue());
+                        } catch (CertIOException ex) {
+                            throw new RsaException("Unable to sign", ex);
+                        }
                     }
                 }
             }
@@ -149,8 +160,12 @@ public class CertUtils {
         } catch (CertificateParsingException ex) {
             throw new RsaException("Unable to build AuthorityKeyIdentifier", ex);
         }
-        certBuilder.addExtension(X509Extension.authorityKeyIdentifier, false, authKeyId.getDERObject());
-        certBuilder.addExtension(X509Extension.subjectKeyIdentifier, false, subjKeyId.getDERObject());
+        try {
+            certBuilder.addExtension(X509Extension.authorityKeyIdentifier, false, authKeyId.toASN1Primitive());
+            certBuilder.addExtension(X509Extension.subjectKeyIdentifier, false, subjKeyId.toASN1Primitive());
+        } catch (CertIOException ex) {
+            throw new RsaException("Unable to sign", ex);
+        }
         X509CertificateHolder certHolder = certBuilder.build(signer);
         try {
             crt = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
@@ -189,14 +204,21 @@ public class CertUtils {
         }
         BigInteger serial = BigInteger.ONE;
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(issuer, serial, notBefore, notAfter, subject, pub);
-
-        certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(true));//This is a CA crt
+        try {
+            certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(true)); //This is a CA crt
+        } catch (CertIOException ex) {
+            throw new RsaException("Unable to sign", ex);
+        }
         try {
             subjKeyId = new SubjectKeyIdentifierStructure(pub);
         } catch (InvalidKeyException ex) {
             throw new RsaException("Ivalid public key when attempting to encode Subjectkey identifier", ex);
         }
-        certBuilder.addExtension(X509Extension.subjectKeyIdentifier, false, subjKeyId.getDERObject());
+        try {
+            certBuilder.addExtension(X509Extension.subjectKeyIdentifier, false, subjKeyId.toASN1Primitive());
+        } catch (CertIOException ex) {
+            throw new RsaException("unable to sign", ex);
+        }
         X509CertificateHolder certHolder = certBuilder.build(signer);
         try {
             cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);

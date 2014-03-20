@@ -1,15 +1,15 @@
 package org.bouncycastle.asn1.x509;
 
-import org.bouncycastle.asn1.ASN1Encodable;
+import java.util.Enumeration;
+
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DERGeneralizedTime;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
-
-import java.util.Enumeration;
 
 /**
  * <pre>
@@ -19,7 +19,7 @@ import java.util.Enumeration;
  * </pre>
  */
 public class PrivateKeyUsagePeriod
-    extends ASN1Encodable
+    extends ASN1Object
 {
     public static PrivateKeyUsagePeriod getInstance(Object obj)
     {
@@ -28,17 +28,12 @@ public class PrivateKeyUsagePeriod
             return (PrivateKeyUsagePeriod)obj;
         }
 
-        if (obj instanceof ASN1Sequence)
+        if (obj != null)
         {
-            return new PrivateKeyUsagePeriod((ASN1Sequence)obj);
+            return new PrivateKeyUsagePeriod(ASN1Sequence.getInstance(obj));
         }
 
-        if (obj instanceof X509Extension)
-        {
-            return getInstance(X509Extension.convertValueToObject((X509Extension)obj));
-        }
-
-        throw new IllegalArgumentException("unknown object in getInstance: " + obj.getClass().getName());
+        return null;
     }
 
     private DERGeneralizedTime _notBefore, _notAfter;
@@ -71,7 +66,7 @@ public class PrivateKeyUsagePeriod
         return _notAfter;
     }
 
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector v = new ASN1EncodableVector();
 

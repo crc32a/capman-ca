@@ -15,9 +15,10 @@ import java.util.Iterator;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1GeneralizedTime;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DERGeneralizedTime;
-import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -79,19 +80,19 @@ public class X509V2AttributeCertificateGenerator
     public void setSerialNumber(
         BigInteger      serialNumber)
     {
-        acInfoGen.setSerialNumber(new DERInteger(serialNumber));
+        acInfoGen.setSerialNumber(new ASN1Integer(serialNumber));
     }
 
     public void setNotBefore(
         Date    date)
     {
-        acInfoGen.setStartDate(new DERGeneralizedTime(date));
+        acInfoGen.setStartDate(new ASN1GeneralizedTime(date));
     }
 
     public void setNotAfter(
         Date    date)
     {
-        acInfoGen.setEndDate(new DERGeneralizedTime(date));
+        acInfoGen.setEndDate(new ASN1GeneralizedTime(date));
     }
 
     /**
@@ -146,7 +147,7 @@ public class X509V2AttributeCertificateGenerator
         ASN1Encodable   value)
         throws IOException
     {
-        extGenerator.addExtension(new DERObjectIdentifier(oid), critical, value);
+        extGenerator.addExtension(new ASN1ObjectIdentifier(oid), critical, value);
     }
 
     /**
@@ -159,7 +160,7 @@ public class X509V2AttributeCertificateGenerator
         boolean         critical,
         byte[]          value)
     {
-        extGenerator.addExtension(new DERObjectIdentifier(oid), critical, value);
+        extGenerator.addExtension(new ASN1ObjectIdentifier(oid), critical, value);
     }
 
     /**

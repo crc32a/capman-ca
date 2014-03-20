@@ -1,6 +1,7 @@
 package org.bouncycastle.bcpg;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -92,7 +93,7 @@ public class ArmoredOutputStream
     String          footerStart = "-----END PGP ";
     String          footerTail = "-----";
 
-    String          version = "BCPG v1.46";
+    String          version = "BCPG v1.50";
     
     Hashtable       headers = new Hashtable();
     

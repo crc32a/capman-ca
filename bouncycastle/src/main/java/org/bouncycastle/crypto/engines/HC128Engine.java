@@ -2,6 +2,7 @@ package org.bouncycastle.crypto.engines;
 
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.crypto.StreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
@@ -117,6 +118,7 @@ public class HC128Engine
                 "The key must be 128 bits long");
         }
 
+        idx = 0;
         cnt = 0;
 
         int[] w = new int[1280];
@@ -234,7 +236,7 @@ public class HC128Engine
 
         if ((outOff + len) > out.length)
         {
-            throw new DataLengthException("output buffer too short");
+            throw new OutputLengthException("output buffer too short");
         }
 
         for (int i = 0; i < len; i++)
@@ -245,7 +247,6 @@ public class HC128Engine
 
     public void reset()
     {
-        idx = 0;
         init();
     }
 

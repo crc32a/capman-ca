@@ -28,9 +28,13 @@ import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.DHPrivateKeySpec;
+import javax.crypto.spec.DHPublicKeySpec;
 
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.jcajce.provider.config.ConfigurableProvider;
 import org.bouncycastle.jce.ECPointUtil;
+import org.bouncycastle.jce.interfaces.PKCS12BagAttributeCarrier;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Base64;
@@ -114,6 +118,318 @@ public class DHTest
         testTwoParty(algName, size, privateValueSize, keyGen);
 
         KeyPair aKeyPair = keyGen.generateKeyPair();
+
+        //
+        // public key encoding test
+        //
+        byte[]              pubEnc = aKeyPair.getPublic().getEncoded();
+        KeyFactory          keyFac = KeyFactory.getInstance(algName, "BC");
+        X509EncodedKeySpec  pubX509 = new X509EncodedKeySpec(pubEnc);
+        DHPublicKey         pubKey = (DHPublicKey)keyFac.generatePublic(pubX509);
+        DHParameterSpec     spec = pubKey.getParams();
+
+        if (!spec.getG().equals(dhParams.getG()) || !spec.getP().equals(dhParams.getP()))
+        {
+            fail(size + " bit public key encoding/decoding test failed on parameters");
+        }
+
+        if (!((DHPublicKey)aKeyPair.getPublic()).getY().equals(pubKey.getY()))
+        {
+            fail(size + " bit public key encoding/decoding test failed on y value");
+        }
+
+        //
+        // public key serialisation test
+        //
+        pubKey = (DHPublicKey)serializeDeserialize(aKeyPair.getPublic());
+        spec = pubKey.getParams();
+
+        if (!spec.getG().equals(dhParams.getG()) || !spec.getP().equals(dhParams.getP()))
+        {
+            fail(size + " bit public key serialisation test failed on parameters");
+        }
+
+        if (!((DHPublicKey)aKeyPair.getPublic()).getY().equals(pubKey.getY()))
+        {
+            fail(size + " bit public key serialisation test failed on y value");
+        }
+
+        if (!aKeyPair.getPublic().equals(pubKey))
+        {
+            fail("equals test failed");
+        }
+
+        if (aKeyPair.getPublic().hashCode() != pubKey.hashCode())
+        {
+            fail("hashCode test failed");
+        }
+
+        //
+        // private key encoding test
+        //
+        byte[]              privEnc = aKeyPair.getPrivate().getEncoded();
+        PKCS8EncodedKeySpec privPKCS8 = new PKCS8EncodedKeySpec(privEnc);
+        DHPrivateKey        privKey = (DHPrivateKey)keyFac.generatePrivate(privPKCS8);
+
+        spec = privKey.getParams();
+
+        if (!spec.getG().equals(dhParams.getG()) || !spec.getP().equals(dhParams.getP()))
+        {
+            fail(size + " bit private key encoding/decoding test failed on parameters");
+        }
+
+        if (!((DHPrivateKey)aKeyPair.getPrivate()).getX().equals(privKey.getX()))
+        {
+            fail(size + " bit private key encoding/decoding test failed on y value");
+        }
+
+        //
+        // private key serialisation test
+        //
+        privKey = (DHPrivateKey)serializeDeserialize(aKeyPair.getPrivate());
+        spec = privKey.getParams();
+
+        if (!spec.getG().equals(dhParams.getG()) || !spec.getP().equals(dhParams.getP()))
+        {
+            fail(size + " bit private key serialisation test failed on parameters");
+        }
+
+        if (!((DHPrivateKey)aKeyPair.getPrivate()).getX().equals(privKey.getX()))
+        {
+            fail(size + " bit private key serialisation test failed on X value");
+        }
+
+        if (!aKeyPair.getPrivate().equals(privKey))
+        {
+            fail("equals test failed");
+        }
+
+        if (aKeyPair.getPrivate().hashCode() != privKey.hashCode())
+        {
+            fail("hashCode test failed");
+        }
+
+        if (!(privKey instanceof PKCS12BagAttributeCarrier))
+        {
+            fail("private key not implementing PKCS12 attribute carrier");
+        }
+
+        //
+        // three party test
+        //
+        KeyPairGenerator aPairGen = KeyPairGenerator.getInstance(algName, "BC");
+        aPairGen.initialize(spec);
+        KeyPair aPair = aPairGen.generateKeyPair();
+
+        KeyPairGenerator bPairGen = KeyPairGenerator.getInstance(algName, "BC");
+        bPairGen.initialize(spec);
+        KeyPair bPair = bPairGen.generateKeyPair();
+
+        KeyPairGenerator cPairGen = KeyPairGenerator.getInstance(algName, "BC");
+        cPairGen.initialize(spec);
+        KeyPair cPair = cPairGen.generateKeyPair();
+
+        KeyAgreement aKeyAgree = KeyAgreement.getInstance(algName, "BC");
+        aKeyAgree.init(aPair.getPrivate());
+
+        KeyAgreement bKeyAgree = KeyAgreement.getInstance(algName, "BC");
+        bKeyAgree.init(bPair.getPrivate());
+
+        KeyAgreement cKeyAgree = KeyAgreement.getInstance(algName, "BC");
+        cKeyAgree.init(cPair.getPrivate());
+
+        Key ac = aKeyAgree.doPhase(cPair.getPublic(), false);
+
+        Key ba = bKeyAgree.doPhase(aPair.getPublic(), false);
+
+        Key cb = cKeyAgree.doPhase(bPair.getPublic(), false);
+
+        aKeyAgree.doPhase(cb, true);
+
+        bKeyAgree.doPhase(ac, true);
+
+        cKeyAgree.doPhase(ba, true);
+
+        BigInteger aShared = new BigInteger(aKeyAgree.generateSecret());
+        BigInteger bShared = new BigInteger(bKeyAgree.generateSecret());
+        BigInteger cShared = new BigInteger(cKeyAgree.generateSecret());
+
+        if (!aShared.equals(bShared))
+        {
+            fail(size + " bit 3-way test failed (a and b differ)");
+        }
+
+        if (!cShared.equals(bShared))
+        {
+            fail(size + " bit 3-way test failed (c and b differ)");
+        }
+    }
+
+    private void testTwoParty(String algName, int size, int privateValueSize, KeyPairGenerator keyGen)
+            throws Exception
+    {
+        testTwoParty(algName, size, privateValueSize, keyGen.generateKeyPair(), keyGen.generateKeyPair());
+    }
+
+    private byte[] testTwoParty(String algName, int size, int privateValueSize, KeyPair aKeyPair, KeyPair bKeyPair)
+        throws Exception
+    {
+        //
+        // a side
+        //
+        KeyAgreement aKeyAgree = KeyAgreement.getInstance(algName, "BC");
+
+        checkKeySize(privateValueSize, aKeyPair);
+
+        aKeyAgree.init(aKeyPair.getPrivate());
+
+        //
+        // b side
+        //
+        KeyAgreement bKeyAgree = KeyAgreement.getInstance(algName, "BC");
+
+        checkKeySize(privateValueSize, bKeyPair);
+
+        bKeyAgree.init(bKeyPair.getPrivate());
+
+        //
+        // agreement
+        //
+        aKeyAgree.doPhase(bKeyPair.getPublic(), true);
+        bKeyAgree.doPhase(aKeyPair.getPublic(), true);
+
+        byte[] aSecret = aKeyAgree.generateSecret();
+        byte[] bSecret = bKeyAgree.generateSecret();
+
+        if (!Arrays.areEqual(aSecret, bSecret))
+        {
+            fail(size + " bit 2-way test failed");
+        }
+
+        return aSecret;
+    }
+
+    private void testExplicitWrapping(
+        int         size,
+        int         privateValueSize,
+        BigInteger  g,
+        BigInteger  p)
+        throws Exception
+    {
+        DHParameterSpec             dhParams = new DHParameterSpec(p, g, privateValueSize);
+
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
+
+        keyGen.initialize(dhParams);
+
+        //
+        // a side
+        //
+        KeyPair aKeyPair = keyGen.generateKeyPair();
+
+        KeyAgreement aKeyAgree = KeyAgreement.getInstance("DH", "BC");
+
+        checkKeySize(privateValueSize, aKeyPair);
+
+        aKeyAgree.init(aKeyPair.getPrivate());
+
+        //
+        // b side
+        //
+        KeyPair bKeyPair = keyGen.generateKeyPair();
+
+        KeyAgreement bKeyAgree = KeyAgreement.getInstance("DH", "BC");
+
+        checkKeySize(privateValueSize, bKeyPair);
+
+        bKeyAgree.init(bKeyPair.getPrivate());
+
+        //
+        // agreement
+        //
+        aKeyAgree.doPhase(bKeyPair.getPublic(), true);
+        bKeyAgree.doPhase(aKeyPair.getPublic(), true);
+
+        SecretKey k1 = aKeyAgree.generateSecret(PKCSObjectIdentifiers.id_alg_CMS3DESwrap.getId());
+        SecretKey k2 = bKeyAgree.generateSecret(PKCSObjectIdentifiers.id_alg_CMS3DESwrap.getId());
+        
+        // TODO Compare k1 and k2?
+    }
+
+    private Object serializeDeserialize(Object o)
+        throws Exception
+    {
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        ObjectOutputStream oOut = new ObjectOutputStream(bOut);
+
+        oOut.writeObject(o);
+        oOut.close();
+
+        ObjectInputStream oIn = new ObjectInputStream(new ByteArrayInputStream(bOut.toByteArray()));
+
+        return oIn.readObject();
+    }
+
+    private void checkKeySize(int privateValueSize, KeyPair aKeyPair)
+    {
+        if (privateValueSize != 0)
+        {
+            DHPrivateKey key = (DHPrivateKey)aKeyPair.getPrivate();
+
+            if (key.getX().bitLength() != privateValueSize)
+            {
+                fail("limited key check failed for key size " + privateValueSize);
+            }
+        }
+    }
+
+    private void testRandom(
+        int         size)
+        throws Exception
+    {
+        AlgorithmParameterGenerator a = AlgorithmParameterGenerator.getInstance("DH", "BC");
+        a.init(size, new SecureRandom());
+        AlgorithmParameters params = a.generateParameters();
+
+        byte[] encodeParams = params.getEncoded();
+
+        AlgorithmParameters a2 = AlgorithmParameters.getInstance("DH", "BC");
+        a2.init(encodeParams);
+
+        // a and a2 should be equivalent!
+        byte[] encodeParams_2 = a2.getEncoded();
+
+        if (!areEqual(encodeParams, encodeParams_2))
+        {
+            fail("encode/decode parameters failed");
+        }
+
+        DHParameterSpec dhP = (DHParameterSpec)params.getParameterSpec(DHParameterSpec.class);
+
+        testGP("DH", size, 0, dhP.getG(), dhP.getP());
+    }
+
+    private void testDefault(
+        int         privateValueSize,
+        BigInteger  g,
+        BigInteger  p)
+        throws Exception
+    {
+        DHParameterSpec             dhParams = new DHParameterSpec(p, g, privateValueSize);
+        String                      algName = "DH";
+        int                         size = p.bitLength();
+
+        new BouncyCastleProvider().setParameter(ConfigurableProvider.DH_DEFAULT_PARAMS, dhParams);
+
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algName, "BC");
+
+        keyGen.initialize(dhParams.getP().bitLength());
+
+        testTwoParty("DH", size, privateValueSize, keyGen);
+
+        KeyPair aKeyPair = keyGen.generateKeyPair();
+
+        new BouncyCastleProvider().setParameter(ConfigurableProvider.DH_DEFAULT_PARAMS, null);
 
         //
         // public key encoding test
@@ -251,133 +567,6 @@ public class DHTest
             fail(size + " bit 3-way test failed (c and b differ)");
         }
     }
-
-    private void testTwoParty(String algName, int size, int privateValueSize, KeyPairGenerator keyGen)
-        throws Exception
-    {
-        //
-        // a side
-        //
-        KeyPair aKeyPair = keyGen.generateKeyPair();
-
-        KeyAgreement aKeyAgree = KeyAgreement.getInstance(algName, "BC");
-
-        checkKeySize(privateValueSize, aKeyPair);
-
-        aKeyAgree.init(aKeyPair.getPrivate());
-
-        //
-        // b side
-        //
-        KeyPair bKeyPair = keyGen.generateKeyPair();
-
-        KeyAgreement bKeyAgree = KeyAgreement.getInstance(algName, "BC");
-
-        checkKeySize(privateValueSize, bKeyPair);
-
-        bKeyAgree.init(bKeyPair.getPrivate());
-
-        //
-        // agreement
-        //
-        aKeyAgree.doPhase(bKeyPair.getPublic(), true);
-        bKeyAgree.doPhase(aKeyPair.getPublic(), true);
-
-        BigInteger  k1 = new BigInteger(aKeyAgree.generateSecret());
-        BigInteger  k2 = new BigInteger(bKeyAgree.generateSecret());
-
-        if (!k1.equals(k2))
-        {
-            fail(size + " bit 2-way test failed");
-        }
-    }
-
-    private void testExplicitWrapping(
-        int         size,
-        int         privateValueSize,
-        BigInteger  g,
-        BigInteger  p)
-        throws Exception
-    {
-        DHParameterSpec             dhParams = new DHParameterSpec(p, g, privateValueSize);
-
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
-
-        keyGen.initialize(dhParams);
-
-        //
-        // a side
-        //
-        KeyPair aKeyPair = keyGen.generateKeyPair();
-
-        KeyAgreement aKeyAgree = KeyAgreement.getInstance("DH", "BC");
-
-        checkKeySize(privateValueSize, aKeyPair);
-
-        aKeyAgree.init(aKeyPair.getPrivate());
-
-        //
-        // b side
-        //
-        KeyPair bKeyPair = keyGen.generateKeyPair();
-
-        KeyAgreement bKeyAgree = KeyAgreement.getInstance("DH", "BC");
-
-        checkKeySize(privateValueSize, bKeyPair);
-
-        bKeyAgree.init(bKeyPair.getPrivate());
-
-        //
-        // agreement
-        //
-        aKeyAgree.doPhase(bKeyPair.getPublic(), true);
-        bKeyAgree.doPhase(aKeyPair.getPublic(), true);
-
-        SecretKey k1 = aKeyAgree.generateSecret(PKCSObjectIdentifiers.id_alg_CMS3DESwrap.getId());
-        SecretKey k2 = bKeyAgree.generateSecret(PKCSObjectIdentifiers.id_alg_CMS3DESwrap.getId());
-        
-        // TODO Compare k1 and k2?
-    }
-
-    private void checkKeySize(int privateValueSize, KeyPair aKeyPair)
-    {
-        if (privateValueSize != 0)
-        {
-            DHPrivateKey key = (DHPrivateKey)aKeyPair.getPrivate();
-
-            if (key.getX().bitLength() != privateValueSize)
-            {
-                fail("limited key check failed for key size " + privateValueSize);
-            }
-        }
-    }
-
-    private void testRandom(
-        int         size)
-        throws Exception
-    {
-        AlgorithmParameterGenerator a = AlgorithmParameterGenerator.getInstance("DH", "BC");
-        a.init(size, new SecureRandom());
-        AlgorithmParameters params = a.generateParameters();
-
-        byte[] encodeParams = params.getEncoded();
-
-        AlgorithmParameters a2 = AlgorithmParameters.getInstance("DH", "BC");
-        a2.init(encodeParams);
-
-        // a and a2 should be equivalent!
-        byte[] encodeParams_2 = a2.getEncoded();
-
-        if (!areEqual(encodeParams, encodeParams_2))
-        {
-            fail("encode/decode parameters failed");
-        }
-
-        DHParameterSpec dhP = (DHParameterSpec)params.getParameterSpec(DHParameterSpec.class);
-
-        testGP("DH", size, 0, dhP.getG(), dhP.getP());
-    }
-
     private void testECDH(String algorithm)
         throws Exception
     {
@@ -544,6 +733,38 @@ public class DHTest
         testTwoParty("DH", 512, 0, keyGen);
     }
 
+    private void testSmallSecret()
+        throws Exception
+    {
+        BigInteger p = new BigInteger("ff3b512a4cc0961fa625d6cbd9642c377ece46b8dbc3146a98e0567f944034b5e3a1406edb179a77cd2539bdb74dc819f0a74d486606e26e578ff52c5242a5ff", 16);
+        BigInteger g = new BigInteger("58a66667431136e99d86de8199eb650a21afc9de3dd4ef9da6dfe89c866e928698952d95e68b418becef26f23211572eebfcbf328809bdaf02bba3d24c74f8c0", 16);
+
+        DHPrivateKeySpec aPrivSpec = new DHPrivateKeySpec(
+            new BigInteger("30a6ea4e2240a42867ad98bd3adbfd5b81aba48bd930f20a595983d807566f7cba4e766951efef2c6c0c1be3823f63d66e12c2a091d5ff3bbeb1ea6e335d072d", 16), p, g);
+        DHPublicKeySpec aPubSpec = new DHPublicKeySpec(
+                    new BigInteger("694dfea1bfc8897e2fcbfd88033ab34f4581892d7d5cc362dc056e3d43955accda12222bd651ca31c85f008a05dea914de68828dfd83a54a340fa84f3bbe6caf", 16), p, g);
+
+        DHPrivateKeySpec bPrivSpec = new DHPrivateKeySpec(
+                    new BigInteger("775b1e7e162190700e2212dd8e4aaacf8a2af92c9c108b81d5bf9a14548f494eaa86a6c4844b9512eb3e3f2f22ffec44c795c813edfea13f075b99bbdebb34bd", 16), p, g);
+
+        DHPublicKeySpec bPubSpec = new DHPublicKeySpec(
+                    new BigInteger("d8ddd4ff9246635eadbfa0bc2ef06d98a329b6e8cd2d1435d7b4921467570e697c9a9d3c172c684626a9d2b6b2fa0fc725d5b91f9a9625b717a4169bc714b064", 16), p, g);
+
+        KeyFactory kFact = KeyFactory.getInstance("DH", "BC");
+
+        byte[] secret = testTwoParty("DH", 512, 0, new KeyPair(kFact.generatePublic(aPubSpec), kFact.generatePrivate(aPrivSpec)), new KeyPair(kFact.generatePublic(bPubSpec), kFact.generatePrivate(bPrivSpec)));
+
+        if (secret.length != ((p.bitLength() + 7) / 8))
+        {
+            fail("short secret wrong length");
+        }
+
+        if (!Arrays.areEqual(Hex.decode("00340d3309ddc86e99e2f0be4fc212837bfb5c59336b09b9e1aeb1884b72c8b485b56723d0bf1c1d37fc89a292fc1cface9125106f1df15f55f22e4f77c5879b"), secret))
+        {
+            fail("short secret mismatch");
+        }
+    }
+
     private void testEnc()
         throws Exception
     {
@@ -578,9 +799,113 @@ public class DHTest
         }
     }
 
+    private void testConfig()
+    {
+        ConfigurableProvider prov = new BouncyCastleProvider();
+
+        DHParameterSpec dhSpec512 = new DHParameterSpec(
+            new BigInteger("fca682ce8e12caba26efccf7110e526db078b05edecbcd1eb4a208f3ae1617ae01f35b91a47e6df63413c5e12ed0899bcd132acd50d99151bdc43ee737592e17", 16),
+            new BigInteger("678471b27a9cf44ee91a49c5147db1a9aaf244f05a434d6486931d2d14271b9e35030b71fd73da179069b32e2935630e1c2062354d0da20a6c416e50be794ca4", 16),
+            384);
+
+        DHParameterSpec dhSpec768 = new DHParameterSpec(
+             new BigInteger("e9e642599d355f37c97ffd3567120b8e25c9cd43e927b3a9670fbec5d890141922d2c3b3ad2480093799869d1e846aab49fab0ad26d2ce6a22219d470bce7d777d4a21fbe9c270b57f607002f3cef8393694cf45ee3688c11a8c56ab127a3daf", 16),
+             new BigInteger("30470ad5a005fb14ce2d9dcd87e38bc7d1b1c5facbaecbe95f190aa7a31d23c4dbbcbe06174544401a5b2c020965d8c2bd2171d3668445771f74ba084d2029d83c1c158547f3a9f1a2715be23d51ae4d3e5a1f6a7064f316933a346d3f529252", 16),
+             384);
+
+        DHParameterSpec dhSpec1024 = new DHParameterSpec(
+                    new BigInteger("f7e1a085d69b3ddecbbcab5c36b857b97994afbbfa3aea82f9574c0b3d0782675159578ebad4594fe67107108180b449167123e84c281613b7cf09328cc8a6e13c167a8b547c8d28e0a3ae1e2bb3a675916ea37f0bfa213562f1fb627a01243bcca4f1bea8519089a883dfe15ae59f06928b665e807b552564014c3bfecf492a", 16),
+                    new BigInteger("fd7f53811d75122952df4a9c2eece4e7f611b7523cef4400c31e3f80b6512669455d402251fb593d8d58fabfc5f5ba30f6cb9b556cd7813b801d346ff26660b76b9950a5a49f9fe8047b1022c24fbba9d7feb7c61bf83b57e7c6a8a6150f04fb83f6d3c51ec3023554135a169132f675f3ae2b61d72aeff22203199dd14801c7", 16),
+                    512);
+
+        prov.setParameter(ConfigurableProvider.DH_DEFAULT_PARAMS, dhSpec512);
+
+        if (!dhSpec512.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(512)))
+        {
+            fail("config mismatch");
+        }
+
+        if (BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(768) != null)
+        {
+            fail("config found when none expected");
+        }
+
+        prov.setParameter(ConfigurableProvider.DH_DEFAULT_PARAMS, new DHParameterSpec[] { dhSpec512, dhSpec768, dhSpec1024 });
+
+        if (!dhSpec512.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(512)))
+        {
+            fail("512 config mismatch");
+        }
+
+        if (!dhSpec768.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(768)))
+        {
+            fail("768 config mismatch");
+        }
+
+        if (!dhSpec1024.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(1024)))
+        {
+            fail("1024 config mismatch");
+        }
+
+        prov.setParameter(ConfigurableProvider.DH_DEFAULT_PARAMS, null);
+
+        if (BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(512) != null)
+        {
+            fail("config found for 512 when none expected");
+        }
+
+        if (BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(768) != null)
+        {
+            fail("config found for 768 when none expected");
+        }
+
+        prov.setParameter(ConfigurableProvider.THREAD_LOCAL_DH_DEFAULT_PARAMS, dhSpec512);
+
+        if (!dhSpec512.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(512)))
+        {
+            fail("config mismatch");
+        }
+
+        if (BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(768) != null)
+        {
+            fail("config found when none expected");
+        }
+
+        prov.setParameter(ConfigurableProvider.THREAD_LOCAL_DH_DEFAULT_PARAMS, new DHParameterSpec[] { dhSpec512, dhSpec768, dhSpec1024 });
+
+        if (!dhSpec512.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(512)))
+        {
+            fail("512 config mismatch");
+        }
+
+        if (!dhSpec768.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(768)))
+        {
+            fail("768 config mismatch");
+        }
+
+        if (!dhSpec1024.equals(BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(1024)))
+        {
+            fail("1024 config mismatch");
+        }
+
+        prov.setParameter(ConfigurableProvider.THREAD_LOCAL_DH_DEFAULT_PARAMS, null);
+
+        if (BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(512) != null)
+        {
+            fail("config found for 512 when none expected");
+        }
+
+        if (BouncyCastleProvider.CONFIGURATION.getDHDefaultParameters(768) != null)
+        {
+            fail("config found for 768 when none expected");
+        }
+    }
+
     public void performTest()
         throws Exception
     {
+        testDefault(64, g512, p512);
+
         testEnc();
         testGP("DH", 512, 0, g512, p512);
         testGP("DiffieHellman", 768, 0, g768, p768);
@@ -595,6 +920,8 @@ public class DHTest
         testExceptions();
         testDESAndDESede(g768, p768);
         testInitialise();
+        testSmallSecret();
+        testConfig();
     }
 
     public static void main(

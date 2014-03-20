@@ -39,7 +39,7 @@ import javax.security.auth.x500.X500Principal;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Object;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DEREnumerated;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
@@ -49,9 +49,11 @@ import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.cms.SignedData;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.CRLReason;
+import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
@@ -68,8 +70,10 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.jce.spec.GOST3410ParameterSpec;
 import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.util.Integers;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.io.Streams;
 import org.bouncycastle.util.test.SimpleTest;
 import org.bouncycastle.x509.X509V1CertificateGenerator;
 import org.bouncycastle.x509.X509V2CRLGenerator;
@@ -1026,6 +1030,118 @@ public class CertTest
             "CM0TjDGJLP3lBQN6Q1z0bSsP508yfleP68wWuZWIA9CafIWuD+SN6qa7flbHy7Df" +
             "D2a8yuoaYDAIBgYqhQMCAgMDQQA8L8kJRLcnqeyn1en7U23Sw6pkfEQu3u0xFkVP" +
             "vFQ/3cHeF26NG+xxtZPz3TaTVXdoiYkXYiD02rEx1bUcM97i");
+    
+    private final byte[] uaczo1 = Base64.decode(
+            "MIIFWzCCBNegAwIBAgIUMAR1He8seK4BAAAAAQAAAAEAAAAwDQYLKoYkAgEBAQED" +
+            "AQEwgfoxPzA9BgNVBAoMNtCc0ZbQvdGW0YHRgtC10YDRgdGC0LLQviDRjtGB0YLQ" +
+            "uNGG0ZbRlyDQo9C60YDQsNGX0L3QuDExMC8GA1UECwwo0JDQtNC80ZbQvdGW0YHR" +
+            "gtGA0LDRgtC+0YAg0IbQotChINCm0JfQnjFJMEcGA1UEAwxA0KbQtdC90YLRgNCw" +
+            "0LvRjNC90LjQuSDQt9Cw0YHQstGW0LTRh9GD0LLQsNC70YzQvdC40Lkg0L7RgNCz" +
+            "0LDQvTEZMBcGA1UEBQwQVUEtMDAwMTU2MjItMjAxMjELMAkGA1UEBhMCVUExETAP" +
+            "BgNVBAcMCNCa0LjRl9CyMB4XDTEyMDkyODE5NTMwMFoXDTIyMDkyODE5NTMwMFow" +
+            "gfoxPzA9BgNVBAoMNtCc0ZbQvdGW0YHRgtC10YDRgdGC0LLQviDRjtGB0YLQuNGG" +
+            "0ZbRlyDQo9C60YDQsNGX0L3QuDExMC8GA1UECwwo0JDQtNC80ZbQvdGW0YHRgtGA" +
+            "0LDRgtC+0YAg0IbQotChINCm0JfQnjFJMEcGA1UEAwxA0KbQtdC90YLRgNCw0LvR" +
+            "jNC90LjQuSDQt9Cw0YHQstGW0LTRh9GD0LLQsNC70YzQvdC40Lkg0L7RgNCz0LDQ" +
+            "vTEZMBcGA1UEBQwQVUEtMDAwMTU2MjItMjAxMjELMAkGA1UEBhMCVUExETAPBgNV" +
+            "BAcMCNCa0LjRl9CyMIIBUTCCARIGCyqGJAIBAQEBAwEBMIIBATCBvDAPAgIBrzAJ" +
+            "AgEBAgEDAgEFAgEBBDbzykDGaaTaFzFJyhLDLa4Ya1Osa8Y2WZferq6K0tiI+b/V" +
+            "NAFpTvnEJz2M/m3Cj3BqD0kQzgMCNj//////////////////////////////////" +
+            "/7oxdUWACajApyTwL4Gqih/Lr4DZDHqVEQUEzwQ2fIV8lMVDO/2ZHhfCJoQGWFCp" +
+            "oknte8JJrlpOh4aJ+HLvetUkCC7DA46a7ee6a6Ezgdl5umIaBECp1utF8TxwgoDE" +
+            "lnsjH16t9ljrpMA3KR042WvwJcpOF/jpcg3GFbQ6KJdfC8Heo2Q4tWTqLBef0BI+" +
+            "bbj6xXkEAzkABDa2G/m9S2LKqyw5UPXFHV+oDXB+AHtSW3BnZ9zlzRuvbido2tDG" +
+            "qE/CL5kFHZE0NfTrHrGa1USjggE6MIIBNjApBgNVHQ4EIgQgMAR1He8seK4VC6vv" +
+            "vv8Nq9v4LOVonutO0xCl+xM4+wowKwYDVR0jBCQwIoAgMAR1He8seK4VC6vvvv8N" +
+            "q9v4LOVonutO0xCl+xM4+wowDgYDVR0PAQH/BAQDAgEGMBkGA1UdIAEB/wQPMA0w" +
+            "CwYJKoYkAgEBAQICMBIGA1UdEwEB/wQIMAYBAf8CAQIwHgYIKwYBBQUHAQMBAf8E" +
+            "DzANMAsGCSqGJAIBAQECATA9BgNVHR8ENjA0MDKgMKAuhixodHRwOi8vY3pvLmdv" +
+            "di51YS9kb3dubG9hZC9jcmxzL0NaTy1GdWxsLmNybDA+BgNVHS4ENzA1MDOgMaAv" +
+            "hi1odHRwOi8vY3pvLmdvdi51YS9kb3dubG9hZC9jcmxzL0NaTy1EZWx0YS5jcmww" +
+            "DQYLKoYkAgEBAQEDAQEDbwAEbPF4bx7drDxzzYABhB33Y0MQ+/N5FuPl7faVx/es" +
+            "V5n5DXg5TzZovzZeICB5JHPLcbdeCq6aGwvXsgybt34zqf7LKmfq0rFNYfXJVWFH" +
+            "4Tg5sPA+fCQ+T0O35VN873BLgTGz7bnHH9o8bnjwMA==");
+    
+    private final byte[] uaczo2 = Base64.decode(
+            "MIIEvTCCBDmgAwIBAgIDAYhwMA0GCyqGJAIBAQEBAwEBMIIBHjELMAkGA1UEBhMC" +
+            "VUExKDAmBgNVBAgMH9Ca0LjRl9Cy0YHRjNC60LAg0L7QsdC70LDRgdGC0YwxETAP" +
+            "BgNVBAcMCNCa0LjRl9CyMUkwRwYDVQQKDEDQptC10L3RgtGA0LDQu9GM0L3QuNC5" +
+            "INC30LDRgdCy0ZbQtNGH0YPQstCw0LvRjNC90LjQuSDQvtGA0LPQsNC9MTUwMwYD" +
+            "VQQLDCzQotC10YXQvdC+0LvQvtCz0ZbRh9C90LjQuSDRhtC10L3RgtGAINCm0JfQ" +
+            "njE1MDMGA1UEAwws0KPQutGA0LDRl9C90LAsINCm0JfQniAvIFVrcmFpbmUsIENl" +
+            "bnRyYWwgQ0ExGTAXBgNVBAUTEFVBLTM3MjAwMzAzLTIwMTAwHhcNMDYxMjI1MDc0" +
+            "MDU4WhcNMTExMjI0MDc0MDU4WjCCAR4xCzAJBgNVBAYTAlVBMSgwJgYDVQQIDB/Q" +
+            "mtC40ZfQstGB0YzQutCwINC+0LHQu9Cw0YHRgtGMMREwDwYDVQQHDAjQmtC40ZfQ" +
+            "sjFJMEcGA1UECgxA0KbQtdC90YLRgNCw0LvRjNC90LjQuSDQt9Cw0YHQstGW0LTR" +
+            "h9GD0LLQsNC70YzQvdC40Lkg0L7RgNCz0LDQvTE1MDMGA1UECwws0KLQtdGF0L3Q" +
+            "vtC70L7Qs9GW0YfQvdC40Lkg0YbQtdC90YLRgCDQptCX0J4xNTAzBgNVBAMMLNCj" +
+            "0LrRgNCw0ZfQvdCwLCDQptCX0J4gLyBVa3JhaW5lLCBDZW50cmFsIENBMRkwFwYD" +
+            "VQQFExBVQS0zNzIwMDMwMy0yMDEwMIGdMGAGCyqGJAIBAQEBAwEBMFEGDSqGJAIB" +
+            "AQEBAwEBAgkEQKnW60XxPHCCgMSWeyMfXq32WOukwDcpHTjZa/Alyk4X+OlyDcYV" +
+            "tDool18Lwd6jZDi1ZOosF5/QEj5tuPrFeQQDOQAENlMfji/H5gxxL5TKtLMFv2X3" +
+            "0EJrj3orwGV0zEz+EgSChr+I8bsOrnfkr5UwMQIjGJOg1G/nYKOCARgwggEUMA8G" +
+            "A1UdEwEB/wQFMAMBAf8weQYDVR0gAQH/BG8wbTBeBgkqhiQCAQEBAgEwUTBPBggr" +
+            "BgEFBQcCARZDaHR0cDovL2N6by5nb3YudWEvY29udGVudC9ub3JtYXRpdmVfZG9j" +
+            "dW1lbnQvZ2VuZXJhbF9kb2MvcmVnQ1pPLnppcDALBgkqhiQCAQEBAgIwHgYIKwYB" +
+            "BQUHAQMBAf8EDzANMAsGCSqGJAIBAQECATAOBgNVHQ8BAf8EBAMCAcYwKQYDVR0O" +
+            "BCIEIPqbNt55OgWdLCn8hfuY9HJE3d3+DTTBlTJBN0nxog+mMCsGA1UdIwQkMCKA" +
+            "IPqbNt55OgWdLCn8hfuY9HJE3d3+DTTBlTJBN0nxog+mMA0GCyqGJAIBAQEBAwEB" +
+            "A28ABGx8QNaWcy0admsBt6iB0Vi+kAargzsQuoc/BThskYdxGNftLvYDPYxkEM2N" +
+            "GQ+9f1RJgCSNVRj3NhWoHhkqcL5R3gxAHie+a+zMqsX0258hGdT3MXkm0Syn/cNo" +
+            "sga4XzzvnVaas9vsPKMrZTQ=");
+    
+    private final byte[] uaczo3 = Base64.decode(
+            "MIIEtTCCBDGgAwIBAgIDAYisMA0GCyqGJAIBAQEBAwEBMIIBGjELMAkGA1UEBhMC" +
+            "VUExKDAmBgNVBAgMH9Ca0LjRl9Cy0YHRjNC60LAg0L7QsdC70LDRgdGC0YwxETAP" +
+            "BgNVBAcMCNCa0LjRl9CyMUkwRwYDVQQKDEDQptC10L3RgtGA0LDQu9GM0L3QuNC5" +
+            "INC30LDRgdCy0ZbQtNGH0YPQstCw0LvRjNC90LjQuSDQvtGA0LPQsNC9MTEwLwYD" +
+            "VQQLDCjQkNC00LzRltC90ZbRgdGC0YDQsNGC0L7RgCDQhtCi0KEg0KbQl9CeMTUw" +
+            "MwYDVQQDDCzQo9C60YDQsNGX0L3QsCwg0KbQl9CeIC8gVWtyYWluZSwgQ2VudHJh" +
+            "bCBDQTEZMBcGA1UEBRMQVUEtMDAwMTU2MjItMjAxMTAeFw0wNzEyMjAxMDAwMDBa" +
+            "Fw0xMjEyMTgxMDAwMDBaMIIBGjELMAkGA1UEBhMCVUExKDAmBgNVBAgMH9Ca0LjR" +
+            "l9Cy0YHRjNC60LAg0L7QsdC70LDRgdGC0YwxETAPBgNVBAcMCNCa0LjRl9CyMUkw" +
+            "RwYDVQQKDEDQptC10L3RgtGA0LDQu9GM0L3QuNC5INC30LDRgdCy0ZbQtNGH0YPQ" +
+            "stCw0LvRjNC90LjQuSDQvtGA0LPQsNC9MTEwLwYDVQQLDCjQkNC00LzRltC90ZbR" +
+            "gdGC0YDQsNGC0L7RgCDQhtCi0KEg0KbQl9CeMTUwMwYDVQQDDCzQo9C60YDQsNGX" +
+            "0L3QsCwg0KbQl9CeIC8gVWtyYWluZSwgQ2VudHJhbCBDQTEZMBcGA1UEBRMQVUEt" +
+            "MDAwMTU2MjItMjAxMTCBnTBgBgsqhiQCAQEBAQMBATBRBg0qhiQCAQEBAQMBAQIJ" +
+            "BECp1utF8TxwgoDElnsjH16t9ljrpMA3KR042WvwJcpOF/jpcg3GFbQ6KJdfC8He" +
+            "o2Q4tWTqLBef0BI+bbj6xXkEAzkABDajkfNBomH27xjY1N7wklRvY5E0ZFaU53Fh" +
+            "y4jUY+G4AUhEHHCkTvUja8CUxPqtb9KyfuZELVOjggEYMIIBFDAPBgNVHRMBAf8E" +
+            "BTADAQH/MHkGA1UdIAEB/wRvMG0wXgYJKoYkAgEBAQIBMFEwTwYIKwYBBQUHAgEW" +
+            "Q2h0dHA6Ly9jem8uZ292LnVhL2NvbnRlbnQvbm9ybWF0aXZlX2RvY3VtZW50L2dl" +
+            "bmVyYWxfZG9jL3JlZ0NaTy56aXAwCwYJKoYkAgEBAQICMB4GCCsGAQUFBwEDAQH/" +
+            "BA8wDTALBgkqhiQCAQEBAgEwDgYDVR0PAQH/BAQDAgHGMCkGA1UdDgQiBCC+e+cA" +
+            "bIdAgQkh6q3dUAZjPrNhwDDGrVnLNP6telmoCjArBgNVHSMEJDAigCC+e+cAbIdA" +
+            "gQkh6q3dUAZjPrNhwDDGrVnLNP6telmoCjANBgsqhiQCAQEBAQMBAQNvAARsyq9i" +
+            "ajEgdBh5mPUZefcLY56AIRWqmsJsWuZuUbCa5oQXRH5iCRa4PSvs8v6zHAKKlMgK" +
+            "gaoY6jywqmwiMlylbSgo/A0HKdCFnUUl7S8yjE4054MSSIjb2R0c2pmqmwtU25JB" +
+            "/MkNbe77Uzka");
+    
+    private final byte[] uaczo4 = Base64.decode(
+            "MIIEKzCCA6egAwIBAgIBATANBgsqhiQCAQEBAQMBATCBzDFJMEcGA1UECwxA0KbQ" +
+            "tdC90YLRgNCw0LvRjNC90LjQuSDQt9Cw0YHQstGW0LTRh9GD0LLQsNC70YzQvdC4" +
+            "0Lkg0L7RgNCz0LDQvTE1MDMGA1UEAwws0KPQutGA0LDRl9C90LAsINCm0JfQniAv" +
+            "IFVrcmFpbmUsIENlbnRyYWwgQ0ExCzAJBgNVBAYTAlVBMREwDwYDVQQHDAjQmtC4" +
+            "0ZfQsjEoMCYGA1UECAwf0JrQuNGX0LLRgdGM0LrQsCDQvtCx0LvQsNGB0YLRjDAe" +
+            "Fw0wNTEyMjMyMzAxMDFaFw0xMDEyMjMyMzAxMDFaMIHMMUkwRwYDVQQLDEDQptC1" +
+            "0L3RgtGA0LDQu9GM0L3QuNC5INC30LDRgdCy0ZbQtNGH0YPQstCw0LvRjNC90LjQ" +
+            "uSDQvtGA0LPQsNC9MTUwMwYDVQQDDCzQo9C60YDQsNGX0L3QsCwg0KbQl9CeIC8g" +
+            "VWtyYWluZSwgQ2VudHJhbCBDQTELMAkGA1UEBhMCVUExETAPBgNVBAcMCNCa0LjR" +
+            "l9CyMSgwJgYDVQQIDB/QmtC40ZfQstGB0YzQutCwINC+0LHQu9Cw0YHRgtGMMIIB" +
+            "UTCCARIGCyqGJAIBAQEBAwEBMIIBATCBvDAPAgIBrzAJAgEBAgEDAgEFAgEBBDbz" +
+            "ykDGaaTaFzFJyhLDLa4Ya1Osa8Y2WZferq6K0tiI+b/VNAFpTvnEJz2M/m3Cj3Bq" +
+            "D0kQzgMCNj///////////////////////////////////7oxdUWACajApyTwL4Gq" +
+            "ih/Lr4DZDHqVEQUEzwQ2lqAgR9+skUI33jGNgj2Qsh9+3x7so5koelwr4fy89k/x" +
+            "5eqNSvFZ/1fPHfXz+iz7PmFIhr15BECLwhftNllK8B904j3LmmBY/teFIBSrw2lL" +
+            "CKc1nWIez+h/01q0GSxgeuwU0oOw9WmwlkGuj13DJ8cSmm70jTULAzkABDa6vb3U" +
+            "VIxZr2cXcVSvKkPM65Ii2+8biqyoH8i9e0NKJu+IhjDvUrvzlr8U+ywuf5bpSj4N" +
+            "fEmjezB5MA4GA1UdDwEB/wQEAwIBxjAPBgNVHRMBAf8EBTADAQH/MCsGA1UdIwQk" +
+            "MCKAIOPEn/xcXE6VGFNB8vbfXS1XMYYzAa4ML8opsOslTHJNMCkGA1UdDgQiBCDj" +
+            "xJ/8XFxOlRhTQfL2310tVzGGMwGuDC/KKbDrJUxyTTANBgsqhiQCAQEBAQMBAQNv" +
+            "AARsh0unjBfQoINx2rXAJggrBdoRsCouw8lN771DhcuUrlQUuEEQHTaZrQoYbECu" +
+            "AGfsxfTyldQDEOVzD/Uq8Xh4gIHuSqki9mRSjMR19MQtTKRmI9TRHIeTdIZ6l3P7" +
+            "jFfGJvTP0E9NYSolx+kM");
 
     private PublicKey dudPublicKey = new PublicKey() 
     {
@@ -1631,7 +1747,7 @@ public class CertTest
 
         ECParameterSpec spec = new ECParameterSpec(
             curve,
-            curve.decodePoint(Hex.decode("02C6858E06B70404E9CD9E3ECB662395B4429C648139053FB521F828AF606B4D3DBAA14B5E77EFE75928FE1DC127A2FFA8DE3348B3C1856A429BF97E7E31C2E5BD66")), // G
+            curve.decodePoint(Hex.decode("0200C6858E06B70404E9CD9E3ECB662395B4429C648139053FB521F828AF606B4D3DBAA14B5E77EFE75928FE1DC127A2FFA8DE3348B3C1856A429BF97E7E31C2E5BD66")), // G
             new BigInteger("01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409", 16)); // n
 
         ECPrivateKeySpec privKeySpec = new ECPrivateKeySpec(
@@ -1639,7 +1755,7 @@ public class CertTest
             spec);
 
         ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(
-            curve.decodePoint(Hex.decode("026BFDD2C9278B63C92D6624F151C9D7A822CC75BD983B17D25D74C26740380022D3D8FAF304781E416175EADF4ED6E2B47142D2454A7AC7801DD803CF44A4D1F0AC")), // Q
+            curve.decodePoint(Hex.decode("02006BFDD2C9278B63C92D6624F151C9D7A822CC75BD983B17D25D74C26740380022D3D8FAF304781E416175EADF4ED6E2B47142D2454A7AC7801DD803CF44A4D1F0AC")), // Q
             spec);
 
         //
@@ -1847,7 +1963,7 @@ public class CertTest
         Vector extOids = new Vector();
         Vector extValues = new Vector();
         
-        CRLReason crlReason = new CRLReason(CRLReason.privilegeWithdrawn);
+        CRLReason crlReason = CRLReason.lookup(CRLReason.privilegeWithdrawn);
         
         try
         {
@@ -1932,7 +2048,7 @@ public class CertTest
         Vector extOids = new Vector();
         Vector extValues = new Vector();
         
-        CRLReason crlReason = new CRLReason(CRLReason.privilegeWithdrawn);
+        CRLReason crlReason = CRLReason.lookup(CRLReason.privilegeWithdrawn);
         
         try
         {
@@ -2369,12 +2485,12 @@ public class CertTest
         CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC");
 
         X509Certificate cert = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(info.getEncoded()));
-        if (cert == null || !areEqual(cert.getEncoded(), certs.get(0).getDERObject().getEncoded()))
+        if (cert == null || !areEqual(cert.getEncoded(), certs.get(0).toASN1Primitive().getEncoded()))
         {
             fail("PKCS7 cert not read");
         }
         X509CRL crl = (X509CRL)cf.generateCRL(new ByteArrayInputStream(info.getEncoded()));
-        if (crl == null || !areEqual(crl.getEncoded(), crls.get(0).getDERObject().getEncoded()))
+        if (crl == null || !areEqual(crl.getEncoded(), crls.get(0).toASN1Primitive().getEncoded()))
         {
             fail("PKCS7 crl not read");
         }
@@ -2483,10 +2599,44 @@ public class CertTest
             new X509KeyUsage(X509KeyUsage.encipherOnly));
         certGen.addExtension("2.5.29.37", true,
             new DERSequence(KeyPurposeId.anyExtendedKeyUsage));
-        certGen.addExtension("2.5.29.17", true,
+        certGen.addExtension(Extension.subjectAlternativeName.getId(), true,
             new GeneralNames(new GeneralName(GeneralName.rfc822Name, "test@test.test")));
+        certGen.addExtension(Extension.issuerAlternativeName, false,
+            new GeneralNames(new GeneralName(GeneralName.directoryName, new X500Name("O=Test, OU=Testing, C=AU"))));
 
         X509Certificate baseCert = certGen.generate(privKey, "BC");
+
+        Collection names = baseCert.getSubjectAlternativeNames();
+
+        if (names.size() != 1)
+        {
+            fail("subject alt names size incorrect");
+        }
+
+        List name = (List)names.iterator().next();
+        if(!name.get(0).equals(Integers.valueOf(GeneralName.rfc822Name)))
+        {
+            fail("subject alt name type incorrect");
+        }
+
+        names = baseCert.getIssuerAlternativeNames();
+
+        if (names.size() != 1)
+        {
+            fail("issuer alt names size incorrect");
+        }
+
+        name = (List)names.iterator().next();
+        if(!name.get(0).equals(Integers.valueOf(GeneralName.directoryName)))
+        {
+            fail("issuer alt name type incorrect");
+        }
+
+        // check IETF output (reverse of default BC)
+        if (!name.get(1).equals("c=AU,ou=Testing,o=Test"))
+        {
+            fail("issuer alt name dir string incorrect");
+        }
 
         baseCert.verify(pubKey);
     }
@@ -2545,7 +2695,7 @@ public class CertTest
         certGen.setSignatureAlgorithm("MD5WithRSAEncryption");
         X509Certificate cert = certGen.generate(privKey, "BC");
 
-        X509CertificateStructure struct = X509CertificateStructure.getInstance(ASN1Object.fromByteArray(cert.getEncoded()));
+        X509CertificateStructure struct = X509CertificateStructure.getInstance(ASN1Primitive.fromByteArray(cert.getEncoded()));
 
         ASN1Encodable tbsCertificate = struct.getTBSCertificate();
         AlgorithmIdentifier sig = struct.getSignatureAlgorithm();
@@ -2596,9 +2746,67 @@ public class CertTest
         }
     }
 
+    private void testV1CRL()
+        throws Exception
+    {
+        byte[] certData = Streams.readAll(this.getClass().getResourceAsStream("ThawteSGCCA.cer"));
+        byte[] crlData = Streams.readAll(this.getClass().getResourceAsStream("ThawteSGCCA.crl"));
+
+        // verify CRL with default (JCE) provider
+        CertificateFactory jceFac = CertificateFactory.getInstance("X.509");
+
+        X509Certificate jceIssuer = (X509Certificate)
+            jceFac.generateCertificate(new ByteArrayInputStream(certData));
+
+        X509CRL jceCRL = (X509CRL)jceFac.generateCRL(new ByteArrayInputStream(crlData));
+
+        jceCRL.verify(jceIssuer.getPublicKey());
+
+
+        // verify CRL with BC provider
+        CertificateFactory bcFac = CertificateFactory.getInstance("X.509", "BC");
+
+        X509Certificate bcIssuer = (X509Certificate)
+            bcFac.generateCertificate(new ByteArrayInputStream(certData));
+
+        X509CRL bcCRL = (X509CRL)bcFac.generateCRL(new ByteArrayInputStream(crlData));
+
+        jceCRL.verify(bcIssuer.getPublicKey());
+
+        bcCRL.verify(bcIssuer.getPublicKey());
+    }
+
+    private void testCertPathEncAvailableTest()
+        throws Exception
+    {
+        CertificateFactory certFact = CertificateFactory.getInstance("X.509", "BC");
+
+        Iterator it = certFact.getCertPathEncodings();
+
+        if (!"PkiPath".equals(it.next()))
+        {
+            fail("available enc 1 wrong");
+        }
+        if (!"PEM".equals(it.next()))
+        {
+            fail("available enc 2 wrong");
+        }
+        if (!"PKCS7".equals(it.next()))
+        {
+            fail("available enc 3 wrong");
+        }
+
+        if (it.hasNext())
+        {
+            fail("wrong number of encodings");
+        }
+    }
+
     public void performTest()
         throws Exception
     {
+        testV1CRL();
+
         checkCertificate(1, cert1);
         checkCertificate(2, cert2);
         checkCertificate(3, cert3);
@@ -2620,7 +2828,22 @@ public class CertTest
         checkSelfSignedCertificate(15, gost34102001base);
         checkSelfSignedCertificate(16, gost341094A);
         checkSelfSignedCertificate(17, gost341094B);
-        checkSelfSignedCertificate(17, gost34102001A);
+        checkSelfSignedCertificate(18, gost34102001A);
+
+        try
+        {
+            checkSelfSignedCertificate(19, uaczo1);
+            checkSelfSignedCertificate(20, uaczo2);
+            checkSelfSignedCertificate(21, uaczo3);
+            checkSelfSignedCertificate(22, uaczo4);
+        }
+        catch (Exception e)
+        {
+            if (e instanceof NoSuchAlgorithmException)
+            {
+                // ignore - only valid for jdk1.5+
+            }
+        }
 
         checkCRL(1, crl1);
 
@@ -2654,6 +2877,8 @@ public class CertTest
         testNullDerNullCert();
 
         checkCertificate(18, emptyDNCert);
+
+        testCertPathEncAvailableTest();
     }
 
     public static void main(

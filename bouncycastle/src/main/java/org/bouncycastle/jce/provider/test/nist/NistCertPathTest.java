@@ -22,6 +22,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,9 +32,9 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.x509.extension.X509ExtensionUtil;
 
 /**
@@ -695,7 +696,8 @@ public class NistCertPathTest
         
         params.addCertStore(store);
         params.setRevocationEnabled(true);
-        
+        params.setDate(new GregorianCalendar(2010, 1, 1).getTime());
+
         if (policies != null)
         {
             params.setExplicitPolicyRequired(true);
@@ -755,6 +757,7 @@ public class NistCertPathTest
         }
 
         builderParams.addCertStore(store);
+        builderParams.setDate(new GregorianCalendar(2010, 1, 1).getTime());
 
         try
         {
@@ -827,13 +830,13 @@ public class NistCertPathTest
         throws Exception
     {
         X509Certificate cert = loadCert(trustAnchorName);
-        byte[]          extBytes = cert.getExtensionValue(X509Extensions.NameConstraints.getId());
+        byte[]          extBytes = cert.getExtensionValue(X509Extension.nameConstraints.getId());
         
         if (extBytes != null)
         {
             ASN1Encodable extValue = X509ExtensionUtil.fromExtensionValue(extBytes);
             
-            return new TrustAnchor(cert, extValue.getDEREncoded());
+            return new TrustAnchor(cert, extValue.toASN1Primitive().getEncoded(ASN1Encoding.DER));
         }
         
         return new TrustAnchor(cert, null);
