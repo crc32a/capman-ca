@@ -31,4 +31,8 @@ public class Debug {
             return st;
         }
     }
+
+    public static int nop(){
+        return 0;
+    }
 }

@@ -2,7 +2,7 @@ package org.rackspace.capman.tools.ca.gui;
 
 import org.rackspace.capman.tools.ca.gui.utils.BytesList;
 import java.net.MalformedURLException;
-import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
+import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import org.rackspace.capman.tools.util.StaticHelpers;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Date;

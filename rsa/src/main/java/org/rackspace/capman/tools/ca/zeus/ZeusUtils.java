@@ -1,6 +1,6 @@
 package org.rackspace.capman.tools.ca.zeus;
 
-import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
+import org.bouncycastle.jce.provider.HackedProviderAccessor;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;

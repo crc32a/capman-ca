@@ -27,7 +27,7 @@ import org.rackspace.capman.tools.ca.exceptions.NoSuchAlgorithmException;
 import org.rackspace.capman.tools.ca.primitives.Debug;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
-import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
+import org.bouncycastle.jce.provider.HackedProviderAccessor;
 
 public class RSAKeyUtils {
 

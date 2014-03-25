@@ -24,6 +24,11 @@ public class PrivKeyReaderTest {
     public static final BigInteger N = new BigInteger("99675546580362630388047288418776497546266544929459382202058935599504667617414334140172749425887382259824160592926415237189152946580311836277111345900797978984411591142653581039172617197568536529428300533573629398538360218288731002978667356038717342815557755512971914108459228431700269551202672244605971289509");
     public static final BigInteger E = new BigInteger("65537");
     public static final BigInteger D = new BigInteger("62682575900072713868699832840860194544636302893369226209250606097288331342357971333034464422212224734980132668215958581953915338516577994420325419380738927356749871388340080582299407690720186068868573272526535670811712614048279201687465492856991784602414667635821170594273503959802822245953527147728281671425");
+    public static final BigInteger P = new BigInteger("10416975775681776573683622640627810062927905134632312688212922050663194957250580165688736839841190064663217199069751695881119648388779265248723767725560837");
+    public static final BigInteger Q = new BigInteger("9568568529558570901150809929939323940811805116535473306686223209890249738375075470027437543280547984234314290531132206094218112987154888452086843282951457");
+    public static final BigInteger dP = new BigInteger("2141029703807521406953604787665846797193018938363020155182996780786933122879675829406705910137187087767422000876902442033029916898803068539913471035648633");
+    public static final BigInteger dQ = new BigInteger("753957121727275586821837778326848479948001306464885242774732695360990732700137170258353105474781417986572455197869397626845023963038708576324464939090305");
+    public static final BigInteger qInv = new BigInteger("1920262295371760253816697961497307107449254580847738390392087923031165973440948157442558264223216512537798514270005157103011732760388324435035033974720227");
     public static final String pkcs1 = "-----BEGIN RSA PRIVATE KEY-----\n"
             + "MIICWwIBAAKBgQCN8VQgtq8dik08rrRyxCqXOf8JFPIZCdZUqmyqCbLguX8NuDc8\n"
             + "PzpiQ0iQRxdz3+2eplVsvgSlx4YifJoJCfQmPexca1Mv4ZD7gcJIXJpj5SjvSTpn\n"
@@ -85,7 +90,6 @@ public class PrivKeyReaderTest {
             + "ZyNrSMQvBGyr/hmhr71BAkEArMvC4eVA9MRXfpPclDgSpSGUpiklbaeZB/jbpi4Q\n"
             + "V0ozFm1Kecdu1Le+mp5Mad3qktlMB7Euifsj8QlT2KN5AQ==\n"
             + "-----END RSA PRIVATE KEY-----\n";
-
     public static final String key2048bit = "-----BEGIN RSA PRIVATE KEY-----\n"
             + "MIIEpQIBAAKCAQEAo5ZrBNCUIeKU8gfptbq9CpkUeZwRasJmij4lGJBaRrTeOpeX\n"
             + "z6lMEqiN49+UvE3NF6LuMCx/sb+/gAU+BGS/pAauJ/TbIESHF4dDzfUMr5nOk0Ae\n"
@@ -159,7 +163,26 @@ public class PrivKeyReaderTest {
         Assert.assertEquals(pk1.getD(), pk8.getD());
         Assert.assertEquals(pk1.getdP(), pk8.getdP());
         Assert.assertEquals(pk1.getdQ(), pk8.getdQ());
-        Assert.assertEquals(pk1.getQinv(), pk8.getQinv());
+        Assert.assertEquals(pk1.getQInv(), pk8.getQInv());
+
+        Assert.assertEquals(pk1.getN(), N);
+        Assert.assertEquals(pk1.getP(), P);
+        Assert.assertEquals(pk1.getQ(), Q);
+        Assert.assertEquals(pk1.getE(), E);
+        Assert.assertEquals(pk1.getD(), D);
+        Assert.assertEquals(pk1.getdP(), dP);
+        Assert.assertEquals(pk1.getdQ(), dQ);
+        Assert.assertEquals(pk1.getQInv(), qInv);
+
+        Assert.assertEquals(pk8.getN(), N);
+        Assert.assertEquals(pk8.getP(), P);
+        Assert.assertEquals(pk8.getQ(), Q);
+        Assert.assertEquals(pk8.getE(), E);
+        Assert.assertEquals(pk8.getD(), D);
+        Assert.assertEquals(pk8.getdP(), dP);
+        Assert.assertEquals(pk8.getdQ(), dQ);
+        Assert.assertEquals(pk8.getQInv(), qInv);
+
     }
 
     public void pkcs8ShouldBeCodedbackToPkcs1ForZeus() throws PrivKeyDecodeException, PemException {
