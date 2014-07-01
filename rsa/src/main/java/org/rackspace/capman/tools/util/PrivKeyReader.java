@@ -59,6 +59,37 @@ public class PrivKeyReader {
         return privKey.getCrtCoefficient();
     }
 
+    private static String biToHex(BigInteger bi) {
+        if (bi == null) {
+            return null;
+        }
+        return bi.toString(16);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        String n = biToHex(privKey.getModulus());
+        String p = biToHex(privKey.getPrimeP());
+        String q = biToHex(privKey.getPrimeQ());
+        String e = biToHex(privKey.getPublicExponent());
+        String d = biToHex(privKey.getPrivateExponent());
+        String dp = biToHex(privKey.getPrimeExponentP());
+        String dq = biToHex(privKey.getPrimeExponentQ());
+        String qInv = biToHex(privKey.getCrtCoefficient());
+        sb.append("{ n=").append(n).
+                append("p=").append(p).
+                append(", q=").append(q).
+                append(", e=").append(e).
+                append(", d=").append(d).
+                append(", dp=").append(dp).
+                append(", dq=").append(dq).
+                append(", qInv=").append(qInv).
+                append("}");
+
+        return sb.toString();
+    }
+
     public BigInteger getT() {
         return privKey.getPrimeP().subtract(BigInteger.ONE).
                 multiply(privKey.getPrimeQ().
@@ -114,6 +145,5 @@ public class PrivKeyReader {
         }
         String out = StaticHelpers.bytes2hex(keyIdBytes);
         return out;
-
     }
 }

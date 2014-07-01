@@ -220,12 +220,16 @@ public class RSAKeyUtils {
     }
 
     public static String objToString(Object obj){
+       StringBuilder sb = new StringBuilder();
         if(obj instanceof JCERSAPublicKey){
             JCERSAPublicKey jPubKey = (JCERSAPublicKey)obj;
             String exp = jPubKey.getPublicExponent().toString(16);
             String mod = jPubKey.getModulus().toString(16);
+            sb.append("Modulus: ").append(mod).append("\ne: ").append(exp).append("\n");
+        }else if(obj instanceof JCERSAPrivateCrtKey){
+
         }
-        return "";
+        return sb.toString();
     }
 
     public static String KeyPairToString(KeyPair kp){
