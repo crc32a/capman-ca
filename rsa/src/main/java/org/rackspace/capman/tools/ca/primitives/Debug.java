@@ -19,6 +19,40 @@ public class Debug {
         return out;
     }
 
+    public static String getExtendedStackTrace(Throwable th) {
+        Throwable t;
+        StringBuilder sb = new StringBuilder();
+        Throwable currThrowable;
+        String msg;
+
+        t = th;
+        while (t != null) {
+            if (t instanceof Throwable) {
+                currThrowable = (Throwable) t;
+                sb.append(String.format("\"%s\":\"%s\"\n", currThrowable.getClass().getName(), currThrowable.getMessage()));
+                for (StackTraceElement se : currThrowable.getStackTrace()) {
+                    sb.append(String.format("%s\n", se.toString()));
+                }
+                sb.append("\nCausing Exception: ");
+                t = t.getCause();
+            } else {
+                break;
+            }
+        }
+        return sb.toString();
+    }
+
+    public static long nowMillis() {
+        return System.currentTimeMillis();
+    }
+
+    public static double getEpochSeconds() {
+        long millisLong = System.currentTimeMillis();
+        double millisDouble = (double) millisLong;
+        double seconds = millisDouble * 0.001;
+        return seconds;
+    }
+
     public static String findClassPath(Class<?> cls) {
         try {
             String className = cls.getName();

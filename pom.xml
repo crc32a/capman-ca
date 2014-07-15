@@ -11,6 +11,7 @@
         <module>bouncycastle</module>
         <module>rsa</module>
         <module>gui</module>
+        <module>test_subjaltname</module>
     </modules>
 
     <dependencies>
