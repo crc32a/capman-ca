@@ -24,7 +24,7 @@ import org.rackspace.capman.tools.ca.primitives.Debug;
 
 public class MainTest {
 
-    private static final long oneMonthMillis = 24L * 60 * 60L * 1000L;
+    private static final long oneMonthMillis = 24L * 60L * 60L * 1000L;
 
     public static void main(String[] args) {
         List<GeneralName> generalNamesList = new ArrayList<GeneralName>();
