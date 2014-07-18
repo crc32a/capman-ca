@@ -55,8 +55,8 @@ public class MainTest {
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName2.org"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName3.org"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName4.org"));
-            generalNamesList.add(new GeneralName(GeneralName.iPAddress, "127.0.0.1"));
-            generalNamesList.add(new GeneralName(GeneralName.iPAddress, "::1"));
+            generalNamesList.add(new GeneralName(GeneralName.iPAddress, "10.1.2.3"));
+            generalNamesList.add(new GeneralName(GeneralName.iPAddress, "0123:4567:89AB:CDEF:F7B3:D591:E6A2:C480"));
             generalNamesList.add(new GeneralName(GeneralName.uniformResourceIdentifier, "http://www.rackexp.org"));
             ASN1EncodableVector generalNamesVector = new ASN1EncodableVector();
             for (GeneralName gn : generalNamesList) {
