@@ -28,8 +28,8 @@ public class MainTest {
 
     public static void main(String[] args) {
         List<GeneralName> generalNamesList = new ArrayList<GeneralName>();
-        String cnFromSubject = "C=US,ST=Texas,L=SanAntonio,O=Rackspace Hosting,OU=Cloud LoadBalancing,CN=www.CNFromSubject.org";
-        String cnFromAltName = "C=US,ST=Texas,L=SanAntonio,O=Rackspace Hosting,OU=Cloud LoadBalancing,CN=";
+        String cnFromSubject = "C=US,ST=Texas,L=San Antonio,O=OpenStack Experiments,OU=Neutron Lbaas,CN=www.CNFromSubject.org";
+        String cnFromAltName = "C=US,ST=Texas,L=San Antonio,O=OpenStack Experiments,OU=Neutron Lbaas,CN=";
         try {
             long now = System.currentTimeMillis();
             System.out.printf("Generating 2048 bit key for demonstration\n");
@@ -50,14 +50,14 @@ public class MainTest {
             generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName1.com"));
             generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName2.com"));
             generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName3.com"));
-            generalNamesList.add(new GeneralName(GeneralName.rfc822Name, "carlos.garza@rackspace.com"));
+            generalNamesList.add(new GeneralName(GeneralName.rfc822Name, "noone@nowhere.org"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName1.org"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName2.org"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName3.org"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName4.org"));
             generalNamesList.add(new GeneralName(GeneralName.iPAddress, "10.1.2.3"));
             generalNamesList.add(new GeneralName(GeneralName.iPAddress, "0123:4567:89AB:CDEF:F7B3:D591:E6A2:C480"));
-            generalNamesList.add(new GeneralName(GeneralName.uniformResourceIdentifier, "http://www.rackexp.org"));
+            generalNamesList.add(new GeneralName(GeneralName.uniformResourceIdentifier, "http://www.example.com"));
             ASN1EncodableVector generalNamesVector = new ASN1EncodableVector();
             for (GeneralName gn : generalNamesList) {
                 generalNamesVector.add(gn);
