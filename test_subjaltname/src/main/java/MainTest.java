@@ -58,6 +58,7 @@ public class MainTest {
             generalNamesList.add(new GeneralName(GeneralName.iPAddress, "10.1.2.3"));
             generalNamesList.add(new GeneralName(GeneralName.iPAddress, "0123:4567:89AB:CDEF:F7B3:D591:E6A2:C480"));
             generalNamesList.add(new GeneralName(GeneralName.uniformResourceIdentifier, "http://www.example.com"));
+            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName4.com"));
             ASN1EncodableVector generalNamesVector = new ASN1EncodableVector();
             for (GeneralName gn : generalNamesList) {
                 generalNamesVector.add(gn);
