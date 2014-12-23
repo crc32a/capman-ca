@@ -24,7 +24,8 @@ import org.rackspace.capman.tools.ca.primitives.Debug;
 
 public class MainTest {
 
-    private static final long oneMonthMillis = 24L * 60L * 60L * 1000L;
+    private static final long oneMonth = 31L * 24L * 60L * 60L * 1000L;
+    private static final long eightYears = 8L * 365L * 24L * 60L * 60L * 1000L;
 
     public static void main(String[] args) {
         List<GeneralName> generalNamesList = new ArrayList<GeneralName>();
@@ -38,8 +39,8 @@ public class MainTest {
             System.err.printf("Generating certificate\n");
             X509V3CertificateGenerator cg = new X509V3CertificateGenerator();
             cg.setSerialNumber(BigInteger.valueOf(System.currentTimeMillis()));
-            cg.setNotBefore(new Date(now - oneMonthMillis));
-            cg.setNotAfter(new Date(now + oneMonthMillis));
+            cg.setNotBefore(new Date(now - oneMonth));
+            cg.setNotAfter(new Date(now + eightYears));
             cg.setSubjectDN(new X509Name(cnFromSubject));
             cg.setIssuerDN(new X509Name(cnFromSubject));
             cg.setPublicKey(kp.getPublic());
