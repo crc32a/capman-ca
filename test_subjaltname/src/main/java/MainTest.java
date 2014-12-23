@@ -1,10 +1,12 @@
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERSequence;
@@ -26,11 +28,14 @@ public class MainTest {
 
     private static final long oneMonth = 31L * 24L * 60L * 60L * 1000L;
     private static final long eightYears = 8L * 365L * 24L * 60L * 60L * 1000L;
+    private static final Random rnd = new SecureRandom();
 
     public static void main(String[] args) {
         List<GeneralName> generalNamesList = new ArrayList<GeneralName>();
         String cnFromSubject = "C=US,ST=Texas,L=San Antonio,O=OpenStack Experiments,OU=Neutron Lbaas,CN=www.CNFromSubject.org";
         String cnFromAltName = "C=US,ST=Texas,L=San Antonio,O=OpenStack Experiments,OU=Neutron Lbaas,CN=";
+        byte[] serialBits = new byte[128];
+        rnd.nextBytes(serialBits);
         try {
             long now = System.currentTimeMillis();
             System.out.printf("Generating 2048 bit key for demonstration\n");
@@ -38,7 +43,7 @@ public class MainTest {
             System.err.printf("Key generated\n%s\n", PemUtils.toPemString(kp));
             System.err.printf("Generating certificate\n");
             X509V3CertificateGenerator cg = new X509V3CertificateGenerator();
-            cg.setSerialNumber(BigInteger.valueOf(System.currentTimeMillis()));
+            cg.setSerialNumber(new BigInteger(serialBits).abs());
             cg.setNotBefore(new Date(now - oneMonth));
             cg.setNotAfter(new Date(now + eightYears));
             cg.setSubjectDN(new X509Name(cnFromSubject));
