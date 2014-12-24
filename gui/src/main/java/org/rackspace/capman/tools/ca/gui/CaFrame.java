@@ -212,11 +212,19 @@ public class CaFrame extends javax.swing.JFrame {
         jLabel22 = new javax.swing.JLabel();
         urlBarTextField = new javax.swing.JTextField();
         fetchServerCrtsButton = new javax.swing.JButton();
+        x509InspectTab = new javax.swing.JPanel();
+        x509InpectorPanel = new javax.swing.JPanel();
+        inspectX509Button = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        X509InspectFN = new javax.swing.JTextField();
+        jButton3 = new javax.swing.JButton();
+        x509InspectorPane = new javax.swing.JScrollPane();
+        x509InspectorMessagePane = new javax.swing.JTextPane();
         debugTab = new javax.swing.JPanel();
         debugPanel = new javax.swing.JPanel();
         clearDebugButton = new javax.swing.JButton();
         debugStateButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        debugScrollPane1 = new javax.swing.JScrollPane();
         debugMessagesPane = new javax.swing.JTextPane();
         setMysteryFileButton = new javax.swing.JButton();
         mysteryFN = new javax.swing.JTextField();
@@ -504,7 +512,7 @@ public class CaFrame extends javax.swing.JFrame {
             csrGenTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(csrGenTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(csrSubjectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(csrSubjectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(csrOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(154, Short.MAX_VALUE))
@@ -1153,13 +1161,13 @@ public class CaFrame extends javax.swing.JFrame {
                         .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
                                 .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(loadCrtPathCrtsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
-                                    .addComponent(loadCrtPathMapButton, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE))
+                                    .addComponent(loadCrtPathCrtsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 185, Short.MAX_VALUE)
+                                    .addComponent(loadCrtPathMapButton, javax.swing.GroupLayout.DEFAULT_SIZE, 185, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                     .addComponent(clearCertPathCrtsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(clearCrtPathMapButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE)))
-                            .addComponent(displayCrtHashCodeButton, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE))
+                            .addComponent(displayCrtHashCodeButton, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE))
                         .addGroup(loadX509MapsBorderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1167,7 +1175,7 @@ public class CaFrame extends javax.swing.JFrame {
                                     .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
                                         .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(crtChainerCountTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 167, Short.MAX_VALUE)
+                                        .addComponent(crtChainerCountTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(loadChainerButton, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1175,7 +1183,7 @@ public class CaFrame extends javax.swing.JFrame {
                                     .addGroup(loadX509MapsBorderLayout.createSequentialGroup()
                                         .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(crtsInRootCAs, javax.swing.GroupLayout.DEFAULT_SIZE, 167, Short.MAX_VALUE)
+                                        .addComponent(crtsInRootCAs, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(loadRootCAsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1188,7 +1196,7 @@ public class CaFrame extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(loadImdsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(clearImdsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)))))
+                                .addComponent(clearImdsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         loadX509MapsBorderLayout.setVerticalGroup(
@@ -1362,6 +1370,82 @@ public class CaFrame extends javax.swing.JFrame {
 
         appTabs.addTab("URLs", urlTab);
 
+        x509InpectorPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("X509 Inspector"));
+
+        inspectX509Button.setText("Inspect");
+
+        jButton2.setText("Clear ");
+
+        jButton3.setText("Choose X509 File");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
+        x509InspectorMessagePane.setBackground(new java.awt.Color(0, 0, 0));
+        x509InspectorMessagePane.setEditable(false);
+        x509InspectorMessagePane.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
+        x509InspectorMessagePane.setForeground(new java.awt.Color(0, 255, 0));
+        x509InspectorPane.setViewportView(x509InspectorMessagePane);
+
+        javax.swing.GroupLayout x509InpectorPanelLayout = new javax.swing.GroupLayout(x509InpectorPanel);
+        x509InpectorPanel.setLayout(x509InpectorPanelLayout);
+        x509InpectorPanelLayout.setHorizontalGroup(
+            x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(x509InpectorPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, x509InpectorPanelLayout.createSequentialGroup()
+                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(inspectX509Button, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(20, 20, 20)
+                        .addComponent(X509InspectFN, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+            .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(x509InpectorPanelLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(x509InspectorPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1240, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+        x509InpectorPanelLayout.setVerticalGroup(
+            x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(x509InpectorPanelLayout.createSequentialGroup()
+                .addGap(580, 580, 580)
+                .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(X509InspectFN, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton3)
+                    .addComponent(inspectX509Button))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton2)
+                .addContainerGap(28, Short.MAX_VALUE))
+            .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(x509InpectorPanelLayout.createSequentialGroup()
+                    .addComponent(x509InspectorPane, javax.swing.GroupLayout.PREFERRED_SIZE, 556, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(124, Short.MAX_VALUE)))
+        );
+
+        javax.swing.GroupLayout x509InspectTabLayout = new javax.swing.GroupLayout(x509InspectTab);
+        x509InspectTab.setLayout(x509InspectTabLayout);
+        x509InspectTabLayout.setHorizontalGroup(
+            x509InspectTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(x509InspectTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(x509InpectorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        x509InspectTabLayout.setVerticalGroup(
+            x509InspectTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(x509InspectTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(x509InpectorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(118, Short.MAX_VALUE))
+        );
+
+        appTabs.addTab("X509 Inspector", x509InspectTab);
+
         debugPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Debug Messages"));
 
         clearDebugButton.setText("Clear Messages");
@@ -1380,9 +1464,9 @@ public class CaFrame extends javax.swing.JFrame {
 
         debugMessagesPane.setBackground(new java.awt.Color(0, 0, 0));
         debugMessagesPane.setEditable(false);
-        debugMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 14));
+        debugMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
         debugMessagesPane.setForeground(new java.awt.Color(0, 255, 0));
-        jScrollPane1.setViewportView(debugMessagesPane);
+        debugScrollPane1.setViewportView(debugMessagesPane);
 
         setMysteryFileButton.setText("Set Mystery File");
         setMysteryFileButton.addActionListener(new java.awt.event.ActionListener() {
@@ -1481,7 +1565,7 @@ public class CaFrame extends javax.swing.JFrame {
                         .addContainerGap())
                     .addGroup(debugPanelLayout.createSequentialGroup()
                         .addGroup(debugPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1240, Short.MAX_VALUE)
+                            .addComponent(debugScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1240, Short.MAX_VALUE)
                             .addGroup(debugPanelLayout.createSequentialGroup()
                                 .addComponent(setMysteryFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1500,7 +1584,7 @@ public class CaFrame extends javax.swing.JFrame {
         debugPanelLayout.setVerticalGroup(
             debugPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(debugPanelLayout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 491, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(debugScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 491, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(debugPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(setMysteryFileButton)
@@ -2501,6 +2585,10 @@ public class CaFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_wastBytesButtonActionPerformed
 
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        setFileName(X509InspectFN);
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     private void displayX509CertificateObject(X509CertificateObject x509obj) {
         try {
             X509Inspector xi = new X509Inspector(x509obj);
@@ -2540,6 +2628,7 @@ public class CaFrame extends javax.swing.JFrame {
         x509Chainer = new X509Chainer();
         dbg = new CaTextPane(debugMessagesPane);
         pth = new CaTextPane(crtPathMessagesPane);
+        xip = new CaTextPane(x509InspectorMessagePane);
         rootCAs = new HashSet<X509Certificate>();
         imds = new HashSet<X509Certificate>();
         byteList = new BytesList();
@@ -2593,6 +2682,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton GenerateCsrButton;
     private javax.swing.JButton MultiParseFileButton;
     private javax.swing.JRadioButton PKIXValidationRadio;
+    private javax.swing.JTextField X509InspectFN;
     private javax.swing.JTabbedPane appTabs;
     private javax.swing.JButton buildNieveChainButton;
     private javax.swing.JButton buildPXIXPathButton;
@@ -2639,6 +2729,7 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JPanel csrSubjectPanel;
     private javax.swing.JTextPane debugMessagesPane;
     private javax.swing.JPanel debugPanel;
+    private javax.swing.JScrollPane debugScrollPane1;
     private javax.swing.JButton debugStateButton;
     private javax.swing.JPanel debugTab;
     private javax.swing.JButton displayCrtHashCodeButton;
@@ -2648,10 +2739,13 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton freeWatedBytesButton;
     private javax.swing.JButton genKeyButton;
     private javax.swing.JButton identifyFileButton;
+    private javax.swing.JButton inspectX509Button;
     private javax.swing.JButton invokeGC;
     private javax.swing.JCheckBox isSerialNumberSpecified;
     private javax.swing.JTextField issuerCertFN;
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -2676,7 +2770,6 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -2732,6 +2825,10 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JTextField vkcKeyFN;
     private javax.swing.JButton wastBytesButton;
     private javax.swing.JTextField wasteBytesTextField;
+    private javax.swing.JPanel x509InpectorPanel;
+    private javax.swing.JPanel x509InspectTab;
+    private javax.swing.JTextPane x509InspectorMessagePane;
+    private javax.swing.JScrollPane x509InspectorPane;
     private javax.swing.JPanel x509OptionsPanel;
     // End of variables declaration//GEN-END:variables
     private static final int SB_INIT_CAPACITY = 4096;
@@ -2743,6 +2840,7 @@ public class CaFrame extends javax.swing.JFrame {
     private X509Chainer x509Chainer;
     private CaTextPane dbg;
     private CaTextPane pth;
+    private CaTextPane xip;
     private Set<X509Certificate> rootCAs;
     private Set<X509Certificate> imds;
     private int nopCount = 0;
