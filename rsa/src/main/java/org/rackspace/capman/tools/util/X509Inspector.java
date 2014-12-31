@@ -8,8 +8,13 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.security.auth.x500.X500Principal;
@@ -31,6 +36,7 @@ import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import org.rackspace.capman.tools.ca.primitives.RsaConst;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderDecodeException;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderNoSuchExtensionException;
+import org.rackspace.capman.tools.ca.primitives.X509ExtContainer;
 import sun.security.provider.certpath.OCSP;
 import sun.security.x509.AccessDescription;
 import sun.security.x509.GeneralNameInterface;
@@ -152,6 +158,25 @@ public class X509Inspector {
             return null;
         }
         return cn;
+    }
+
+    public List<X509ExtContainer> getExtensions() {
+        int i;
+        StringBuilder sb = new StringBuilder();
+        List<X509ExtContainer> exts = new ArrayList<X509ExtContainer>();
+        Set<String> oids = x509obj.getCriticalExtensionOIDs();
+        for (String oid : oids) {
+            byte[] tmpPtr = x509obj.getExtensionValue(oid);
+            byte[] extValue = Arrays.copyOf(tmpPtr, tmpPtr.length);
+            exts.add(new X509ExtContainer(oid, true, extValue));
+        }
+        oids = x509obj.getNonCriticalExtensionOIDs();
+        for (String oid : oids) {
+            byte[] tmpPtr = x509obj.getExtensionValue(oid);
+            byte[] extValue = Arrays.copyOf(tmpPtr, tmpPtr.length);
+            exts.add(new X509ExtContainer(oid, false, extValue));
+        }
+        return exts;
     }
 
     public X509CertificateObject getX509CertificateObject() {

@@ -196,7 +196,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="csrSubjectPanel" min="-2" pref="263" max="-2" attributes="0"/>
+                      <Component id="csrSubjectPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="csrOptionsPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace pref="154" max="32767" attributes="0"/>
@@ -528,7 +528,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CSRSigningPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="321" max="32767" attributes="0"/>
+                      <EmptySpace pref="278" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -550,12 +550,16 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="caFilesPanel" alignment="0" max="32767" attributes="1"/>
+                              <Component id="x509OptionsPanel" alignment="1" max="32767" attributes="1"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="signCSRButton" min="-2" pref="285" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="selfSignCA" min="-2" pref="392" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="signCrtAsCA" pref="433" max="32767" attributes="1"/>
+                                      <Component id="selfSignCA" alignment="0" min="-2" pref="392" max="-2" attributes="1"/>
+                                      <Component id="clientAuthBox" alignment="0" pref="433" max="32767" attributes="1"/>
+                                  </Group>
                               </Group>
-                              <Component id="x509OptionsPanel" alignment="1" max="32767" attributes="1"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -568,11 +572,17 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="caFilesPanel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="signCSRButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="selfSignCA" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="selfSignCA" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="signCrtAsCA" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="signCSRButton" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="130" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="clientAuthBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="119" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -787,6 +797,25 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Self Sign csr and create CA Certificate"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="selfSignCAActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="signCrtAsCA">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Allow certificate to sign other Certs"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="signCrtAsCAActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="clientAuthBox">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="clientAuth cert"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clientAuthBoxActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>
@@ -1861,13 +1890,13 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="1" attributes="0">
-                                  <Component id="jButton3" min="-2" pref="183" max="-2" attributes="0"/>
+                                  <Component id="setX509InspectFileButton" min="-2" pref="183" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="inspectX509Button" min="-2" pref="105" max="-2" attributes="0"/>
                                   <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
                                   <Component id="X509InspectFN" min="-2" pref="920" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="jButton2" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
+                              <Component id="clearX509InspectorMessageButton" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1886,11 +1915,11 @@
                           <EmptySpace min="-2" pref="580" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="X509InspectFN" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jButton3" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="setX509InspectFileButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="inspectX509Button" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="jButton2" min="-2" max="-2" attributes="0"/>
+                          <Component id="clearX509InspectorMessageButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace pref="28" max="32767" attributes="0"/>
                       </Group>
                       <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
@@ -1907,20 +1936,26 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Inspect"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="inspectX509ButtonActionPerformed"/>
+                  </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="jButton2">
+                <Component class="javax.swing.JButton" name="clearX509InspectorMessageButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Clear "/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearX509InspectorMessageButtonActionPerformed"/>
+                  </Events>
                 </Component>
                 <Component class="javax.swing.JTextField" name="X509InspectFN">
                 </Component>
-                <Component class="javax.swing.JButton" name="jButton3">
+                <Component class="javax.swing.JButton" name="setX509InspectFileButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Choose X509 File"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton3ActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="setX509InspectFileButtonActionPerformed"/>
                   </Events>
                 </Component>
                 <Container class="javax.swing.JScrollPane" name="x509InspectorPane">

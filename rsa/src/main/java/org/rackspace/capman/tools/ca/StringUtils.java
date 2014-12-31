@@ -10,6 +10,11 @@ public class StringUtils {
 
     private static final String USASCII = "US-ASCII";
     private static final int PAGESIZE = 4096;
+    public static final String[] hexMap = new String[]{
+        "0", "1", "2", "3",
+        "4", "5", "6", "7",
+        "8", "9", "a", "b",
+        "c", "d", "e", "f"};
 
     public static String displayParsedInt(String strIn) {
         try {
@@ -98,7 +103,7 @@ public class StringUtils {
     }
 
     public static String asciiString(byte[] asciiBytes) {
-        if(asciiBytes == null){
+        if (asciiBytes == null) {
             return "";
         }
         try {
@@ -110,7 +115,7 @@ public class StringUtils {
 
     public static byte[] asciiBytes(String asciiStr) {
         byte[] out = null;
-        if(asciiStr==null){
+        if (asciiStr == null) {
             return new byte[0];
         }
         try {
@@ -135,19 +140,29 @@ public class StringUtils {
     }
 
     // LineWrapper for jython encodeing of Strings
-    public static String lineWrap(String strIn,int cols){
+    public static String lineWrap(String strIn, int cols) {
         StringBuilder sb = new StringBuilder(PAGESIZE);
         char[] strArray = strIn.toCharArray();
         int chrsLeftToWrite = strArray.length;
         int offset = 0;
-        while(chrsLeftToWrite > 0){
-            int nChrs = (chrsLeftToWrite<cols)?chrsLeftToWrite:cols;
+        while (chrsLeftToWrite > 0) {
+            int nChrs = (chrsLeftToWrite < cols) ? chrsLeftToWrite : cols;
             sb.append(strArray, offset, nChrs);
             offset += nChrs;
             chrsLeftToWrite -= nChrs;
-            if(chrsLeftToWrite>0){
+            if (chrsLeftToWrite > 0) {
                 sb.append('\n');
             }
+        }
+        return sb.toString();
+    }
+
+    public static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        int l = bytes.length;
+        for (int i = 0; i < l; i++) {
+            int val = 255&bytes[i];
+            sb.append(hexMap[val>>4]).append(hexMap[val&15]);
         }
         return sb.toString();
     }

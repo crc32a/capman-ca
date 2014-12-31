@@ -41,9 +41,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.rackspace.capman.tools.ca.PemUtils;
@@ -66,15 +72,13 @@ public class CertUtils {
         RsaConst.init();
     }
 
-    public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, int days, BigInteger serial) throws RsaException {
-        long nowMillis = System.currentTimeMillis();
-        Date notBefore = new Date(nowMillis);
-        Date notAfter = new Date((long) days * DAY_IN_MILLIS + nowMillis);
-        return signCSR(req, kp, caCrt, notBefore, notAfter, serial);
+    public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
+            BigInteger serial) throws RsaException {
+        return signCSR(req, kp, caCrt, notBeforeIn, notAfterIn, serial, null);
     }
 
     public static X509Certificate signCSR(PKCS10CertificationRequest req, KeyPair kp, X509Certificate caCrt, Date notBeforeIn, Date notAfterIn,
-            BigInteger serial) throws RsaException {
+            BigInteger serial, Map<String, Object> options) throws RsaException {
         int i;
         Date notBefore;
         Date notAfter;
@@ -128,15 +132,17 @@ public class CertUtils {
         // Add any x509 extensions from the request
         ASN1Set attrs = req.getCertificationRequestInfo().getAttributes();
         X509Extension ext;
-        if (attrs != null) {
-            for (i = 0; i < attrs.size(); i++) {
-                Attribute attr = Attribute.getInstance(attrs.getObjectAt(i));
-                if (attr.getAttrType().equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
-                    DEREncodable extsDer = attr.getAttrValues().getObjectAt(0);
-                    X509Extensions exts = X509Extensions.getInstance(extsDer);
-                    for (ASN1ObjectIdentifier oid : exts.getExtensionOIDs()) {
-                        ext = exts.getExtension(oid);
-                        certBuilder.addExtension(oid, ext.isCritical(), ext.getParsedValue());
+        if (options != null && options.get("SIGN_EXTENSIONS") != null) {
+            if (attrs != null) {
+                for (i = 0; i < attrs.size(); i++) {
+                    Attribute attr = Attribute.getInstance(attrs.getObjectAt(i));
+                    if (attr.getAttrType().equals(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest)) {
+                        DEREncodable extsDer = attr.getAttrValues().getObjectAt(0);
+                        X509Extensions exts = X509Extensions.getInstance(extsDer);
+                        for (ASN1ObjectIdentifier oid : exts.getExtensionOIDs()) {
+                            ext = exts.getExtension(oid);
+                            certBuilder.addExtension(oid, ext.isCritical(), ext.getParsedValue());
+                        }
                     }
                 }
             }
@@ -160,7 +166,7 @@ public class CertUtils {
         return crt;
     }
 
-    public static X509Certificate selfSignCsrCA(PKCS10CertificationRequest req, KeyPair kp, Date notBefore, Date notAfter) throws RsaException {
+    public static X509Certificate selfSignCsrCA(PKCS10CertificationRequest req, KeyPair kp, Date notBefore, Date notAfter, Map<String, Object> options) throws RsaException {
         PrivateKey priv;
         PublicKey pub;
         String msg;
@@ -187,10 +193,20 @@ public class CertUtils {
         } catch (OperatorCreationException ex) {
             throw new RsaException("Error creating signature", ex);
         }
+
         BigInteger serial = BigInteger.ONE;
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(issuer, serial, notBefore, notAfter, subject, pub);
 
-        certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(true));//This is a CA crt
+        certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(true));//This is a CA crt}
+        int usageFlags = KeyUsage.keyCertSign | KeyUsage.dataEncipherment | KeyUsage.keyEncipherment | KeyUsage.digitalSignature;
+        Vector usages = new Vector();
+        usages.add((DERObject) KeyPurposeId.id_kp_serverAuth);
+        if (options != null && options.containsKey("clientAuth")) {
+            usages.add((DERObject) KeyPurposeId.id_kp_clientAuth);
+        }
+
+        certBuilder.addExtension(X509Extensions.KeyUsage, true, new KeyUsage(usageFlags));
+        certBuilder.addExtension(X509Extension.extendedKeyUsage, true, new ExtendedKeyUsage(usages));
         try {
             subjKeyId = new SubjectKeyIdentifierStructure(pub);
         } catch (InvalidKeyException ex) {
@@ -386,7 +402,7 @@ public class CertUtils {
             kp = RSAKeyUtils.genKeyPair(RSAKeyUtils.DEFAULT_KEY_SIZE);  // If you pass in null you'll never see the key again
         }
         PKCS10CertificationRequest csr = CsrUtils.newCsr(subjectName, kp, true);
-        X509Certificate x509 = CertUtils.selfSignCsrCA(csr, kp, notBefore, notAfter);
+        X509Certificate x509 = CertUtils.selfSignCsrCA(csr, kp, notBefore, notAfter, null);
         return x509;
     }
 

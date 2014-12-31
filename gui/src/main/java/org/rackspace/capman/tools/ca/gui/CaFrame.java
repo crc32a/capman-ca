@@ -1,5 +1,9 @@
 package org.rackspace.capman.tools.ca.gui;
 
+import org.rackspace.capman.tools.ca.primitives.Debug;
+import java.io.FileNotFoundException;
+import java.util.Map;
+import java.util.HashMap;
 import org.rackspace.capman.tools.ca.gui.utils.BytesList;
 import java.net.MalformedURLException;
 import org.rackspace.capman.tools.ca.primitives.bcextenders.HackedProviderAccessor;
@@ -56,6 +60,7 @@ import org.rackspace.capman.tools.util.X509PathBuilder;
 import org.rackspace.capman.tools.util.X509Inspector;
 import org.rackspace.capman.tools.ca.exceptions.X509PathBuildException;
 import org.rackspace.capman.tools.ca.exceptions.X509ReaderException;
+import org.rackspace.capman.tools.ca.primitives.X509ExtContainer;
 import org.rackspace.capman.tools.ca.zeus.ZeusUtils;
 import org.rackspace.capman.tools.util.X509ReaderWriter;
 import org.rackspace.capman.tools.util.fileio.RsaFileUtils;
@@ -140,6 +145,8 @@ public class CaFrame extends javax.swing.JFrame {
         notAfterDaysTextField = new javax.swing.JTextField();
         signCSRButton = new javax.swing.JButton();
         selfSignCA = new javax.swing.JCheckBox();
+        signCrtAsCA = new javax.swing.JCheckBox();
+        clientAuthBox = new javax.swing.JCheckBox();
         verifyPanel = new javax.swing.JPanel();
         verifyKeyCertPanel = new javax.swing.JPanel();
         vkcKeyButton = new javax.swing.JButton();
@@ -215,9 +222,9 @@ public class CaFrame extends javax.swing.JFrame {
         x509InspectTab = new javax.swing.JPanel();
         x509InpectorPanel = new javax.swing.JPanel();
         inspectX509Button = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        clearX509InspectorMessageButton = new javax.swing.JButton();
         X509InspectFN = new javax.swing.JTextField();
-        jButton3 = new javax.swing.JButton();
+        setX509InspectFileButton = new javax.swing.JButton();
         x509InspectorPane = new javax.swing.JScrollPane();
         x509InspectorMessagePane = new javax.swing.JTextPane();
         debugTab = new javax.swing.JPanel();
@@ -512,7 +519,7 @@ public class CaFrame extends javax.swing.JFrame {
             csrGenTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(csrGenTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(csrSubjectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(csrSubjectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(csrOptionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(154, Short.MAX_VALUE))
@@ -655,6 +662,25 @@ public class CaFrame extends javax.swing.JFrame {
         });
 
         selfSignCA.setText("Self Sign csr and create CA Certificate");
+        selfSignCA.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selfSignCAActionPerformed(evt);
+            }
+        });
+
+        signCrtAsCA.setText("Allow certificate to sign other Certs");
+        signCrtAsCA.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                signCrtAsCAActionPerformed(evt);
+            }
+        });
+
+        clientAuthBox.setText("clientAuth cert");
+        clientAuthBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clientAuthBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout CSRSigningPanelLayout = new javax.swing.GroupLayout(CSRSigningPanel);
         CSRSigningPanel.setLayout(CSRSigningPanelLayout);
@@ -664,11 +690,14 @@ public class CaFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(CSRSigningPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(caFilesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(x509OptionsPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(CSRSigningPanelLayout.createSequentialGroup()
                         .addComponent(signCSRButton, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(selfSignCA, javax.swing.GroupLayout.PREFERRED_SIZE, 392, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(x509OptionsPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(CSRSigningPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(signCrtAsCA, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
+                            .addComponent(selfSignCA, javax.swing.GroupLayout.PREFERRED_SIZE, 392, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(clientAuthBox, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         CSRSigningPanelLayout.setVerticalGroup(
@@ -678,10 +707,15 @@ public class CaFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(caFilesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(CSRSigningPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(signCSRButton)
-                    .addComponent(selfSignCA))
-                .addContainerGap(130, Short.MAX_VALUE))
+                .addGroup(CSRSigningPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(CSRSigningPanelLayout.createSequentialGroup()
+                        .addComponent(selfSignCA)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(signCrtAsCA))
+                    .addComponent(signCSRButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(clientAuthBox)
+                .addContainerGap(119, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout csrSigningTabLayout = new javax.swing.GroupLayout(csrSigningTab);
@@ -698,7 +732,7 @@ public class CaFrame extends javax.swing.JFrame {
             .addGroup(csrSigningTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(CSRSigningPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(321, Short.MAX_VALUE))
+                .addContainerGap(278, Short.MAX_VALUE))
         );
 
         appTabs.addTab("CSR Signing", csrSigningTab);
@@ -1373,19 +1407,29 @@ public class CaFrame extends javax.swing.JFrame {
         x509InpectorPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("X509 Inspector"));
 
         inspectX509Button.setText("Inspect");
-
-        jButton2.setText("Clear ");
-
-        jButton3.setText("Choose X509 File");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        inspectX509Button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                inspectX509ButtonActionPerformed(evt);
+            }
+        });
+
+        clearX509InspectorMessageButton.setText("Clear ");
+        clearX509InspectorMessageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearX509InspectorMessageButtonActionPerformed(evt);
+            }
+        });
+
+        setX509InspectFileButton.setText("Choose X509 File");
+        setX509InspectFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                setX509InspectFileButtonActionPerformed(evt);
             }
         });
 
         x509InspectorMessagePane.setBackground(new java.awt.Color(0, 0, 0));
         x509InspectorMessagePane.setEditable(false);
-        x509InspectorMessagePane.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
+        x509InspectorMessagePane.setFont(new java.awt.Font("Monospaced", 1, 14));
         x509InspectorMessagePane.setForeground(new java.awt.Color(0, 255, 0));
         x509InspectorPane.setViewportView(x509InspectorMessagePane);
 
@@ -1397,12 +1441,12 @@ public class CaFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, x509InpectorPanelLayout.createSequentialGroup()
-                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(setX509InspectFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(inspectX509Button, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(20, 20, 20)
                         .addComponent(X509InspectFN, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(clearX509InspectorMessageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
             .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(x509InpectorPanelLayout.createSequentialGroup()
@@ -1416,10 +1460,10 @@ public class CaFrame extends javax.swing.JFrame {
                 .addGap(580, 580, 580)
                 .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(X509InspectFN, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton3)
+                    .addComponent(setX509InspectFileButton)
                     .addComponent(inspectX509Button))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton2)
+                .addComponent(clearX509InspectorMessageButton)
                 .addContainerGap(28, Short.MAX_VALUE))
             .addGroup(x509InpectorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(x509InpectorPanelLayout.createSequentialGroup()
@@ -1464,7 +1508,7 @@ public class CaFrame extends javax.swing.JFrame {
 
         debugMessagesPane.setBackground(new java.awt.Color(0, 0, 0));
         debugMessagesPane.setEditable(false);
-        debugMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
+        debugMessagesPane.setFont(new java.awt.Font("Monospaced", 1, 14));
         debugMessagesPane.setForeground(new java.awt.Color(0, 255, 0));
         debugScrollPane1.setViewportView(debugMessagesPane);
 
@@ -1930,6 +1974,7 @@ public class CaFrame extends javax.swing.JFrame {
         Date notBeforeDays;
         Date notAfterDays;
         Date now = StaticHelpers.now();
+        Map<String, Object> options = new HashMap<String, Object>();
         byte[] caKeyBytes;
         byte[] caCrtBytes;
         byte[] csrBytes;
@@ -2008,12 +2053,14 @@ public class CaFrame extends javax.swing.JFrame {
             return;
         }
 
+        if (clientAuthBox.isSelected()) {
+            options.put("clientAuth", "clientAuth");
+        }
 
         if (selfSignCA.isSelected()) {
             // Self Sign this CSR
             try {
-
-                crt = CertUtils.selfSignCsrCA(req, kp, notBeforeDays, notAfterDays);
+                crt = CertUtils.selfSignCsrCA(req, kp, notBeforeDays, notAfterDays, options);
             } catch (RsaException ex) {
                 fmt = "Error generating Certificate\n%s\n";
                 logError(fmt, getEST(ex));
@@ -2585,9 +2632,64 @@ public class CaFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_wastBytesButtonActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+    private void setX509InspectFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setX509InspectFileButtonActionPerformed
         setFileName(X509InspectFN);
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_setX509InspectFileButtonActionPerformed
+
+    private void inspectX509ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inspectX509ButtonActionPerformed
+        String fileName = X509InspectFN.getText();
+        byte[] pem;
+        X509Certificate x509;
+        xip.greenWrite("Inspecting file \"%s\"\n", fileName);
+        if (fileName == null) {
+            xip.greenWrite("No filename entered\n");
+            return;
+        }
+        fileName = RsaFileUtils.expandUser(fileName);
+
+        try {
+            pem = RsaFileUtils.readFileToByteArray(fileName);
+            x509 = (X509Certificate) PemUtils.fromPem(pem);
+            X509Inspector xi = X509Inspector.newX509Inspector(x509);
+            List<X509ExtContainer> exts = xi.getExtensions();
+            xip.greenWrite("Extensions:\n");
+            for(X509ExtContainer ext : exts){
+                xip.greenWrite("%s\n",ext.toString());
+            }
+        } catch (CertificateEncodingException ex) {
+            dbg.redWrite("CertificateEncodingException: %s\n", Debug.getExtendedStackTrace(ex));
+            return;
+        } catch (CertificateParsingException ex) {
+            dbg.redWrite("CertificateparsingException: %s\n", Debug.getExtendedStackTrace(ex));
+            return;
+        } catch (NotAnX509CertificateException ex) {
+            dbg.redWrite("NotAnX509CertificateException: %s\n", Debug.getExtendedStackTrace(ex));
+            return;
+        } catch (PemException ex) {
+            dbg.redWrite("PemException: %s\n", Debug.getExtendedStackTrace(ex));
+            return;
+        } catch (FileNotFoundException ex) {
+            dbg.redWrite("File not found Exception: %s\n", Debug.getExtendedStackTrace(ex));
+            return;
+        } catch (IOException ex) {
+            dbg.redWrite("IOException: %s\n", Debug.getExtendedStackTrace(ex));
+            return;
+        }
+
+    }//GEN-LAST:event_inspectX509ButtonActionPerformed
+
+    private void clearX509InspectorMessageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearX509InspectorMessageButtonActionPerformed
+        xip.clear();
+    }//GEN-LAST:event_clearX509InspectorMessageButtonActionPerformed
+
+    private void signCrtAsCAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signCrtAsCAActionPerformed
+    }//GEN-LAST:event_signCrtAsCAActionPerformed
+
+    private void selfSignCAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selfSignCAActionPerformed
+    }//GEN-LAST:event_selfSignCAActionPerformed
+
+    private void clientAuthBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clientAuthBoxActionPerformed
+    }//GEN-LAST:event_clientAuthBoxActionPerformed
 
     private void displayX509CertificateObject(X509CertificateObject x509obj) {
         try {
@@ -2708,6 +2810,8 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton clearKeyButton;
     private javax.swing.JButton clearLoadBaseDirNameButton;
     private javax.swing.JButton clearRootCAsButton;
+    private javax.swing.JButton clearX509InspectorMessageButton;
+    private javax.swing.JCheckBox clientAuthBox;
     private javax.swing.JTextField cnTextField;
     private javax.swing.JTextField crtChainerCountTextField;
     private javax.swing.JTextField crtLoadBaseDir;
@@ -2744,8 +2848,6 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox isSerialNumberSpecified;
     private javax.swing.JTextField issuerCertFN;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -2806,8 +2908,10 @@ public class CaFrame extends javax.swing.JFrame {
     private javax.swing.JButton setMysteryFileButton;
     private javax.swing.JButton setOutputCrtFileButton;
     private javax.swing.JButton setParentCertButton;
+    private javax.swing.JButton setX509InspectFileButton;
     private javax.swing.JCheckBox showZcfExceptionsCheckBox;
     private javax.swing.JButton signCSRButton;
+    private javax.swing.JCheckBox signCrtAsCA;
     private javax.swing.JTextField stTextField;
     private javax.swing.JTextField subjectCertFN;
     private javax.swing.JTextField urlBarTextField;

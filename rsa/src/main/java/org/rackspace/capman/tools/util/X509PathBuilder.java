@@ -145,7 +145,7 @@ public class X509PathBuilder<E extends X509Certificate> {
         String rootSubj = subjNames.get(0);
         KeyPair rootKey = RSAKeyUtils.genKeyPair(keySize);
         PKCS10CertificationRequest rootCsr = CsrUtils.newCsr(rootSubj, rootKey, true);
-        Object obj = CertUtils.selfSignCsrCA(rootCsr, rootKey, notBefore, notAfter);
+        Object obj = CertUtils.selfSignCsrCA(rootCsr, rootKey, notBefore, notAfter,null);
         if (!(obj instanceof X509CertificateObject)) {
             String fmt = "Could not generate X509CertificateObject for subj \"%s\"";
             String msg = String.format(fmt, rootSubj);
