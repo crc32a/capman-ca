@@ -147,6 +147,21 @@ public class CertUtils {
                 }
             }
         }
+        Vector usages = new Vector();
+        usages.add((DERObject) KeyPurposeId.id_kp_serverAuth);
+        if (options != null && options.containsKey("clientAuth")) {
+            usages.add((DERObject) KeyPurposeId.id_kp_clientAuth);
+        }
+        int usageFlags = KeyUsage.dataEncipherment | KeyUsage.keyEncipherment | KeyUsage.digitalSignature;
+        if (options != null && options.get("CA") != null) {
+            certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(true));//This is a CA crt}
+            usageFlags |= KeyUsage.keyCertSign;
+        } else {
+            certBuilder.addExtension(X509Extension.basicConstraints, true, new BasicConstraints(false));
+        }
+        certBuilder.addExtension(X509Extensions.KeyUsage, true, new KeyUsage(usageFlags));
+        certBuilder.addExtension(X509Extension.extendedKeyUsage, true, new ExtendedKeyUsage(usages));
+
         try {
             authKeyId = new AuthorityKeyIdentifierStructure(caCrt);
             subjKeyId = new SubjectKeyIdentifierStructure(crtPub);

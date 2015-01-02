@@ -2057,6 +2057,10 @@ public class CaFrame extends javax.swing.JFrame {
             options.put("clientAuth", "clientAuth");
         }
 
+        if(signCrtAsCA.isSelected()){
+            options.put("CA","CA");
+        }
+
         if (selfSignCA.isSelected()) {
             // Self Sign this CSR
             try {
@@ -2106,7 +2110,7 @@ public class CaFrame extends javax.swing.JFrame {
                 return;
             }
             try {
-                crt = CertUtils.signCSR(req, kp, caCrt, notBeforeDays, notAfterDays, serial);
+                crt = CertUtils.signCSR(req, kp, caCrt, notBeforeDays, notAfterDays, serial,options);
             } catch (RsaException ex) {
                 logError("Error signing csr\n%s\n", getEST(ex));
                 return;
