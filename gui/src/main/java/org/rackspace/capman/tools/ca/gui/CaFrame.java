@@ -2384,7 +2384,7 @@ public class CaFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_crtPathCrtFileButtonActionPerformed
 
     private X509Certificate readCrtPathFN() {
-        File file = new File(crtPathFN.getText());
+        File file = new File(RsaFileUtils.expandUser(crtPathFN.getText()));
         byte[] pemBytes;
         X509Certificate x509obj;
 
