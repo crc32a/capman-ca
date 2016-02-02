@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import javax.xml.crypto.KeySelector.Purpose;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERSequence;
@@ -19,6 +20,7 @@ import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.rackspace.capman.tools.ca.RSAKeyUtils;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.rackspace.capman.tools.ca.PemUtils;
@@ -52,10 +54,16 @@ public class MainTest {
             cg.setSignatureAlgorithm("sha512WithRSAEncryption");
             cg.addExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
             cg.addExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment | KeyUsage.dataEncipherment | KeyUsage.keyAgreement));
+
+            ASN1EncodableVector keyPurposes = new ASN1EncodableVector();
+            keyPurposes.add(KeyPurposeId.id_kp_clientAuth);
+            keyPurposes.add(KeyPurposeId.id_kp_serverAuth);
+            keyPurposes.add(KeyPurposeId.id_kp_timeStamping);
+            cg.addExtension(X509Extensions.ExtendedKeyUsage, true, new DERSequence(keyPurposes));
             System.err.printf("Adding general Names\n");
-            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName1.example.com"));
-            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName2.example.com"));
-            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName3.example.com"));
+            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFromdNSName1.example.com"));
+            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFromdNSName2.example.com"));
+            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFromdNSName3.example.com"));
             generalNamesList.add(new GeneralName(GeneralName.rfc822Name, "noone@example.com"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName1.example.com"));
             generalNamesList.add(new GeneralName(GeneralName.directoryName, cnFromAltName + "www.cnFromAltName2.example.com"));
@@ -64,7 +72,7 @@ public class MainTest {
             generalNamesList.add(new GeneralName(GeneralName.iPAddress, "10.1.2.3"));
             generalNamesList.add(new GeneralName(GeneralName.iPAddress, "0123:4567:89AB:CDEF:F7B3:D591:E6A2:C480"));
             generalNamesList.add(new GeneralName(GeneralName.uniformResourceIdentifier, "http://www.example.com"));
-            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFrom_dNSName4.example.com"));
+            generalNamesList.add(new GeneralName(GeneralName.dNSName, "www.hostFromdNSName4.example.com"));
             ASN1EncodableVector generalNamesVector = new ASN1EncodableVector();
             for (GeneralName gn : generalNamesList) {
                 generalNamesVector.add(gn);
