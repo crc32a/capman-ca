@@ -251,6 +251,14 @@ public class X509Inspector {
         return dirName;
     }
 
+    public String getSignatureAlgorithmName() {
+        return x509obj.getSigAlgName();
+    }
+
+    public String getSignatureAlgorithmOid() {
+        return x509obj.getSigAlgOID();
+    }
+
     public String getAuthKeyId() {
         AuthorityKeyIdentifierStructure authKIS = getAKISNoExcept();
         if (authKIS == null) {
@@ -294,6 +302,10 @@ public class X509Inspector {
     public PublicKey getPublicKey() {
         PublicKey pubKey = x509obj.getPublicKey();
         return pubKey;
+    }
+
+    public String getPublicKeyAlgorithm() {
+        return x509obj.getPublicKey().getAlgorithm();
     }
 
     private AuthorityKeyIdentifierStructure getAuthorityKeyIdentifierStructure() throws X509ReaderNoSuchExtensionException, X509ReaderDecodeException {

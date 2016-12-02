@@ -2656,6 +2656,10 @@ public class CaFrame extends javax.swing.JFrame {
             x509 = (X509Certificate) PemUtils.fromPem(pem);
             X509Inspector xi = X509Inspector.newX509Inspector(x509);
             List<X509ExtContainer> exts = xi.getExtensions();
+            xip.greenWrite("x509 implementing class: %s\n", Debug.findClassPath(xi.getX509CertificateObject().getClass()));
+            xip.greenWrite("public key algo: %s\n", xi.getPublicKeyAlgorithm());
+            xip.greenWrite("Sinature algo name: %s\n", xi.getSignatureAlgorithmName());
+            xip.greenWrite("SignatureAlgoOid: %s\n", xi.getSignatureAlgorithmName());
             xip.greenWrite("Extensions:\n");
             for(X509ExtContainer ext : exts){
                 xip.greenWrite("%s\n",ext.toString());

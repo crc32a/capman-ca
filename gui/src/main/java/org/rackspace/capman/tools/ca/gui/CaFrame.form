@@ -39,7 +39,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
-              <Component id="appTabs" pref="873" max="32767" attributes="0"/>
+              <Component id="appTabs" pref="870" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -81,7 +81,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="rsaGenPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="698" max="32767" attributes="0"/>
+                      <EmptySpace pref="691" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -188,7 +188,7 @@
                           <Component id="csrOptionsPanel" alignment="0" min="0" max="32767" attributes="1"/>
                           <Component id="csrSubjectPanel" alignment="0" min="-2" pref="734" max="-2" attributes="1"/>
                       </Group>
-                      <EmptySpace pref="487" max="32767" attributes="0"/>
+                      <EmptySpace pref="477" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -199,7 +199,7 @@
                       <Component id="csrSubjectPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="csrOptionsPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="154" max="32767" attributes="0"/>
+                      <EmptySpace pref="139" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -353,8 +353,8 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="csrFnButton1" pref="312" max="32767" attributes="1"/>
-                                      <Component id="keyFnButton1" alignment="0" pref="312" max="32767" attributes="1"/>
+                                      <Component id="csrFnButton1" pref="322" max="32767" attributes="1"/>
+                                      <Component id="keyFnButton1" alignment="0" pref="322" max="32767" attributes="1"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -449,7 +449,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace pref="246" max="32767" attributes="0"/>
+                              <EmptySpace pref="237" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -528,7 +528,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CSRSigningPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="278" max="32767" attributes="0"/>
+                      <EmptySpace pref="267" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -861,7 +861,7 @@
                       <Component id="keycertandchainPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="verifyKeyCrtPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="48" max="32767" attributes="0"/>
+                      <EmptySpace pref="37" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1062,12 +1062,12 @@
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="jLabel14" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="clearCertButton" pref="318" max="32767" attributes="0"/>
+                                          <Component id="clearCertButton" pref="319" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jScrollPane3" pref="357" max="32767" attributes="1"/>
+                                      <Component id="jScrollPane3" pref="358" max="32767" attributes="1"/>
                                       <Group type="102" attributes="0">
                                           <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -1297,7 +1297,7 @@
                       <Component id="loadX509MapsBorder" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="CrtPathMessageBorder" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="113" max="32767" attributes="0"/>
+                      <EmptySpace pref="102" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1777,7 +1777,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="urlPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="507" max="32767" attributes="0"/>
+                      <EmptySpace pref="501" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1868,7 +1868,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="x509InpectorPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="118" max="32767" attributes="0"/>
+                      <EmptySpace pref="112" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1925,7 +1925,7 @@
                       <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="x509InspectorPane" min="-2" pref="556" max="-2" attributes="0"/>
-                              <EmptySpace pref="124" max="32767" attributes="0"/>
+                              <EmptySpace pref="126" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -2009,7 +2009,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="debugPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="106" max="32767" attributes="0"/>
+                      <EmptySpace pref="98" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -2174,7 +2174,7 @@
                               <Component id="wasteBytesTextField" min="-2" pref="234" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabel23" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="477" max="32767" attributes="0"/>
+                              <EmptySpace pref="466" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
