@@ -24,6 +24,7 @@ import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.exceptions.NotAnRSAKeyException;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.rackspace.capman.tools.ca.CertUtils;
 import org.rackspace.capman.tools.ca.exceptions.PemException;
 import org.rackspace.capman.tools.ca.exceptions.RsaException;
@@ -137,6 +138,7 @@ public class X509PathBuilderTest {
         return (KeyPair) obj;
     }
 
+    @Ignore
     @Test
     public void testCreateChainBasedOnRootCa() throws NotAnX509CertificateException, RsaException {
         List<String> subjNames = new ArrayList<String>();

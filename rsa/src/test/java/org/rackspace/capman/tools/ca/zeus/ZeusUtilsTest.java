@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.rackspace.capman.tools.ca.PemUtils;
 import org.rackspace.capman.tools.ca.StringUtils;
 import org.rackspace.capman.tools.ca.exceptions.NotAnX509CertificateException;
@@ -235,6 +236,7 @@ public class ZeusUtilsTest {
     public void tearDown() {
     }
 
+    @Ignore
     @Test
     public void testZeusCertFile() throws X509PathBuildException, PemException {
         StringBuilder wtf = new StringBuilder(4096);
@@ -267,6 +269,7 @@ public class ZeusUtilsTest {
         }
     }
 
+    @Ignore
     @Test
     public void testLbaasValidation() throws PemException {
         Set<X509CertificateObject> roots = loadX509Set((X509CertificateObject)PemUtils.fromPemString(workingRootCa));
